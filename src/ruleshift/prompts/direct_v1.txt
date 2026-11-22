@@ -32,8 +32,9 @@ placeholder, not a value: replace it with something you derived from THIS input.
 Rules:
 - candidate_probabilities: exactly one entry per candidate rule id above; the
   numbers lie in [0,1] and sum to 1.
-- action_predictions: exactly one entry, for selected_action. Do not include
-  predictions for any other action.
+- action_predictions: at most two entries — selected_action and, when it was a
+  real alternative, the one action you compared against it. Never add a third
+  and never repeat an action.
 - under_rules: one entry per candidate rule id, each at most once. For each
   rule, possible_outcomes lists only outcomes supported by the public text. If
   that text describes uncertainty, include the plausible outcomes and derive

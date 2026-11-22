@@ -39,7 +39,8 @@ def test_template_keeps_the_answer_inside_the_token_budget(name: str) -> None:
 
 def test_direct_prompt_limits_predictions_to_fit_the_output_budget() -> None:
     text = (PROMPTS_DIR / "direct_v1.txt").read_text(encoding="utf-8").lower()
-    assert "exactly one entry, for selected_action" in text
+    assert "at most two entries" in text
+    assert "never add a third" in text
 
 
 def test_outcomes_prompt_limits_predictions_to_fit_the_output_budget() -> None:
