@@ -36,6 +36,7 @@ def main() -> None:
     parser.add_argument("--out", default="results/real")
     parser.add_argument("--report", default="reports/real_pilot.md")
     parser.add_argument("--config", default="configs/models.yaml")
+    parser.add_argument("--device", default=None, help="Override device, e.g. cpu")
     args = parser.parse_args()
 
     with (ROOT / args.config).open(encoding="utf-8") as handle:
@@ -57,8 +58,9 @@ def main() -> None:
 
     backend = TransformersVLMBackend(
         model_id=model_id,
-        device=model["device"],
+        device=args.device or model["device"],
         revision=model["revision"],
+        dtype=model["dtype"],
     )
     contexts = build_offline_contexts(args.contexts)
     cache = ResponseCache(ROOT / args.out / "response_cache.jsonl")

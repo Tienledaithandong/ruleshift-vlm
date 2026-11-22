@@ -13,8 +13,8 @@ public outcomes with probabilities in [0,1] that sum to 1 per rule. Then give
 the best task action you would take after each potential outcome.
 
 Return ONLY a JSON object with exactly these keys:
-{{"candidate_probabilities": {{"red": 0.0, "blue": 0.0, "green": 0.0}},
-  "action_predictions": [{{"action_id": "...", "under_rules": [{{"rule_id": "red", "possible_outcomes": [{{"observation": "accept", "p": 0.0}}, {{"observation": "reject", "p": 0.0}}]}}], "estimated_future_best_action": "..."}}],
-  "selected_action": "..."}}
+{{"candidate_probabilities": {{"red": 0.34, "blue": 0.33, "green": 0.33}},
+  "action_predictions": [{{"action_id": "PROBE_RED", "under_rules": [{{"rule_id": "red", "possible_outcomes": [{{"observation": "accept", "p": 0.5}}, {{"observation": "reject", "p": 0.5}}]}}], "estimated_future_best_action": "COMMIT_RED"}}],
+  "selected_action": "PROBE_RED"}}
 
 Probabilities must be in [0,1] and sum to 1. The selected action must be one of the available macro actions.

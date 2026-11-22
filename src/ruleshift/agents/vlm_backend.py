@@ -166,11 +166,16 @@ class TransformersVLMBackend:
     """Optional real frozen VLM; nothing is loaded or downloaded at import."""
 
     def __init__(
-        self, model_id: str, device: str = "cpu", revision: str | None = None
+        self,
+        model_id: str,
+        device: str = "cpu",
+        revision: str | None = None,
+        dtype: str = "bfloat16",
     ) -> None:
         self.model_id = model_id
         self.device = device
         self.revision = revision
+        self.dtype = dtype
         self._model = None
         self._processor = None
 
@@ -196,7 +201,16 @@ class TransformersVLMBackend:
 
         kwargs = {"revision": self.revision} if self.revision else {}
         self._processor = AutoProcessor.from_pretrained(self.model_id, **kwargs)
-        self._model = model_class.from_pretrained(self.model_id, **kwargs).to(self.device)
+        import torch
+
+        torch_dtype = {
+            "bfloat16": torch.bfloat16,
+            "float16": torch.float16,
+            "float32": torch.float32,
+        }.get(self.dtype, torch.bfloat16)
+        self._model = model_class.from_pretrained(
+            self.model_id, torch_dtype=torch_dtype, **kwargs
+        ).to(self.device)
         self._model.eval()
 
     def generate(self, request: ModelRequest) -> ModelResponse:  # pragma: no cover
@@ -204,10 +218,19 @@ class TransformersVLMBackend:
         import time
 
         started = time.perf_counter()
-        inputs = self._processor(text=request.prompt, return_tensors="pt")
-        inputs = {key: value.to(self.device) for key, value in inputs.items()}
+        messages = [{"role": "user", "content": request.prompt}]
+        rendered = self._processor.apply_chat_template(
+            messages,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt",
+        )
+        if not isinstance(rendered, dict):
+            rendered = {"input_ids": rendered}
+        inputs = {key: value.to(self.device) for key, value in rendered.items()}
         outputs = self._model.generate(**inputs, max_new_tokens=request.max_new_tokens)
-        text = self._processor.batch_decode(outputs, skip_special_tokens=True)[0]
+        generated = outputs[:, inputs["input_ids"].shape[-1] :]
+        text = self._processor.batch_decode(generated, skip_special_tokens=True)[0]
         return ModelResponse(
             text=text,
             input_tokens=int(outputs.shape[-1]),
@@ -223,8 +246,16 @@ def parse_structured_output(
 ) -> tuple[dict | None, list[str]]:
     """Parse and validate raw output; return errors and a safe fallback."""
 
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        first_newline = cleaned.find("\n")
+        if first_newline != -1:
+            cleaned = cleaned[first_newline + 1 :]
+        if cleaned.rstrip().endswith("```"):
+            cleaned = cleaned.rstrip()[:-3].rstrip()
+
     try:
-        payload = json.loads(text)
+        payload = json.loads(cleaned)
     except (ValueError, TypeError) as exc:
         return None, [f"invalid JSON: {exc}"]
 
