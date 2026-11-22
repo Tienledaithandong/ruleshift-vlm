@@ -14,7 +14,7 @@ from .vlm_backend import ModelRequest, ModelResponse, parse_structured_output
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "outcomes_v1.txt"
 #: Stamped into the request fingerprint so caches record the template actually
 #: used (``ModelRequest`` cannot default to this because it is backend-agnostic).
-OUTCOMES_PROMPT_VERSION = "outcomes_v1"
+OUTCOMES_PROMPT_VERSION = "outcomes_v3"
 
 
 def render_outcomes_prompt(observation: PublicObservation) -> str:

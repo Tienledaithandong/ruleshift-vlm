@@ -19,7 +19,7 @@ from typing import Mapping, Sequence
 from ruleshift.public_api.schemas import validate_structured_vlm_output
 
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "direct_v1.txt"
-PROMPT_VERSION = "direct_v1"
+PROMPT_VERSION = "direct_v3"
 
 
 @dataclass(frozen=True)
@@ -233,8 +233,8 @@ class TransformersVLMBackend:
         text = self._processor.batch_decode(generated, skip_special_tokens=True)[0]
         return ModelResponse(
             text=text,
-            input_tokens=int(outputs.shape[-1]),
-            output_tokens=int(outputs.shape[-1]),
+            input_tokens=int(inputs["input_ids"].shape[-1]),
+            output_tokens=int(generated.shape[-1]),
             latency_ms=(time.perf_counter() - started) * 1000,
             model_id=self.model_id,
             backend_id="TRANSFORMERS_FROZEN",

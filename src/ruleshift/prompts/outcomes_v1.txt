@@ -37,11 +37,13 @@ placeholder, not a value: replace it with something you derived from THIS input.
 Rules:
 - candidate_probabilities: exactly one entry per candidate rule id above; the
   numbers lie in [0,1] and sum to 1.
-- action_predictions: one entry per candidate action you evaluated, using each
-  candidate action at most once; include the action you select.
+- action_predictions: evaluate at most two candidate actions, one task action
+  and one probe action when both are available. Choose them from candidate_actions,
+  include selected_action, and include each evaluated action only once.
 - under_rules: one entry per candidate rule id, each at most once. For each
-  rule, possible_outcomes lists the public outcomes you consider possible, and
-  their probabilities lie in [0,1] and sum to 1.
+  rule, possible_outcomes lists only outcomes supported by the public text. If
+  that text describes uncertainty, include the plausible outcomes and derive
+  their probabilities from it. Probabilities lie in [0,1] and sum to 1.
 - observation: use only these public outcome words: accept, reject, success,
   failure, none.
 - selected_action and estimated_future_best_action must be available macro ids.
@@ -49,5 +51,6 @@ Rules:
   probabilities or the same action across different inputs, or that ignores the
   uncertainty the public text describes, is wrong. Choose the action whose
   expected control value best justifies its public cost.
+- Keep the JSON compact on one line and within the 256-token generation limit.
 
 Return ONLY the JSON object: no prose, no code fence.
