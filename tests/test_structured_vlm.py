@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from ruleshift.agents.cache import ResponseCache
 from ruleshift.agents.structured_vlm import render_outcomes_prompt, run_structured_prediction
 from ruleshift.agents.vlm_backend import StubVLMBackend
@@ -21,6 +23,14 @@ def observation() -> PublicObservation:
         ),
         public_costs={"primitive_step": 0.05, "lockout": 8.0},
     )
+
+
+def test_templates_do_not_supply_copyable_example_values() -> None:
+    prompts_dir = Path(__file__).resolve().parents[1] / "src" / "ruleshift" / "prompts"
+    for name in ("direct_v1.txt", "outcomes_v1.txt"):
+        text = (prompts_dir / name).read_text(encoding="utf-8")
+        for literal in ("0.34", "0.33", "PROBE_RED", "COMMIT_RED"):
+            assert literal not in text, f"{name} leaks copyable example value {literal!r}"
 
 
 def test_outcomes_prompt_contains_only_public_fields() -> None:

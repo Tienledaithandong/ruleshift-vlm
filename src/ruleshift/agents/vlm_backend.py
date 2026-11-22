@@ -33,7 +33,7 @@ class ModelRequest:
     available_actions: tuple[str, ...]
     candidate_hash: str
     decoding_seed: int
-    max_new_tokens: int = 768
+    max_new_tokens: int = 1024   # raised from 768 to fit the full object
     prompt_version: str = PROMPT_VERSION
 
     def fingerprint(self) -> str:
