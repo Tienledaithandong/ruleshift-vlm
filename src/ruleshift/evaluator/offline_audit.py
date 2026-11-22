@@ -147,7 +147,9 @@ def build_offline_contexts(count: int = 81) -> tuple[OfflineContext, ...]:
     return tuple(contexts[:count])
 
 
-def _make_request(context: OfflineContext, prompt: str, model_id: str) -> ModelRequest:
+def _make_request(
+    context: OfflineContext, prompt: str, model_id: str, max_new_tokens: int
+) -> ModelRequest:
     observation = context.public_observation
     descriptions = [rule.description for rule in observation.candidate_rules]
     candidate_hash = hashlib.sha256(
@@ -161,6 +163,7 @@ def _make_request(context: OfflineContext, prompt: str, model_id: str) -> ModelR
         available_actions=tuple(observation.available_actions),
         candidate_hash=candidate_hash,
         decoding_seed=7,
+        max_new_tokens=max_new_tokens,
     )
 
 
@@ -168,6 +171,7 @@ def run_offline_audit(
     contexts: tuple[OfflineContext, ...],
     backend: _Backend,
     cache: ResponseCache,
+    max_new_tokens: int = 768,
 ) -> tuple[list[dict], AuditMetrics]:
     """Run the direct prompt over contexts and score probe decisions."""
 
@@ -188,7 +192,9 @@ def run_offline_audit(
             available_actions=list(observation.available_actions),
             public_costs=dict(observation.public_costs),
         )
-        request = _make_request(context, prompt, backend.model_id)
+        request = _make_request(
+            context, prompt, backend.model_id, max_new_tokens
+        )
         cached = cache.get(request)
         cache_hit = cached is not None
         if cached is None:

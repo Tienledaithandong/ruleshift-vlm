@@ -37,11 +37,14 @@ placeholder, not a value: replace it with something you derived from THIS input.
 Rules:
 - candidate_probabilities: exactly one entry per candidate rule id above; the
   numbers lie in [0,1] and sum to 1.
-- action_predictions: one entry per candidate action you evaluated, using each
-  candidate action at most once; include the action you select.
+- action_predictions: AT MOST three entries — the action you select plus at
+  most two candidate actions you compared it with. Each candidate action at
+  most once.
 - under_rules: one entry per candidate rule id, each at most once. For each
-  rule, possible_outcomes lists the public outcomes you consider possible, and
-  their probabilities lie in [0,1] and sum to 1.
+  rule, possible_outcomes lists at most two public outcomes you consider
+  possible, and their probabilities lie in [0,1] and sum to 1.
+- Keep the whole object compact: it must be complete and parseable, so do not
+  pad it with extra actions, extra outcomes, commentary or repeated fields.
 - observation: use only these public outcome words: accept, reject, success,
   failure, none.
 - selected_action and estimated_future_best_action must be available macro ids.
@@ -49,5 +52,15 @@ Rules:
   probabilities or the same action across different inputs, or that ignores the
   uncertainty the public text describes, is wrong. Choose the action whose
   expected control value best justifies its public cost.
+
+Decision procedure — apply it, and let it choose selected_action:
+- probe_detour is the extra travel a probe adds, commit_travel is what a
+  delivery trip costs, and delivery_reward is what a completed delivery pays.
+- A probe only pays when the travel it adds is small next to the travel and
+  reward it can save. When a probe costs a large share of the delivery it is
+  meant to protect, probing is a net loss even while the rules are uncertain.
+- If probing is not worth that cost, select the commit action for the most
+  likely candidate rule. Do not probe by default, and do not repeat the
+  action of a previous answer.
 
 Return ONLY the JSON object: no prose, no code fence.

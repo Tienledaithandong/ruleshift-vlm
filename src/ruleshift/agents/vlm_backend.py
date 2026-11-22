@@ -33,7 +33,7 @@ class ModelRequest:
     available_actions: tuple[str, ...]
     candidate_hash: str
     decoding_seed: int
-    max_new_tokens: int = 256
+    max_new_tokens: int = 768
     prompt_version: str = PROMPT_VERSION
 
     def fingerprint(self) -> str:
@@ -228,13 +228,17 @@ class TransformersVLMBackend:
         if not isinstance(rendered, dict):
             rendered = {"input_ids": rendered}
         inputs = {key: value.to(self.device) for key, value in rendered.items()}
+        prompt_tokens = int(inputs["input_ids"].shape[-1])
         outputs = self._model.generate(**inputs, max_new_tokens=request.max_new_tokens)
-        generated = outputs[:, inputs["input_ids"].shape[-1] :]
+        generated = outputs[:, prompt_tokens:]
         text = self._processor.batch_decode(generated, skip_special_tokens=True)[0]
         return ModelResponse(
             text=text,
-            input_tokens=int(outputs.shape[-1]),
-            output_tokens=int(outputs.shape[-1]),
+            # Prompt and completion are counted separately: reporting the total
+            # sequence length for both made every run look like it had used the
+            # same number of prompt and output tokens.
+            input_tokens=prompt_tokens,
+            output_tokens=int(generated.shape[-1]),
             latency_ms=(time.perf_counter() - started) * 1000,
             model_id=self.model_id,
             backend_id="TRANSFORMERS_FROZEN",

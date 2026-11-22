@@ -101,3 +101,25 @@ def test_cache_hits_and_never_stores_privileged_fields(tmp_path) -> None:
         assert field not in raw
     record = json.loads(raw.strip().splitlines()[0])
     assert record["history_hash"] == request.history_hash
+
+
+def test_audit_wires_max_new_tokens_into_every_request(tmp_path) -> None:
+    """The config value must reach the request; it was silently dropped before,
+    so every call used the 256-token default and the JSON was truncated."""
+    from ruleshift.evaluator.offline_audit import (
+        build_offline_contexts,
+        run_offline_audit,
+    )
+
+    seen: list[int] = []
+
+    class Recorder:
+        model_id = "rec-v0"
+
+        def generate(self, request: ModelRequest):
+            seen.append(request.max_new_tokens)
+            return StubVLMBackend(model_id="rec-v0").generate(request)
+
+    cache = ResponseCache(tmp_path / "response_cache.jsonl")
+    run_offline_audit(build_offline_contexts(1), Recorder(), cache, max_new_tokens=640)
+    assert seen == [640]

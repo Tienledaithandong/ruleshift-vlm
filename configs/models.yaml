@@ -13,7 +13,7 @@ models:
     revision: 66285546d2b821cf421d4f5eb2576359d3770cd3
     device: cuda            # set to cpu only if no GPU is available in the runtime
     dtype: bfloat16
-    max_new_tokens: 256
+    max_new_tokens: 768   # the answer needs the whole object; 256 truncated it
     call_cap_per_episode: 6
     role: small_anchor
   qwen3-vl-4b:

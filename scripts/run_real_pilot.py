@@ -64,7 +64,9 @@ def main() -> None:
     )
     contexts = build_offline_contexts(args.contexts)
     cache = ResponseCache(ROOT / args.out / "response_cache.jsonl")
-    records, metrics = run_offline_audit(contexts, backend, cache)
+    records, metrics = run_offline_audit(
+        contexts, backend, cache, max_new_tokens=int(model["max_new_tokens"])
+    )
     paths = write_real_artifacts(
         records,
         contexts,
