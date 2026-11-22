@@ -1,8 +1,10 @@
 """RuleShift / Agentic VLM research repository.
 
-Week 1 status: this package contains only contracts, static interfaces and
-permission-checking utilities. There is intentionally no environment, no Bayes
-oracle, no VLM runner and no learned model in this package yet.
+Status: contracts and static interfaces (``public_api``), the Gymnasium
+environments (``envs``), the privileged evaluator references (``evaluator``),
+and the public-only agent pipeline (``agents``) are implemented. There is no
+training and no fine-tuning; the default model backend is a deterministic stub
+marked ``STUB_SYNTHETIC``, and no empirical result exists yet.
 
 The research question is frozen in the master plan: when hidden environment
 dynamics change without warning, do frozen vision-language agents choose probes

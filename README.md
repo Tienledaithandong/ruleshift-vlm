@@ -50,14 +50,14 @@ project_0/
 ├── docs/{problem_spec,agent_evaluator_permissions,benchmark_protocol,week2_issues,RUNBOOK}.md
 ├── research/{literature_matrix.csv,reading_notes.md,ablation_matrix.csv}
 ├── scripts/*.py                   # setup, verification and later-run entrypoints
-├── reports/ results/ data/         # intentionally empty; README in each
+├── reports/ results/ data/         # clean setup; generated files are git-ignored
 ├── src/ruleshift/
 │   ├── public_api/                # agent-visible schemas and dataclasses
 │   ├── envs/                      # simulator (agents must not import)
 │   ├── evaluator/                 # privileged labels and references
 │   ├── agents/                    # public-only policies and VLM interface
 │   └── prompts/                   # direct_v1.txt, outcomes_v1.txt
-└── tests/                         # 163 tests, all passing
+└── tests/                         # 193 tests, all passing
 ```
 
 ## Verify the setup
@@ -70,8 +70,13 @@ python scripts/check_reproducibility.py
 ```
 
 The full stub-labelled artifact set can be regenerated on demand with
-`python scripts/reproduce_all.py`; those artifacts are not stored in the clean
-setup.
+`python scripts/reproduce_all.py`; those artifacts are git-ignored and are not
+stored in the clean setup. CI regenerates them and then asserts the working
+tree is still clean, so the ignore list cannot drift.
+
+The only model-backend dependencies are in the optional extra:
+`python -m pip install -e '.[vlm]'` installs `torch`/`transformers` for
+`scripts/run_real_pilot.py`. The CPU harness and its tests never need them.
 
 ## Remote GPU setup (Colab / Kaggle)
 

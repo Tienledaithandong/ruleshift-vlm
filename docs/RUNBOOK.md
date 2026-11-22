@@ -7,6 +7,23 @@ covered by tests. **No training, experiment or evaluation with a real model has
 been run**, and generated result files are intentionally absent so that
 stub-produced numbers cannot be mistaken for measurements.
 
+## 0. Budget and statistics contract (enforced in code)
+
+- **VLM call cap.** `evaluator/closed_loop.py` applies
+  `max_vlm_calls_per_episode` (default 6, matching
+  `configs/preregistered_test.yaml`) to every method. Once the cap is spent,
+  further decisions use the deterministic `WAIT` fallback without calling the
+  model and are counted in `Episode.call_cap_hits`. `tests/test_closed_loop.py`
+  asserts no method exceeds the cap.
+- **Clustering.** Paired intervals average seeds *within* a scenario and
+  resample scenarios, never seeds or frames. `PairedSummary.n_scenarios` is the
+  number of independent scenarios and `n_episodes` the number of episodes they
+  were averaged from.
+- **Costs.** `public_costs` publishes non-negative magnitudes
+  (`primitive_step`, `probe_detour`, `commit_travel`, `lockout`,
+  `delivery_reward`). Build the signed model with
+  `PublicCostModel.from_public_costs(...)`; a positive `step_cost` is rejected.
+
 ## 1. What is ready
 
 - CPU environment: Family A `RuleShiftEnv` and Family B `BridgeHazardEnv`
@@ -99,7 +116,10 @@ held = run_heldout_evaluation(
 ```
 
 Method ids are `direct`, `diva`, `m1`, `immediate` with a real backend; with
-the default stub they are `direct_stub`, `diva_stub`, etc.
+the default stub they are `direct_stub`, `diva_stub`, etc. Both spellings are
+accepted as *inputs* (`_make_method` strips the suffix), and the label is
+derived from whichever backend you inject, so the snippet above runs with or
+without a real checkpoint.
 
 ## 7. Diagnostics, stress and write-up (later)
 
@@ -119,7 +139,9 @@ suite. For a real write-up, replace those with real-backend runs, fill the
 - No simulator likelihood, oracle belief, Q* or true rule enters prompts,
   caches or public logs.
 - Probes cost primitive steps in the same reward stream; all methods share the
-  same menu and step budget.
+  same menu, step budget and per-episode VLM call cap.
+- A probe's feedback survives the walk back to the start tile, so the
+  decision-boundary public text still reports `accept`/`reject`.
 - Never report stub-generated numbers as empirical results, and never claim
   novelty or publishability before a real held-out result survives matched
   budgets and paired intervals.

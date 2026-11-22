@@ -5,6 +5,7 @@ Usage: python scripts/reproduce_all.py
 
 from __future__ import annotations
 
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -33,6 +34,14 @@ EXPECTED = (
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--skip-tests",
+        action="store_true",
+        help="regenerate artifacts but do not run pytest",
+    )
+    args = parser.parse_args()
+
     for script in SCRIPTS:
         print(f"==> {script}")
         completed = subprocess.run(
@@ -47,6 +56,10 @@ def main() -> None:
     missing = [name for name in EXPECTED if not (ROOT / name).exists()]
     if missing:
         raise SystemExit(f"missing artifacts: {missing}")
+
+    if args.skip_tests:
+        print("reproduction complete — artifacts regenerated (tests skipped)")
+        return
 
     completed = subprocess.run(
         [sys.executable, "-m", "pytest", "-q"], cwd=ROOT, capture_output=True, text=True

@@ -19,23 +19,28 @@ Edit `configs/runtime.yaml`:
 
 ## 1. GitHub
 
-The project folder was not a Git repository. I initialized one locally with no
-remote and no commit, so you control the remote, credentials and first commit.
+The project is already a Git repository with a remote and a commit history, so
+there is nothing to initialise. Clone it where you want to run:
 
 ```bash
-git remote add origin <YOUR_GITHUB_HTTPS_URL>
-git add .
-git commit -m "RuleShift prepared research harness"
-git push -u origin main
+git clone https://github.com/Tienledaithandong/ruleshift-vlm.git
+cd ruleshift-vlm
 ```
 
+If you want results tied to an exact source snapshot, check out the commit you
+intend to cite (`git checkout <commit>`) and record it in
+`reports/experiment_manifest.json` (`scripts/check_reproducibility.py` writes
+the file hashes for you).
+
 Never commit `kaggle.json`, API tokens, credentials, or generated result files.
-They are git-ignored.
+They are git-ignored, and CI fails if `scripts/reproduce_all.py` leaves the
+working tree dirty.
 
 ## 2. Google Colab — offline pilot
 
 Open `notebooks/colab_pilot.ipynb` for the ready-to-run pilot. It clones this
-repo, installs the package, checks the GPU and runs
+repo, installs `.[dev,vlm]` (the real backend needs `torch`/`transformers`,
+which the CPU `dev` extra deliberately omits), checks the GPU and runs
 `scripts/run_real_pilot.py --model-key qwen2.5-vl-3b --contexts 81`.
 The pilot is **text-input only** (P1 diagnostic mode): the backend sends the
 public prompt but no RGB tensor yet. No training, closed loop or evaluation
@@ -49,7 +54,8 @@ below.
    for BF16 prefer L4/A100 if available).
 3. Set `RULESHIFT_REPO_URL` in Colab secrets or a setup cell.
 4. Run all cells. They clone the repo, install `.[dev]`, check `nvidia-smi`,
-   run `pytest -q`, and run `scripts/preflight.py`.
+   run `pytest -q`, and run `scripts/preflight.py`. The setup notebook stays on
+   the CPU `dev` extra; only the pilot notebook installs `.[dev,vlm]`.
 5. `preflight.py` will still say NO-GO until a checkpoint exists and the test
    config is frozen. That is intentional.
 
