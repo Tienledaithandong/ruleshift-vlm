@@ -1,4 +1,4 @@
-"""Generate the Week 8 Family A→B transfer report from analytical references."""
+"""Generate the Week 8 Family A->B transfer report from analytical references."""
 
 from __future__ import annotations
 

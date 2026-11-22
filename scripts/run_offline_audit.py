@@ -4,7 +4,7 @@ Usage:
     python scripts/run_offline_audit.py --contexts 81 \
         --out data --report reports
 
-A real VLM is not bundled. Use StubVLMBackend → TransformersVLMBackend in code
+A real VLM is not bundled. Use StubVLMBackend -> TransformersVLMBackend in code
 only when an actual checkpoint is available; this script never downloads one.
 """
 
