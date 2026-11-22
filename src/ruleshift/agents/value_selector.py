@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, replace
+from typing import Mapping
 
 from ruleshift.public_api.schemas import COMMIT_ACTIONS
 
@@ -19,7 +20,16 @@ from .consistency import Belief, HistoryConsistencyUpdater
 
 @dataclass(frozen=True)
 class PublicCostModel:
-    """Costs and budget that are publicly described to every agent."""
+    """Costs and budget that are publicly described to every agent.
+
+    ``step_cost`` is a **signed** reward delta: a cost must be negative so that
+    a longer macro lowers its estimate. The public observation only publishes
+    non-negative cost *magnitudes* (see ``schemas.PUBLIC_COST_KEYS``), so
+    consumers must build this model through :meth:`from_public_costs` rather
+    than copying ``public_costs["primitive_step"]`` straight into
+    ``step_cost``. Constructing a model with a positive ``step_cost`` is
+    rejected because it would reward taking more steps.
+    """
 
     step_cost: float = -0.05
     success_reward: float = 10.0
@@ -28,6 +38,64 @@ class PublicCostModel:
     lockout_steps: int = 0
     remaining_horizon: int = 3
     learning_rate: float = 0.3
+
+    def __post_init__(self) -> None:
+        if self.step_cost > 0.0:
+            raise ValueError(
+                "step_cost must be zero or negative (a cost, not a reward); "
+                "use PublicCostModel.from_public_costs to convert the published "
+                "non-negative magnitude"
+            )
+        if self.success_reward < 0.0:
+            raise ValueError("success_reward must be non-negative")
+        for name in ("probe_duration", "commit_duration", "lockout_steps"):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} must be non-negative")
+        if self.remaining_horizon < 1:
+            raise ValueError("remaining_horizon must be at least 1 primitive step")
+
+    @classmethod
+    def from_public_costs(
+        cls,
+        public_costs: Mapping[str, float],
+        *,
+        probe_duration: int,
+        commit_duration: int,
+        remaining_horizon: int,
+        learning_rate: float = 0.3,
+    ) -> "PublicCostModel":
+        """Build a signed cost model from an agent-visible ``public_costs`` map.
+
+        ``public_costs`` publishes ``primitive_step`` as a non-negative
+        magnitude, so it is negated exactly once here.
+        """
+
+        magnitude = abs(float(public_costs.get("primitive_step", 0.05)))
+        return cls(
+            step_cost=-magnitude,
+            success_reward=float(public_costs.get("delivery_reward", 10.0)),
+            probe_duration=int(probe_duration),
+            commit_duration=int(commit_duration),
+            lockout_steps=int(public_costs.get("lockout", 0)),
+            remaining_horizon=max(1, int(remaining_horizon)),
+            learning_rate=float(learning_rate),
+        )
+
+
+def public_macro_durations(
+    public_costs: Mapping[str, float],
+) -> tuple[int, int]:
+    """Public primitive duration of a probe macro and of a commit macro.
+
+    A probe is ``2 * detour + 1`` steps (out, test, back) and a commit is
+    ``public travel to the gate + 1`` steps, matching ``envs.macro``. These are
+    derived from public cost descriptions only.
+    """
+
+    detour = float(public_costs.get("probe_detour", 0.0))
+    probe_duration = int(2 * detour + 1)
+    commit_duration = int(public_costs.get("commit_travel", 0)) + 1
+    return probe_duration, commit_duration
 
 
 def _duration(action: str, outcome: str, cost: PublicCostModel) -> int:
@@ -68,7 +136,23 @@ def q_hat_from_prediction(
     cost: PublicCostModel,
     account_continuation: bool = True,
 ) -> dict[str, float]:
-    """Estimate Q-hat per predicted macro from VLM outcomes and public costs."""
+    """Estimate Q-hat per predicted macro from VLM outcomes and public costs.
+
+    Lookahead depth (known limitation, documented rather than hidden): the
+    continuation is a *one-step* value, ``max_a rhat(a | posterior)``. It is
+    added to every branch, and the posterior map depends only on the card
+    colour and the observed outcome — not on whether the outcome came from a
+    probe or from a commit. When both actions' durations fit inside
+    ``remaining_horizon``, the continuation therefore cancels between
+    ``PROBE_c`` and ``COMMIT_c`` and the comparison reduces to the probe's cost
+    versus the commit's expected immediate reward. Since a commit normally has
+    positive expected reward, the selector prefers committing; a probe is only
+    chosen when the commit's lockout branch is truncated by the remaining
+    horizon (which is what ``test_value_aware_selector_prefers_probe_*``
+    exercises). Valuing evidence that pays off across several future deliveries
+    requires a deeper ``Vhat`` and is a method decision, not a cost-accounting
+    fix.
+    """
 
     updater = HistoryConsistencyUpdater(
         rules=tuple(belief.keys()), learning_rate=cost.learning_rate

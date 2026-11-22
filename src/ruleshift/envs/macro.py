@@ -27,7 +27,7 @@ class Geometry:
 class PrimitiveOp:
     """One primitive step inside a macro."""
 
-    kind: str  # "move" | "commit" | "test" | "wait"
+    kind: str  # "move" | "move_back" | "commit" | "test" | "wait"
     target: Coord | None = None
     color: str | None = None
 
@@ -40,18 +40,23 @@ class MacroPlan:
     ops: tuple[PrimitiveOp, ...]
 
 
-def _route(source: Coord, target: Coord) -> list[PrimitiveOp]:
-    """Deterministic horizontal-then-vertical public route."""
+def _route(source: Coord, target: Coord, kind: str = "move") -> list[PrimitiveOp]:
+    """Deterministic horizontal-then-vertical public route.
+
+    ``kind="move_back"`` marks the return leg of a probe. The environment keeps
+    the probe feedback as the last public outcome across those steps, so the
+    agent can still see what the test reported after travelling home.
+    """
 
     x, y = source
     tx, ty = target
     ops: list[PrimitiveOp] = []
     while x != tx:
         x += 1 if tx > x else -1
-        ops.append(PrimitiveOp("move", (x, y)))
+        ops.append(PrimitiveOp(kind, (x, y)))
     while y != ty:
         y += 1 if ty > y else -1
-        ops.append(PrimitiveOp("move", (x, y)))
+        ops.append(PrimitiveOp(kind, (x, y)))
     return ops
 
 
@@ -76,7 +81,7 @@ class MacroExecutor:
             ops = [
                 *_route(position, geometry.station),
                 PrimitiveOp("test", color=color),
-                *_route(geometry.station, geometry.start),
+                *_route(geometry.station, geometry.start, kind="move_back"),
             ]
         elif macro_id == "GO_TO_STATION":
             ops = _route(position, geometry.station)

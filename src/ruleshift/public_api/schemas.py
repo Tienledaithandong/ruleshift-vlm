@@ -75,6 +75,7 @@ PUBLIC_COST_KEYS: frozenset[str] = frozenset(
         "primitive_step",
         "probe_test",
         "probe_detour",
+        "commit_travel",
         "lockout",
         "delivery_reward",
         "safe_steps",
