@@ -9,7 +9,7 @@ local machine.
 
 Edit `configs/runtime.yaml`:
 
-- `repo_url`: your real GitHub HTTPS URL. It is currently `PLACEHOLDER_GITHUB_HTTPS_URL`.
+- `repo_url`: already set to `https://github.com/Tienledaithandong/ruleshift-vlm.git`.
 - `checkpoint.source`: `hf` or `kaggle_dataset`.
 - `checkpoint.dataset_slug`: required only if using a Kaggle dataset.
 

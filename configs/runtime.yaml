@@ -1,6 +1,6 @@
 # Remote runtime configuration. PLACEHOLDERS ONLY — no run has been executed.
 schema_version: 1
-repo_url: PLACEHOLDER_GITHUB_HTTPS_URL   # e.g. https://github.com/<owner>/<repo>.git
+repo_url: https://github.com/Tienledaithandong/ruleshift-vlm.git
 branch: main
 project_dir_colab: /content/ruleshift-vlm
 project_dir_kaggle: /kaggle/working/ruleshift-vlm
