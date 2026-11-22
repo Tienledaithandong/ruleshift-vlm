@@ -1,0 +1,19 @@
+# Remote runtime configuration. PLACEHOLDERS ONLY — no run has been executed.
+schema_version: 1
+repo_url: PLACEHOLDER_GITHUB_HTTPS_URL   # e.g. https://github.com/<owner>/<repo>.git
+branch: main
+project_dir_colab: /content/ruleshift-vlm
+project_dir_kaggle: /kaggle/working/ruleshift-vlm
+
+checkpoint:
+  source: placeholder            # one of: hf | kaggle_dataset | local
+  model_key: qwen2.5-vl-3b       # refers to configs/models.yaml
+  dataset_slug: PLACEHOLDER       # only when source == kaggle_dataset
+  local_path: null
+
+execution:
+  status: SETUP_ONLY
+  allow_remote_run: false
+  note: >-
+    Set allow_remote_run to true only after preflight passes on the target
+    runtime and the test configuration is frozen.

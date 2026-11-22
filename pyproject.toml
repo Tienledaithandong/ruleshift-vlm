@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ruleshift-vlm"
+version = "0.1.0"
+description = "Value-aware probing under hidden dynamics shifts: Week 1 contracts and static interfaces"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+# Week 1 core is standard-library only so the repo runs on any CPU Python 3.11.
+# Gymnasium/numpy/pydantic/Pillow are introduced in Week 2 when needed.
+dependencies = []
+
+[project.optional-dependencies]
+env = [
+    "gymnasium>=1.0,<2",
+    "numpy>=1.26",
+    "Pillow>=10",
+    "PyYAML>=6",
+    "matplotlib>=3.8",
+]
+dev = [
+    "pytest>=8,<10",
+    "gymnasium>=1.0,<2",
+    "numpy>=1.26",
+    "Pillow>=10",
+    "PyYAML>=6",
+    "matplotlib>=3.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

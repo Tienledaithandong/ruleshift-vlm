@@ -1,0 +1,80 @@
+# DEVELOPMENT-ONLY configuration. Not a test set. Do not freeze test scenarios here.
+# Every number below is a hypothesis to tune on dev, not a reported result.
+schema_version: 1
+split: dev
+name: ruleshift-dev-v0.1
+description: >-
+  Deterministic cost / noise / diagnosticity grid for environment debugging and
+  early symbolic baselines. Family B and locked-test scenarios are deliberately
+  absent.
+
+seeds:
+  master: 20261121
+  episode_offset: 1000
+  streams:
+    shift_trigger: SHIFT_TRIGGER
+    shift_target: SHIFT_TARGET
+    probe_feedback: PROBE_FEEDBACK
+    hazard_outcome: HAZARD_OUTCOME
+    observation_noise: OBSERVATION_NOISE
+
+environment:
+  family: gate_lock          # family B arrives in Week 8
+  grid_size: [5, 5]          # dev-tunable within 5x5..7x7
+  max_env_steps: 60          # primitive steps, not macro decisions
+  seed_rule: red             # public old default
+  candidate_rules: [red, blue, green]
+  delivery_reward: 10.0
+  step_cost: -0.05
+  lockout_steps_options: [0, 3, 8]
+  probe_round_trip: true     # probe = detour out + 1 test + detour back
+
+grid:
+  probe_detour_steps: [0, 2, 5]          # one-way public distance to station
+  feedback_noise_rate: [0.00, 0.10, 0.25]
+  task_action_diagnosticity: [low, medium, high]
+  shift_condition: [no_shift, low_hazard, high_hazard]
+
+# Shift hazard is applied per primitive step while c_t == 0, over the whole
+# episode. There is NO narrow shift window and NO episode-progress feature.
+shift:
+  max_shifts_per_episode: 1
+  no_shift_is_valid_episode: true
+  hazard_over_full_horizon: true
+  narrow_time_window: false
+  expose_progress_feature: false
+  log_shift_time_to_agent: false
+
+# Hypotheses to validate when the environment exists. Do not treat as results.
+hypothesised_cells:
+  - id: dev_direct_action_preferable
+    probe_detour_steps: 5
+    feedback_noise_rate: 0.25
+    task_action_diagnosticity: high
+    lockout_steps: 0
+    shift_condition: no_shift
+    prediction: direct task action dominates probing
+    status: HYPOTHESIS_UNTESTED
+  - id: dev_probe_preferable
+    probe_detour_steps: 0
+    feedback_noise_rate: 0.00
+    task_action_diagnosticity: low
+    lockout_steps: 8
+    shift_condition: high_hazard
+    prediction: probing dominates blind commit
+    status: HYPOTHESIS_UNTESTED
+
+diagnosticity_definition:
+  status: OPEN_QUESTION
+  note: >-
+    Quantify via a preregistered expected-information-gain formula under a
+    fixed reference belief before inspecting any VLM results. See
+    docs/problem_spec.md section 15.
+
+model_call_cap:
+  per_episode: 6
+  note: Cap applies identically to all methods; extra samples count toward it.
+
+planned_splits:
+  test_locked: NOT_DEFINED
+  note: Do not create test scenarios until method freeze in Week 6.

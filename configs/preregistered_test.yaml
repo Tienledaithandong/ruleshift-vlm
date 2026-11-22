@@ -1,0 +1,54 @@
+# DRAFT — DO NOT USE AS A FROZEN TEST SET.
+# A frozen test configuration requires a completed validation run with a real
+# frozen VLM. Neither exists in this environment (no CUDA device, no checkpoint).
+# This file records the intended schema and preregistration commitments only.
+schema_version: 1
+status: DRAFT_NOT_FROZEN
+frozen_commit: null
+frozen_on: null
+reason: >-
+  Week 6 validation could not be run with a real VLM. Freezing test scenarios
+  from stub-generated diagnostics would be scientifically invalid. Remove this
+  block and set frozen_commit only after validation on a real model.
+
+primary_endpoint:
+  name: mean_total_undiscounted_episodic_return
+  direction: higher_is_better
+  step_accounting: every primitive step cost appears once in the same reward stream
+
+comparisons:
+  primary: M1_minus_direct_vlm
+  secondary:
+    - M1_minus_diva_style_adapted
+    - M1_minus_immediate_only
+  privileged_separately:
+    - B5_oracle_belief
+    - B6e_true_rule_oracle
+
+statistics:
+  unit_of_analysis: scenario_or_layout_cluster
+  interval: paired_bootstrap_95_percent
+  resampling: scenario_level_not_frame_level
+  small_sample_rule: do not treat a positive difference in about ten episodes as evidence
+
+call_and_step_budget:
+  max_vlm_calls_per_episode: 6
+  max_env_steps: 60
+  applies_identically_to_all_methods: true
+  extra_samples_count_toward_cap: true
+
+planned_grid:
+  families: [gate_lock, bridge_hazard]
+  probe_detour_steps: [0, 2, 5]
+  feedback_noise: [0.00, 0.10, 0.25]
+  shift_condition: [no_shift, low_hazard, high_hazard]
+  split_by_scenario: true
+
+exclusion_rules:
+  invalid_json: counted and logged with deterministic WAIT fallback
+  invalid_action: counted and logged separately
+  prompt_tuning_split: validation_only
+
+decision_rule_if_h2_fails: >-
+  Preserve the failure taxonomy and pivot to a rigorous diagnostic/benchmark
+  analysis. Do not move the endpoint or tune on test results.

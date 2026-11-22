@@ -1,0 +1,117 @@
+"""Offline pilot harness: context selection, labels and failure taxonomy."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from ruleshift.agents.cache import ResponseCache
+from ruleshift.agents.vlm_backend import StubVLMBackend
+from ruleshift.evaluator.offline_audit import (
+    build_offline_contexts,
+    run_offline_audit,
+    write_taxonomy_report,
+)
+from ruleshift.permissions import PRIVILEGED_FIELDS
+
+
+def test_context_selection_has_pilot_scale_and_both_delta_signs() -> None:
+    contexts = build_offline_contexts()
+    assert 50 <= len(contexts) <= 100
+    assert any(context.delta_probe > 0 for context in contexts)
+    assert any(context.delta_probe < 0 for context in contexts)
+    for context in contexts:
+        assert validate_public(context.public_observation.to_payload())
+        assert "WAIT" in context.q_values
+
+
+def validate_public(payload: dict) -> bool:
+    from ruleshift.public_api.schemas import validate_public_observation
+
+    return validate_public_observation(payload) == []
+
+
+def test_audit_is_deterministic_and_metrics_are_bounded(tmp_path) -> None:
+    contexts = build_offline_contexts()
+
+    def run(index: int) -> dict:
+        records, metrics = run_offline_audit(
+            contexts,
+            backend=StubVLMBackend(),
+            cache=ResponseCache(tmp_path / f"cache-{index}.jsonl"),
+        )
+        return {"records": records, "metrics": metrics}
+
+    first = run(1)
+    second = run(2)
+    assert first["records"] == second["records"]
+    metrics = first["metrics"]
+    assert metrics.n_contexts == len(contexts)
+    for rate in (
+        metrics.json_valid_rate,
+        metrics.valid_action_rate,
+        metrics.over_probe_rate,
+        metrics.under_probe_rate,
+        metrics.cache_hit_rate,
+    ):
+        assert 0.0 <= rate <= 1.0
+    # Hidden noise is not part of the public prompt, so contexts that differ
+    # only in feedback noise must share a cache entry. The call count equals
+    # the number of distinct public inputs.
+    distinct_inputs = len({record["prompt_hash"] for record in first["records"]})
+    assert metrics.call_count == distinct_inputs
+    assert metrics.cache_hit_rate == pytest.approx(1.0 - distinct_inputs / len(contexts))
+
+
+def test_manifest_is_public_only_and_labels_are_separate(tmp_path) -> None:
+    contexts = build_offline_contexts()
+    records, _ = run_offline_audit(
+        contexts[:4],
+        backend=StubVLMBackend(),
+        cache=ResponseCache(tmp_path / "cache.jsonl"),
+    )
+    manifest_path = tmp_path / "manifest.jsonl"
+    evaluator_path = tmp_path / "evaluator_only.jsonl"
+    write_taxonomy_report(
+        _,
+        records,
+        contexts[:4],
+        manifest_path,
+        evaluator_path,
+        tmp_path / "report.md",
+    )
+
+    public_text = manifest_path.read_text(encoding="utf-8")
+    for field in PRIVILEGED_FIELDS:
+        assert field not in public_text
+    public_rows = [json.loads(line) for line in public_text.strip().splitlines()]
+    assert len(public_rows) == 4
+    assert "delta_probe" not in public_rows[0]
+
+    private_rows = [
+        json.loads(line) for line in evaluator_path.read_text(encoding="utf-8").strip().splitlines()
+    ]
+    assert len(private_rows) == 4
+    assert "delta_probe" in private_rows[0]
+
+
+def test_report_explicitly_labels_synthetic_dry_run(tmp_path) -> None:
+    contexts = build_offline_contexts()[:4]
+    records, metrics = run_offline_audit(
+        contexts,
+        backend=StubVLMBackend(),
+        cache=ResponseCache(tmp_path / "cache.jsonl"),
+    )
+    report = tmp_path / "report.md"
+    write_taxonomy_report(
+        metrics,
+        records,
+        contexts,
+        tmp_path / "manifest.jsonl",
+        tmp_path / "evaluator_only.jsonl",
+        report,
+    )
+    text = report.read_text(encoding="utf-8")
+    assert "SYNTHETIC" in text
+    assert "no vlm" in text.lower() or "not vlm" in text.lower()

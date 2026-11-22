@@ -1,0 +1,34 @@
+# Frozen-VLM candidates for the LATER experiment/evaluation run.
+# Nothing here is downloaded by the Week 1-11 setup.
+schema_version: 1
+status: NOT_DOWNLOADED
+default: qwen2.5-vl-3b
+
+models:
+  qwen2.5-vl-3b:
+    hf_id: Qwen/Qwen2.5-VL-3B-Instruct
+    revision: null          # PIN this to a commit hash before the locked run
+    device: cpu             # change to cuda only if a GPU is actually available
+    dtype: bfloat16
+    max_new_tokens: 256
+    call_cap_per_episode: 6
+    role: small_anchor
+  qwen3-vl-4b:
+    hf_id: Qwen/Qwen3-VL-4B-Instruct
+    revision: null
+    device: cpu
+    dtype: bfloat16
+    max_new_tokens: 256
+    call_cap_per_episode: 6
+    role: newer_alternative
+
+runtime:
+  allow_download: false
+  local_files_only: true
+  cache_dir: null
+  seed: 20261121
+
+notes: >-
+  No model is fetched by the setup. Before any empirical run, set revision to a
+  pinned commit hash, confirm the checkpoint exists locally (or explicitly
+  allow a download), and verify the hardware in `scripts/preflight.py`.

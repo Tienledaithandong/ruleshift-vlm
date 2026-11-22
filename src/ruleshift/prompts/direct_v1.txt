@@ -1,0 +1,15 @@
+You are controlling a gate-delivery agent. Use ONLY the public information below.
+You are not told which rule is active, when any change occurred, or any action value.
+
+Public history: {public_history}
+Visible public text: {public_text}
+Candidate rules (text only): {candidate_rules}
+Available macro actions: {available_actions}
+Public costs: {public_costs}
+
+Return ONLY a JSON object with exactly these keys:
+{{"candidate_probabilities": {{"red": 0.0, "blue": 0.0, "green": 0.0}},
+  "action_predictions": [{{"action_id": "...", "under_rules": [{{"rule_id": "red", "possible_outcomes": [{{"observation": "accept", "p": 0.0}}, {{"observation": "reject", "p": 0.0}}]}}], "estimated_future_best_action": "..."}}],
+  "selected_action": "..."}}
+
+Probabilities must be in [0,1] and sum to 1. The selected action must be one of the available macro actions.

@@ -1,0 +1,145 @@
+"""Core Family A environment tests (master plan critical tests 1-4, 7, 14)."""
+
+from __future__ import annotations
+
+import gymnasium as gym
+import numpy as np
+import pytest
+from gymnasium.utils.env_checker import check_env
+
+from ruleshift.envs.config import EnvConfig
+from ruleshift.public_api.schemas import FAMILY_A_ACTIONS
+from ruleshift.envs.gate_lock import RuleShiftEnv
+from ruleshift.permissions import PRIVILEGED_FIELDS
+from ruleshift.public_api.schemas import validate_public_observation
+
+
+def make_env(**kwargs: object) -> RuleShiftEnv:
+    return RuleShiftEnv(config=EnvConfig(**kwargs))
+
+
+def test_reset_returns_rgb_and_public_info() -> None:
+    env = make_env()
+    obs, info = env.reset(seed=7)
+    assert isinstance(obs, np.ndarray)
+    assert obs.ndim == 3
+    assert obs.shape[2] == 3
+    assert obs.shape[0] >= 5 and obs.shape[1] >= 5
+    assert obs.dtype == np.uint8
+    assert set(info).isdisjoint(PRIVILEGED_FIELDS)
+
+
+def test_family_a_observation_advertises_only_family_a_macros() -> None:
+    env = make_env()
+    env.reset(seed=7)
+    assert set(env.public_view().available_actions) == set(FAMILY_A_ACTIONS)
+
+
+def test_public_view_validates_and_evaluator_state_is_separate() -> None:
+    env = make_env()
+    env.reset(seed=7)
+    assert validate_public_observation(env.public_view().to_payload()) == []
+    public_keys = set(env.public_view().to_payload())
+    private_keys = set(env.evaluator_state())
+    assert public_keys.isdisjoint(private_keys)
+    assert {"mechanic_id", "shift_time", "true_rule"} <= private_keys
+
+
+def test_same_seed_reproduces_public_and_evaluator_traces() -> None:
+    actions = ["PROBE_RED", "WAIT", "COMMIT_RED", "COMMIT_BLUE", "WAIT"]
+
+    def run() -> tuple[list[object], list[dict], list[float]]:
+        env = make_env(feedback_noise=0.10, lockout_steps=3, shift_hazard=0.5)
+        env.reset(seed=123)
+        public: list[object] = []
+        private: list[dict] = []
+        rewards: list[float] = []
+        for action in actions:
+            _, reward, terminated, truncated, _ = env.step(action)
+            public.append(env.public_view().to_payload())
+            private.append(env.evaluator_state())
+            rewards.append(reward)
+            if terminated or truncated:
+                break
+        return public, private, rewards
+
+    assert run() == run()
+
+
+def test_shift_alone_does_not_change_public_view() -> None:
+    shared = dict(initial_mechanic="red", feedback_noise=0.0)
+    no_shift = make_env(disable_shift=True, **shared)
+    forced_shift = make_env(disable_shift=False, shift_hazard=1.0, **shared)
+    no_shift.reset(seed=11)
+    forced_shift.reset(seed=11)
+
+    no_shift.step("WAIT")
+    forced_shift.step("WAIT")
+
+    assert no_shift.public_view().to_payload() == forced_shift.public_view().to_payload()
+    assert no_shift.evaluator_state()["mechanic_id"] == "red"
+    assert forced_shift.evaluator_state()["mechanic_id"] != "red"
+
+
+@pytest.mark.parametrize(
+    "macro, expected",
+    [("PROBE_BLUE", "accept"), ("PROBE_RED", "reject")],
+)
+def test_probe_feedback_comes_from_active_mechanic(macro: str, expected: str) -> None:
+    env = make_env(
+        initial_mechanic="blue",
+        disable_shift=True,
+        feedback_noise=0.0,
+        probe_detour_steps=0,
+    )
+    env.reset(seed=3)
+    env.step(macro)
+    assert expected in env.public_view().public_text
+
+
+def test_failed_task_action_leaves_public_reject_feedback() -> None:
+    env = make_env(
+        initial_mechanic="blue",
+        disable_shift=True,
+        feedback_noise=0.0,
+        probe_detour_steps=0,
+        lockout_steps=0,
+    )
+    env.reset(seed=4)
+    env.step("COMMIT_RED")
+    assert "reject" in env.public_view().public_text
+    assert env.evaluator_state()["deliveries"] == 0
+
+
+def test_lockout_ticks_consume_one_step_each_then_allow_commit() -> None:
+    env = make_env(
+        initial_mechanic="blue",
+        disable_shift=True,
+        feedback_noise=0.0,
+        lockout_steps=2,
+    )
+    env.reset(seed=4)
+    _, first_reward, _, _, _ = env.step("COMMIT_RED")
+    assert env.evaluator_state()["steps_taken"] == 5
+    assert first_reward == pytest.approx(-5 * 0.05)
+    assert env.evaluator_state()["lockout_remaining"] == 2
+
+    for expected_remaining in (1, 0):
+        _, reward, _, _, _ = env.step("WAIT")
+        assert reward == pytest.approx(-0.05)
+        assert env.evaluator_state()["lockout_remaining"] == expected_remaining
+
+    # A rejected commit leaves the agent at the gate (no teleport), so the
+    # follow-up commit costs a single step: 5 + 2 + 1 = 8 primitive steps.
+    _, reward, _, _, _ = env.step("COMMIT_BLUE")
+    assert env.evaluator_state()["steps_taken"] == 8
+    assert reward == pytest.approx(10 - 0.05)  # this macro: 1 step + delivery
+    assert env.evaluator_state()["deliveries"] == 1
+
+
+def test_gymnasium_env_checker() -> None:
+    env = gym.make("RuleShift-GateLock-v0")
+    try:
+        check_env(env.unwrapped, skip_render_check=False)
+    finally:
+        env.close()
