@@ -165,9 +165,12 @@ class StubVLMBackend:
 class TransformersVLMBackend:
     """Optional real frozen VLM; nothing is loaded or downloaded at import."""
 
-    def __init__(self, model_id: str, device: str = "cpu") -> None:
+    def __init__(
+        self, model_id: str, device: str = "cpu", revision: str | None = None
+    ) -> None:
         self.model_id = model_id
         self.device = device
+        self.revision = revision
         self._model = None
         self._processor = None
 
@@ -175,12 +178,25 @@ class TransformersVLMBackend:
         if self._model is not None:
             return
         try:
-            import torch
-            from transformers import AutoProcessor, AutoModelForVision2Seq
+            from transformers import AutoProcessor
         except ImportError as exc:  # pragma: no cover - optional dependency
-            raise RuntimeError("transformers backend needs torch and transformers") from exc
-        self._processor = AutoProcessor.from_pretrained(self.model_id)
-        self._model = AutoModelForVision2Seq.from_pretrained(self.model_id).to(self.device)
+            raise RuntimeError("transformers backend needs transformers") from exc
+
+        model_class = None
+        for candidate in (
+            "AutoModelForImageTextToText",
+            "AutoModelForVision2Seq",
+            "AutoModelForMultimodalLM",
+        ):
+            model_class = getattr(__import__("transformers"), candidate, None)
+            if model_class is not None:
+                break
+        if model_class is None:  # pragma: no cover
+            raise RuntimeError("no compatible transformers auto model class found")
+
+        kwargs = {"revision": self.revision} if self.revision else {}
+        self._processor = AutoProcessor.from_pretrained(self.model_id, **kwargs)
+        self._model = model_class.from_pretrained(self.model_id, **kwargs).to(self.device)
         self._model.eval()
 
     def generate(self, request: ModelRequest) -> ModelResponse:  # pragma: no cover
@@ -189,6 +205,7 @@ class TransformersVLMBackend:
 
         started = time.perf_counter()
         inputs = self._processor(text=request.prompt, return_tensors="pt")
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}
         outputs = self._model.generate(**inputs, max_new_tokens=request.max_new_tokens)
         text = self._processor.batch_decode(outputs, skip_special_tokens=True)[0]
         return ModelResponse(

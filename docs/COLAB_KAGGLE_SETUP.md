@@ -13,8 +13,9 @@ Edit `configs/runtime.yaml`:
 - `checkpoint.source`: `hf` or `kaggle_dataset`.
 - `checkpoint.dataset_slug`: required only if using a Kaggle dataset.
 
-Also fill `configs/models.yaml`: pin `revision` to a model commit hash and set
-`device: cuda` for remote GPU use.
+`configs/models.yaml` is now pinned for the pilot:
+`Qwen/Qwen2.5-VL-3B-Instruct` at revision
+`66285546d2b821cf421d4f5eb2576359d3770cd3`, with `device: cuda`.
 
 ## 1. GitHub
 
@@ -31,7 +32,17 @@ git push -u origin main
 Never commit `kaggle.json`, API tokens, credentials, or generated result files.
 They are git-ignored.
 
-## 2. Google Colab
+## 2. Google Colab — offline pilot
+
+Open `notebooks/colab_pilot.ipynb` for the ready-to-run pilot. It clones this
+repo, installs the package, checks the GPU and runs
+`scripts/run_real_pilot.py --model-key qwen2.5-vl-3b --contexts 81`.
+The pilot is **text-input only** (P1 diagnostic mode): the backend sends the
+public prompt but no RGB tensor yet. No training, closed loop or evaluation
+happens in this step.
+
+The general setup notebook (no run) is `notebooks/colab_setup.ipynb`, described
+below.
 
 1. Open `notebooks/colab_setup.ipynb` in Colab.
 2. Runtime → Change runtime type → GPU (T4 is enough for a 3B model at 4-bit;

@@ -77,6 +77,7 @@ setup.
 
 Setup scaffolding exists but has **not been executed remotely**:
 
+- `notebooks/colab_pilot.ipynb` — ready-to-run **real** offline pilot on Colab (pinned Qwen2.5-VL-3B, text-input only).
 - `notebooks/colab_setup.ipynb`, `notebooks/kaggle_gpu.ipynb` — clone/install/check notebooks.
 - `configs/runtime.yaml` — GitHub URL and checkpoint source (currently placeholders).
 - `scripts/preflight.py`, `scripts/kaggle_preflight.py` — local-only GO/NO-GO gates.

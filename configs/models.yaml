@@ -1,14 +1,14 @@
 # Frozen-VLM candidates for the LATER experiment/evaluation run.
 # Nothing here is downloaded by the Week 1-11 setup.
 schema_version: 1
-status: NOT_DOWNLOADED
+status: READY_FOR_PILOT
 default: qwen2.5-vl-3b
 
 models:
   qwen2.5-vl-3b:
     hf_id: Qwen/Qwen2.5-VL-3B-Instruct
-    revision: null          # PIN this to a commit hash before the locked run
-    device: cpu             # change to cuda only if a GPU is actually available
+    revision: 66285546d2b821cf421d4f5eb2576359d3770cd3
+    device: cuda            # set to cpu only if no GPU is available in the runtime
     dtype: bfloat16
     max_new_tokens: 256
     call_cap_per_episode: 6

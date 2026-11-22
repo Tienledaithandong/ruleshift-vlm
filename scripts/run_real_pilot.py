@@ -55,7 +55,11 @@ def main() -> None:
             print(message)
         raise SystemExit("no usable checkpoint; preflight failed (stub fallback disabled)")
 
-    backend = TransformersVLMBackend(model_id=model_id, device=model["device"])
+    backend = TransformersVLMBackend(
+        model_id=model_id,
+        device=model["device"],
+        revision=model["revision"],
+    )
     contexts = build_offline_contexts(args.contexts)
     cache = ResponseCache(ROOT / args.out / "response_cache.jsonl")
     records, metrics = run_offline_audit(contexts, backend, cache)
