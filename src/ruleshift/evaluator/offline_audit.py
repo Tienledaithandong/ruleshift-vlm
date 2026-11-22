@@ -23,13 +23,22 @@ from ruleshift.agents.vlm_backend import (
 )
 from ruleshift.envs.config import EnvConfig
 from ruleshift.envs.gate_lock import RuleShiftEnv
-from ruleshift.evaluator.exact_solver import ExactSolver, MicrotaskConfig, freeze_belief
+from ruleshift.evaluator.exact_solver import (
+    ExactSolver,
+    MicrotaskConfig,
+    family_a_microtask,
+    freeze_belief,
+)
 from ruleshift.public_api.interface import PublicObservation
+from ruleshift.public_api.schemas import FAMILY_A_ACTIONS
 
-from .phase_diagram import LOCKOUT_LEVELS, NOISE_LEVELS, PROBE_STEPS
+from .phase_diagram import LOCKOUT_LEVELS, NOISE_LEVELS, PROBE_DETOURS
 
-HORIZON = 9
-ACTIONS = ("COMMIT_RED", "COMMIT_BLUE", "PROBE_RED", "WAIT")
+#: Long enough for a full probe, a commit and the largest lockout to fit, so
+#: both ``delta_probe`` signs are reachable with the real macro durations.
+HORIZON = 24
+#: Labels cover the complete public macro menu, not a hand-picked subset.
+ACTIONS = FAMILY_A_ACTIONS
 REFERENCE_BELIEF = {("red", False): 0.5, ("blue", True): 0.5}
 
 
@@ -56,6 +65,9 @@ class AuditMetrics:
     mean_output_tokens: float
     call_count: int
     cache_hit_rate: float
+    #: Fraction of decisions whose chosen macro has an exact-solver label.
+    #: Regret is only averaged over covered decisions.
+    label_coverage_rate: float
 
 
 class _Backend(Protocol):
@@ -64,38 +76,52 @@ class _Backend(Protocol):
     def generate(self, request: ModelRequest) -> ModelResponse: ...
 
 
-def _microtask_config(probe_steps: int, noise: float, lockout: int) -> MicrotaskConfig:
-    durations = {action: {1: 1.0} for action in ACTIONS}
-    durations["PROBE_RED"] = {probe_steps: 1.0}
-    observation_steps = {action: 0 for action in ACTIONS}
-    observation_steps["PROBE_RED"] = probe_steps - 1
-    return MicrotaskConfig(
-        shift_hazard=0.0,
+def _microtask_config(
+    probe_detour_steps: int, commit_travel_steps: int, noise: float, lockout: int
+) -> MicrotaskConfig:
+    """Exact microtask whose macro durations match the environment's executor."""
+
+    return family_a_microtask(
+        probe_detour_steps=probe_detour_steps,
+        commit_travel_steps=commit_travel_steps,
         feedback_noise=noise,
-        reward_success=10.0,
-        step_cost=-0.05,
         lockout_steps=lockout,
-        durations=durations,
-        observation_steps=observation_steps,
+        actions=ACTIONS,
     )
 
 
 def build_offline_contexts(count: int = 81) -> tuple[OfflineContext, ...]:
     """Select diverse dev contexts with exact labels and public observations."""
 
-    seeds_per_cell = math.ceil(count / (len(PROBE_STEPS) * len(NOISE_LEVELS) * len(LOCKOUT_LEVELS)))
+    seeds_per_cell = math.ceil(
+        count / (len(PROBE_DETOURS) * len(NOISE_LEVELS) * len(LOCKOUT_LEVELS))
+    )
     contexts: list[OfflineContext] = []
-    for probe_steps in PROBE_STEPS:
+    for detour in PROBE_DETOURS:
         for noise in NOISE_LEVELS:
             for lockout in LOCKOUT_LEVELS:
-                microtask = _microtask_config(probe_steps, noise, lockout)
+                # Public geometry is identical for the whole cell, so read the
+                # commit travel distance from a throwaway environment.
+                probe_env = RuleShiftEnv(
+                    config=EnvConfig(
+                        probe_detour_steps=detour,
+                        feedback_noise=noise,
+                        lockout_steps=lockout,
+                        disable_shift=True,
+                    )
+                )
+                probe_env.reset(seed=1)
+                commit_travel = int(
+                    probe_env.public_view().public_costs["commit_travel"]
+                )
+                microtask = _microtask_config(detour, commit_travel, noise, lockout)
                 solver = ExactSolver(microtask, ACTIONS)
                 q_values = dict(solver.q_values(freeze_belief(REFERENCE_BELIEF), HORIZON))
                 delta = solver.delta_probe(REFERENCE_BELIEF, HORIZON)
                 for seed in range(1, seeds_per_cell + 1):
-                    scenario_id = f"dev-p{probe_steps}-n{noise}-l{lockout}-s{seed}"
+                    scenario_id = f"dev-d{detour}-n{noise}-l{lockout}-s{seed}"
                     env_config = EnvConfig(
-                        probe_detour_steps=probe_steps,
+                        probe_detour_steps=detour,
                         feedback_noise=noise,
                         lockout_steps=lockout,
                         disable_shift=True,
@@ -179,8 +205,11 @@ def run_offline_audit(
         over_probe = context.delta_probe < 0 and chosen.startswith("PROBE_")
         under_probe = context.delta_probe > 0 and not chosen.startswith("PROBE_")
         best_q = max(context.q_values.values())
-        chosen_q = context.q_values.get(chosen, 0.0)
-        regret = best_q - chosen_q
+        # An action with no exact label must be reported as uncovered, never
+        # scored as if it were worth zero: that silently fabricated regret.
+        chosen_q = context.q_values.get(chosen)
+        label_covered = chosen_q is not None
+        regret = (best_q - chosen_q) if chosen_q is not None else None
 
         records.append(
             {
@@ -209,22 +238,32 @@ def run_offline_audit(
                 "best_q": best_q,
                 "chosen_q": chosen_q,
                 "decision_regret": regret,
+                "label_covered": label_covered,
                 "belief": {f"{k[0]}:{k[1]}": v for k, v in context.belief.items()},
             }
         )
         flags.append({"over_probe": over_probe, "under_probe": under_probe})
 
     n = max(len(records), 1)
+    covered_regrets = [
+        label["decision_regret"]
+        for label in labels
+        if label["decision_regret"] is not None
+    ]
+    covered = sum(label["label_covered"] for label in labels)
     metrics = AuditMetrics(
         n_contexts=len(records),
         json_valid_rate=sum(r["json_valid"] for r in records) / n,
         valid_action_rate=sum(not r["invalid_action"] for r in records) / n,
         over_probe_rate=sum(f["over_probe"] for f in flags) / n,
         under_probe_rate=sum(f["under_probe"] for f in flags) / n,
-        mean_decision_regret=sum(label["decision_regret"] for label in labels) / n,
+        mean_decision_regret=(
+            sum(covered_regrets) / len(covered_regrets) if covered_regrets else 0.0
+        ),
         mean_output_tokens=sum(r["output_tokens"] for r in records) / n,
         call_count=call_count,
         cache_hit_rate=sum(r["cache_hit"] for r in records) / n,
+        label_coverage_rate=covered / n,
     )
     return records, metrics
 
@@ -277,7 +316,8 @@ Privileged labels: `{Path(evaluator_path).name}` (never joined into model input)
 | Valid action rate | {metrics.valid_action_rate:.3f} |
 | Over-probe rate (probed when exact label says do not) | {metrics.over_probe_rate:.3f} |
 | Under-probe rate (did not probe when label says probe) | {metrics.under_probe_rate:.3f} |
-| Mean decision regret vs exact Q* | {metrics.mean_decision_regret:.3f} |
+| Mean decision regret vs exact Q* (covered decisions only) | {metrics.mean_decision_regret:.3f} |
+| Decisions with an exact label (full macro menu) | {metrics.label_coverage_rate:.3f} |
 | Mean output tokens | {metrics.mean_output_tokens:.1f} |
 | Cache hit rate | {metrics.cache_hit_rate:.3f} |
 

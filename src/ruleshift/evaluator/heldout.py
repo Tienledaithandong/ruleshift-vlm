@@ -20,7 +20,10 @@ from ruleshift.evaluator.closed_loop import (
 )
 from ruleshift.evaluator.metrics_ci import PairedSummary
 
-PROPOSED = "m1_stub"
+#: Method ids for the proposed method, in preference order. The ``_stub``
+#: suffix only reflects which backend was injected, so a real-backend run uses
+#: ``m1`` and the same code path still finds the proposed method.
+PROPOSED_LABELS = ("m1", "m1_stub")
 HELD_OUT_DETOUR = (1, 3)
 HELD_OUT_NOISE = (0.05, 0.15)
 HELD_OUT_LOCKOUT = (2, 5)
@@ -60,10 +63,20 @@ class HeldOutResult:
     closed_loop: ClosedLoopOutput
     method_stats: dict[str, dict[str, float | int]]
     summaries: dict[tuple[str, str], PairedSummary]
+    max_vlm_calls_per_episode: int = 6
 
     @property
     def episodes(self):
         return self.closed_loop.episodes
+
+
+def proposed_label(methods: tuple[str, ...]) -> str | None:
+    """Return the proposed-method id actually present in *methods*."""
+
+    for candidate in PROPOSED_LABELS:
+        if candidate in methods:
+            return candidate
+    return None
 
 
 def run_heldout_evaluation(
@@ -72,14 +85,24 @@ def run_heldout_evaluation(
     seeds: tuple[int, ...] = (101,),
     backend: object | None = None,
     cache: object | None = None,
+    max_vlm_calls_per_episode: int = 6,
 ) -> HeldOutResult:
     """Run paired held-out episodes and accounting for every method."""
 
-    comparisons = tuple(
-        (PROPOSED, method) for method in methods if method != PROPOSED
-    ) or (("m1_stub", "direct_stub"),)
+    proposed = proposed_label(tuple(methods))
+    comparisons: tuple[tuple[str, str], ...] = (
+        tuple((proposed, method) for method in methods if method != proposed)
+        if proposed is not None
+        else ()
+    )
     result = run_closed_loop(
-        scenarios, methods, seeds, comparisons, backend=backend, cache=cache
+        scenarios,
+        methods,
+        seeds,
+        comparisons,
+        backend=backend,
+        cache=cache,
+        max_vlm_calls_per_episode=max_vlm_calls_per_episode,
     )
 
     stats: dict[str, dict[str, float | int]] = {}
@@ -106,8 +129,11 @@ def run_heldout_evaluation(
             "invalid_actions": sum(episode.invalid_actions for episode in episodes),
             "tokens": tokens,
             "latency_ms": sum(episode.latency_ms for episode in episodes),
+            "call_cap_hits": sum(episode.call_cap_hits for episode in episodes),
         }
-    return HeldOutResult(result, stats, result.summaries)
+    return HeldOutResult(
+        result, stats, result.summaries, max_vlm_calls_per_episode
+    )
 
 
 def write_result_files(
@@ -174,7 +200,10 @@ def write_result_files(
         "and must not be reported as results.",
         "",
         "Held-out scenario values are disjoint from the development grid; "
-        "the resampling unit is the scenario, not the frame. "
+        "seeds are averaged within each scenario and the resampling unit is the "
+        "scenario, never the frame or the seed. Every method is held to the same "
+        "per-episode VLM call cap "
+        f"({result.max_vlm_calls_per_episode}). "
         "`configs/preregistered_test.yaml` remains DRAFT_NOT_FROZEN because no "
         "real validation has been completed.",
         "",
@@ -193,14 +222,15 @@ def write_result_files(
         "",
         "## Cost and call accounting",
         "",
-        "| Method | Episodes | Mean return | Probes | VLM calls | Tokens | Invalid actions |",
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "| Method | Episodes | Mean return | Probes | VLM calls | Tokens "
+        "| Invalid actions | Cap fallbacks |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for method, stats in result.method_stats.items():
         lines.append(
             f"| {method} | {stats['episodes']} | {stats['mean_return']:+.3f} | "
             f"{stats['probes']} | {stats['vlm_calls']} | {stats['tokens']} | "
-            f"{stats['invalid_actions']} |"
+            f"{stats['invalid_actions']} | {stats['call_cap_hits']} |"
         )
 
     negative = [

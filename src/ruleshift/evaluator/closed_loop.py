@@ -23,6 +23,7 @@ from ruleshift.agents.value_selector import (
     ImmediateOnlySelector,
     PublicCostModel,
     ValueAwareSelector,
+    public_macro_durations,
 )
 from ruleshift.agents.vlm_backend import StubVLMBackend
 from ruleshift.envs.config import EnvConfig
@@ -32,6 +33,9 @@ from ruleshift.public_api.interface import PublicObservation
 from ruleshift.public_api.schemas import MACRO_ACTIONS_FROZEN
 
 MAX_DECISIONS = 12
+#: Preregistered per-episode VLM call cap (configs/preregistered_test.yaml).
+#: Extra samples and re-tries count toward it; it applies to every method.
+DEFAULT_VLM_CALL_CAP = 6
 _RULES = ("red", "blue", "green")
 
 
@@ -49,6 +53,8 @@ class Episode:
     invalid_actions: int
     public_rows: tuple[dict, ...]
     evaluator_rows: tuple[dict, ...]
+    #: Decisions that fell back to WAIT because the VLM call cap was spent.
+    call_cap_hits: int = 0
 
 
 class _Method(Protocol):
@@ -108,15 +114,18 @@ class _StubMethod:
 
     @staticmethod
     def _cost(observation: PublicObservation, info: dict) -> PublicCostModel:
+        """Signed cost model built from the public cost descriptions only."""
+
         costs = observation.public_costs
-        detour = costs.get("probe_detour", 0.0)
-        return PublicCostModel(
-            step_cost=costs.get("primitive_step", 0.05),
-            success_reward=costs.get("delivery_reward", 10.0),
-            probe_duration=int(2 * detour + 1),
-            commit_duration=1,
-            lockout_steps=int(costs.get("lockout", 0)),
-            remaining_horizon=max(1, int(info["max_env_steps"]) - int(info["physical_steps_elapsed"])),
+        probe_duration, commit_duration = public_macro_durations(costs)
+        return PublicCostModel.from_public_costs(
+            costs,
+            probe_duration=probe_duration,
+            commit_duration=commit_duration,
+            remaining_horizon=max(
+                1,
+                int(info["max_env_steps"]) - int(info["physical_steps_elapsed"]),
+            ),
             learning_rate=0.5,
         )
 
@@ -138,6 +147,12 @@ class _StubMethod:
         if self.mode == "immediate":
             return ImmediateOnlySelector().choose(payload, self._belief, cost)
         return ValueAwareSelector().choose(payload, self._belief, cost)
+
+    @property
+    def belief(self) -> dict[str, float]:
+        """Current public-only belief (read-only view for tests and logging)."""
+
+        return dict(self._belief)
 
     def record(self, action: str, outcome: str) -> None:
         self._belief = self._updater.update(self._belief, action, outcome)
@@ -163,6 +178,11 @@ class _OracleMethod:
         return None
 
 
+#: Model-side method modes; the ``_stub`` suffix is cosmetic and derived from
+#: whichever backend is injected, so both ``m1`` and ``m1_stub`` are accepted.
+_STUB_MODES = ("direct", "m1", "diva", "immediate")
+
+
 def _make_method(
     name: str,
     backend: object | None = None,
@@ -174,8 +194,9 @@ def _make_method(
         return _RandomProbeMethod()
     if name == "true_rule_oracle":
         return _OracleMethod()
-    if name in {"direct_stub", "m1_stub", "diva_stub", "immediate_stub"}:
-        return _StubMethod(name.removesuffix("_stub"), backend=backend, cache=cache)
+    mode = name.removesuffix("_stub")
+    if mode in _STUB_MODES:
+        return _StubMethod(mode, backend=backend, cache=cache)
     raise ValueError(f"unknown method: {name}")
 
 
@@ -217,8 +238,14 @@ def run_episode(
     scenario_id: str,
     backend: object | None = None,
     cache: ResponseCache | None = None,
+    max_vlm_calls_per_episode: int = DEFAULT_VLM_CALL_CAP,
 ) -> Episode:
-    """Drive one full episode through the public macro interface."""
+    """Drive one full episode through the public macro interface.
+
+    Once ``max_vlm_calls_per_episode`` model calls have been spent, further
+    decisions use the documented deterministic ``WAIT`` fallback without
+    calling the model, so every method stays inside the preregistered budget.
+    """
 
     env = RuleShiftEnv(config=config)
     obs, info = env.reset(seed=seed)
@@ -235,10 +262,23 @@ def run_episode(
     input_tokens = 0
     output_tokens = 0
     latency = 0.0
+    cap_hits = 0
 
     for decision in range(MAX_DECISIONS):
         observation = env.public_view()
-        action = method.choose(observation, info)
+        if calls >= max_vlm_calls_per_episode:
+            action = "WAIT"
+            used_call = 0
+            used_input = 0
+            used_output = 0
+            used_latency = 0.0
+            cap_hits += 1
+        else:
+            action = method.choose(observation, info)
+            used_call = int(getattr(method, "last_calls", 0))
+            used_input = int(getattr(method, "last_input_tokens", 0))
+            used_output = int(getattr(method, "last_output_tokens", 0))
+            used_latency = float(getattr(method, "last_latency_ms", 0.0))
         if action not in MACRO_ACTIONS_FROZEN:
             action = "WAIT"
             invalid += 1
@@ -248,7 +288,10 @@ def run_episode(
 
         public_rows.append(
             {
+                "run_id": f"{scenario_id}-s{seed}",
+                "episode_id": f"{scenario_id}-s{seed}",
                 "scenario_id": scenario_id,
+                "seed": seed,
                 "method": method_name,
                 "decision_id": decision,
                 "public_obs_hash": observation.public_obs_hash,
@@ -257,19 +300,20 @@ def run_episode(
                 "chosen_action": action,
                 "reward": reward,
                 "physical_steps_elapsed": info["physical_steps_elapsed"],
-                "vlm_calls_used": getattr(method, "last_calls", 0),
-                "input_tokens": getattr(method, "last_input_tokens", 0),
-                "output_tokens": getattr(method, "last_output_tokens", 0),
-                "latency_ms": getattr(method, "last_latency_ms", 0.0),
+                "vlm_calls_used": used_call,
+                "input_tokens": used_input,
+                "output_tokens": used_output,
+                "latency_ms": used_latency,
+                "cap_fallback": used_call == 0 and action == "WAIT" and cap_hits > 0,
             }
         )
         evaluator_rows.append(dict(env.evaluator_state()))
         if action.startswith("PROBE_"):
             probes += 1
-        calls += int(getattr(method, "last_calls", 0))
-        input_tokens += int(getattr(method, "last_input_tokens", 0))
-        output_tokens += int(getattr(method, "last_output_tokens", 0))
-        latency += float(getattr(method, "last_latency_ms", 0.0))
+        calls += used_call
+        input_tokens += used_input
+        output_tokens += used_output
+        latency += used_latency
         if terminated or truncated:
             break
 
@@ -286,6 +330,7 @@ def run_episode(
         invalid_actions=invalid,
         public_rows=tuple(public_rows),
         evaluator_rows=tuple(evaluator_rows),
+        call_cap_hits=cap_hits,
     )
 
 
@@ -298,6 +343,36 @@ class ClosedLoopOutput:
         return self.summaries[key]
 
 
+def _scenario_cluster_means(
+    episodes: dict[tuple[str, int, str], Episode],
+    methods: tuple[str, str],
+) -> tuple[dict[str, list[float]], int, int]:
+    """Per-scenario mean returns for two methods, paired on shared scenarios.
+
+    The independent unit is the scenario: seeds are averaged *within* a
+    scenario rather than treated as extra independent observations, which
+    would shrink the paired interval for the wrong reason.
+    """
+
+    by_method: dict[str, dict[str, list[float]]] = {method: {} for method in methods}
+    for (scenario_id, _seed, name), episode in episodes.items():
+        if name in by_method:
+            by_method[name].setdefault(scenario_id, []).append(episode.total_return)
+
+    shared = sorted(set.intersection(*(set(v) for v in by_method.values()))) if all(
+        by_method.values()
+    ) else []
+    means = {
+        method: [
+            sum(by_method[method][scenario_id]) / len(by_method[method][scenario_id])
+            for scenario_id in shared
+        ]
+        for method in methods
+    }
+    n_episodes = sum(len(v) for v in by_method[methods[0]].values())
+    return means, len(shared), n_episodes
+
+
 def run_closed_loop(
     scenarios: tuple[tuple[str, EnvConfig], ...],
     methods: tuple[str, ...],
@@ -305,6 +380,7 @@ def run_closed_loop(
     comparisons: tuple[tuple[str, str], ...] = (("m1_stub", "never_probe"),),
     backend: object | None = None,
     cache: ResponseCache | None = None,
+    max_vlm_calls_per_episode: int = DEFAULT_VLM_CALL_CAP,
 ) -> ClosedLoopOutput:
     """Run paired episodes and compute scenario-level paired summaries."""
 
@@ -313,25 +389,29 @@ def run_closed_loop(
         for seed in seeds:
             for method in methods:
                 episodes[(scenario_id, seed, method)] = run_episode(
-                    config, method, seed, scenario_id, backend=backend, cache=cache
+                    config,
+                    method,
+                    seed,
+                    scenario_id,
+                    backend=backend,
+                    cache=cache,
+                    max_vlm_calls_per_episode=max_vlm_calls_per_episode,
                 )
 
     summaries: dict[tuple[str, str], PairedSummary] = {}
     for method, baseline in comparisons:
         if method not in methods or baseline not in methods:
             continue
-        method_returns = [
-            episode.total_return
-            for (scenario_id, seed, name), episode in episodes.items()
-            if name == method
-        ]
-        baseline_returns = [
-            episode.total_return
-            for (scenario_id, seed, name), episode in episodes.items()
-            if name == baseline
-        ]
+        means, n_scenarios, n_episodes = _scenario_cluster_means(
+            episodes, (method, baseline)
+        )
+        if n_scenarios == 0:
+            continue
         summaries[(method, baseline)] = summarize_paired(
-            method_returns, baseline_returns, seed=0
+            means[method],
+            means[baseline],
+            seed=0,
+            n_episodes=n_episodes,
         )
     return ClosedLoopOutput(episodes=episodes, summaries=summaries)
 

@@ -8,6 +8,9 @@ import pytest
 
 from ruleshift.agents.cache import ResponseCache
 from ruleshift.agents.vlm_backend import StubVLMBackend
+from ruleshift.envs.config import EnvConfig
+from ruleshift.envs.gate_lock import RuleShiftEnv
+from ruleshift.public_api.schemas import FAMILY_A_ACTIONS
 from ruleshift.evaluator.offline_audit import (
     build_offline_contexts,
     run_offline_audit,
@@ -115,3 +118,38 @@ def test_report_explicitly_labels_synthetic_dry_run(tmp_path) -> None:
     text = report.read_text(encoding="utf-8")
     assert "SYNTHETIC" in text
     assert "no vlm" in text.lower() or "not vlm" in text.lower()
+
+
+# ---------------------------------------------------------------------------
+# Label integrity: full menu and durations that match the executor.
+# ---------------------------------------------------------------------------
+def test_labels_cover_the_full_public_action_menu() -> None:
+    from ruleshift.evaluator.offline_audit import ACTIONS
+
+    assert set(ACTIONS) == set(FAMILY_A_ACTIONS)
+    for context in build_offline_contexts(9):
+        assert set(context.q_values) == set(
+            context.public_observation.available_actions
+        )
+
+
+def test_labelled_probe_duration_matches_the_executor() -> None:
+    for context in build_offline_contexts(9):
+        detour = int(context.public_observation.public_costs["probe_detour"])
+        env = RuleShiftEnv(
+            config=EnvConfig(probe_detour_steps=detour, disable_shift=True)
+        )
+        env.reset(seed=1)
+        actual = len(env.executor.plan("PROBE_RED", env.geometry.start).ops)
+        labelled = next(iter(context.config.durations["PROBE_RED"]))
+        assert labelled == actual == 2 * detour + 1
+
+
+def test_audit_reports_label_coverage(tmp_path) -> None:
+    contexts = build_offline_contexts(9)
+    _, metrics = run_offline_audit(
+        contexts,
+        backend=StubVLMBackend(),
+        cache=ResponseCache(tmp_path / "cache.jsonl"),
+    )
+    assert metrics.label_coverage_rate == pytest.approx(1.0)

@@ -73,3 +73,20 @@ def test_result_files_and_report_are_written(tmp_path) -> None:
     assert "SYNTHETIC" in report
     assert "negative" in report.lower()
     assert "paired" in report.lower()
+
+
+def test_real_backend_method_ids_produce_the_proposed_comparisons() -> None:
+    """A real run uses ``m1``/``direct``; the proposed label must follow."""
+
+    from ruleshift.evaluator.heldout import proposed_label
+
+    assert proposed_label(("direct", "m1", "immediate")) == "m1"
+    assert proposed_label(("direct_stub", "m1_stub")) == "m1_stub"
+    assert proposed_label(("direct", "immediate")) is None
+
+    result = run_heldout_evaluation(
+        build_heldout_family_a()[:2], ("direct", "m1"), seeds=(101,)
+    )
+    assert result.summaries
+    assert all(method == "m1" for method, _ in result.summaries)
+    assert result.max_vlm_calls_per_episode == 6

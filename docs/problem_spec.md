@@ -139,6 +139,17 @@ observation_id, public_obs_hash, public_history_hash, public_text,
 available_actions, candidate_rules, public_costs
 ```
 
+`last_outcome` inside `public_text` is the outcome of the most recent
+*informative* primitive op. A probe's return leg therefore does not erase the
+station's accept/reject report: the decision-boundary observation still carries
+it, so a probing agent can update its belief afterwards.
+
+`public_costs` publishes non-negative **magnitudes** only — `primitive_step`,
+`probe_detour` (one-way station distance), `commit_travel` (public Manhattan
+distance to the gate), `lockout` and `delivery_reward`. Consumers must convert
+them to a signed cost model exactly once; a positive per-step "cost" would
+reward taking more steps.
+
 No other key is permitted. In particular, a `shift_time`, `mechanic_id`,
 `oracle_belief`, `Q*`, `delta_probe` or hidden-RNG field must never be present.
 `reset`/`step` `info` dictionaries returned to generic agent code must satisfy

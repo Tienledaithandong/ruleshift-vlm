@@ -17,13 +17,14 @@ primary_endpoint:
   step_accounting: every primitive step cost appears once in the same reward stream
 
 comparisons:
-  primary: M1_minus_direct_vlm
+  primary: m1_minus_direct
   secondary:
-    - M1_minus_diva_style_adapted
-    - M1_minus_immediate_only
+    # Method ids as passed to evaluator/closed_loop.py (add _stub when the
+    # deterministic backend is used).
+    - m1_minus_diva
+    - m1_minus_immediate_selector
   privileged_separately:
-    - B5_oracle_belief
-    - B6e_true_rule_oracle
+    - true_rule_oracle
 
 statistics:
   unit_of_analysis: scenario_or_layout_cluster
@@ -32,6 +33,9 @@ statistics:
   small_sample_rule: do not treat a positive difference in about ten episodes as evidence
 
 call_and_step_budget:
+  # Enforced by evaluator/closed_loop.py: once the cap is spent, further
+  # decisions use the deterministic WAIT fallback and are counted in
+  # Episode.call_cap_hits. Tests assert no method exceeds it.
   max_vlm_calls_per_episode: 6
   max_env_steps: 60
   applies_identically_to_all_methods: true

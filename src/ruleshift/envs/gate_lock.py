@@ -166,6 +166,7 @@ class RuleShiftEnv(Env):
             public_costs={
                 "primitive_step": abs(config.step_cost),
                 "probe_detour": float(config.probe_detour_steps),
+                "commit_travel": float(self._gate_travel()),
                 "lockout": float(config.lockout_steps),
                 "delivery_reward": float(config.delivery_reward),
             },
@@ -208,6 +209,12 @@ class RuleShiftEnv(Env):
         except (TypeError, ValueError):
             return "WAIT"
         return FAMILY_A_ACTIONS[index] if 0 <= index < len(FAMILY_A_ACTIONS) else "WAIT"
+
+    def _gate_travel(self) -> int:
+        """Public Manhattan distance from the start tile to the gate tile."""
+
+        (sx, sy), (gx, gy) = self.geometry.start, self.geometry.gate
+        return abs(gx - sx) + abs(gy - sy)
 
     def _render_state(self) -> RenderState:
         assert self._state is not None
@@ -258,6 +265,11 @@ class RuleShiftEnv(Env):
             self._state.position = op.target or self._state.position
             self._last_outcome = "none"
             self._history.append(("move", None, "none"))
+        elif op.kind == "move_back":
+            # Return leg of a probe: move without erasing the test feedback, so
+            # the decision-boundary public text still reports accept/reject.
+            self._state.position = op.target or self._state.position
+            self._history.append(("move", None, self._last_outcome or "none"))
         elif op.kind == "commit":
             color = op.color or ""
             if color == self._state.mechanic:

@@ -30,7 +30,7 @@ behaviour.
 |---|---|---|---|
 | H2 primary | M1 | B0 direct VLM | paired mean episodic return |
 | H2 secondary | M1 | B3 DIVA-style adapted | paired mean episodic return |
-| H2 ablation | M1 | M1_minus_immediate_only | offline decision regret |
+| H2 ablation | M1 | Immediate-only selector (`ImmediateOnlySelector`) | offline decision regret |
 | H1 diagnostic | all methods | exact Q* on microtasks | probe error vs Delta_probe bins |
 
 Every method receives the same public action menu, environment step budget and

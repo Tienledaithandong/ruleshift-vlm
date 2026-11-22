@@ -30,6 +30,14 @@ dev = [
     "PyYAML>=6",
     "matplotlib>=3.8",
 ]
+# Real frozen-VLM backend (scripts/run_real_pilot.py). Not installed by the
+# `dev` extra, because the CPU harness and its tests never need torch.
+# Install with: python -m pip install -e '.[vlm]'
+vlm = [
+    "torch>=2.1",
+    "transformers>=4.45",
+    "accelerate>=0.30",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

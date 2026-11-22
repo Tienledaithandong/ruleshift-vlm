@@ -18,8 +18,13 @@ def test_probe_macro_has_round_trip_cost() -> None:
     geometry = Geometry(start=(0, 0), gate=(4, 0), station=(4, 1), grid=(5, 5))
     ops = MacroExecutor(geometry).plan("PROBE_RED", position=(0, 0)).ops
     assert len(ops) == 11
-    assert sum(op.kind == "move" for op in ops) == 10
+    # Outbound leg is a plain move; the return leg is marked move_back so the
+    # environment can keep the test feedback for the decision boundary.
+    assert sum(op.kind == "move" for op in ops) == 5
+    assert sum(op.kind == "move_back" for op in ops) == 5
     assert sum(op.kind == "test" for op in ops) == 1
+    kinds = [op.kind for op in ops]
+    assert kinds.index("test") < kinds.index("move_back")
 
 
 def test_commit_macro_is_approach_plus_one_commit() -> None:
