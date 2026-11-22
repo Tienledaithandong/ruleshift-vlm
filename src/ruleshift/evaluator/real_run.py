@@ -11,7 +11,11 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from ruleshift.evaluator.offline_audit import AuditMetrics, OfflineContext
+from ruleshift.evaluator.offline_audit import (
+    AuditMetrics,
+    OfflineContext,
+    _stratum_rows,
+)
 
 
 def write_real_artifacts(
@@ -67,13 +71,21 @@ def write_real_artifacts(
         f"| Model calls | {metrics.call_count} |",
         f"| JSON valid rate | {metrics.json_valid_rate:.3f} |",
         f"| Valid action rate | {metrics.valid_action_rate:.3f} |",
-        f"| Over-probe rate | {metrics.over_probe_rate:.3f} |",
-        f"| Under-probe rate | {metrics.under_probe_rate:.3f} |",
+        f"| Correct-argmax rate | {metrics.correct_argmax_rate:.3f} |",
         f"| Mean decision regret | {metrics.mean_decision_regret:.3f} |",
         f"| Mean input tokens per model call | {metrics.mean_input_tokens:.1f} |",
         f"| Mean output tokens per model call | {metrics.mean_output_tokens:.1f} |",
         f"| Mean model-call latency (s) | {metrics.mean_model_latency_ms / 1000:.3f} |",
         f"| Cache hit rate | {metrics.cache_hit_rate:.3f} |",
+        "",
+        "## Probe decisions by stratum",
+        "",
+        "Probe rate is `PROBE_*` choices over that stratum's contexts; in the "
+        "`delta_probe<0` row it is the over-probe rate.",
+        "",
+        "| Stratum | n | Probes | Probe rate | Correct argmax | Mean regret |",
+        "|---|---:|---:|---:|---:|---:|",
+        _stratum_rows(metrics.strata),
         "",
         "Public decisions and privileged labels are written to separate files "
         "and must never be joined into model input.",

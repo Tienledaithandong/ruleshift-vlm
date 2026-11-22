@@ -54,8 +54,7 @@ def test_audit_is_deterministic_and_metrics_are_bounded(tmp_path) -> None:
     for rate in (
         metrics.json_valid_rate,
         metrics.valid_action_rate,
-        metrics.over_probe_rate,
-        metrics.under_probe_rate,
+        metrics.correct_argmax_rate,
         metrics.cache_hit_rate,
     ):
         assert 0.0 <= rate <= 1.0
@@ -143,6 +142,73 @@ def test_labelled_probe_duration_matches_the_executor() -> None:
         actual = len(env.executor.plan("PROBE_RED", env.geometry.start).ops)
         labelled = next(iter(context.config.durations["PROBE_RED"]))
         assert labelled == actual == 2 * detour + 1
+
+
+def test_probe_diagnostics_are_stratified_by_sign_and_detour(tmp_path) -> None:
+    contexts = build_offline_contexts()
+    records, metrics = run_offline_audit(
+        contexts,
+        backend=StubVLMBackend(),
+        cache=ResponseCache(tmp_path / "cache.jsonl"),
+    )
+    by_key = {stratum.key: stratum for stratum in metrics.strata}
+    assert metrics.strata[0].key == "all"
+    assert by_key["all"].n_contexts == len(contexts)
+    assert by_key["all"].n_probes == sum(
+        record["chosen_action"].startswith("PROBE_") for record in records
+    )
+
+    # The sign split partitions the contexts, so no aggregate number hides
+    # which cells drove the probe rate.
+    assert (
+        by_key["delta_probe>=0"].n_contexts + by_key["delta_probe<0"].n_contexts
+        == by_key["all"].n_contexts
+    )
+    assert by_key["delta_probe<0"].n_contexts == sum(
+        context.delta_probe < 0 for context in contexts
+    )
+
+    detours = {
+        int(context.public_observation.public_costs["probe_detour"])
+        for context in contexts
+    }
+    assert {f"detour={detour}" for detour in detours} <= set(by_key)
+    assert sum(by_key[f"detour={detour}"].n_contexts for detour in detours) == len(
+        contexts
+    )
+
+    for stratum in metrics.strata:
+        assert 0.0 <= stratum.probe_rate <= 1.0
+        assert 0.0 <= stratum.correct_argmax_rate <= 1.0
+        assert stratum.mean_decision_regret is None or stratum.mean_decision_regret >= 0.0
+        assert stratum.n_labelled <= stratum.n_contexts
+
+
+def test_strata_appear_in_the_report(tmp_path) -> None:
+    contexts = build_offline_contexts(9)
+    manifest, metrics, report = _run_and_write(tmp_path, contexts)
+    text = report.read_text(encoding="utf-8")
+    for stratum in metrics.strata:
+        assert stratum.key in text
+    assert "Correct-argmax rate" in text
+
+
+def _run_and_write(tmp_path, contexts):
+    records, metrics = run_offline_audit(
+        contexts,
+        backend=StubVLMBackend(),
+        cache=ResponseCache(tmp_path / "cache.jsonl"),
+    )
+    report = tmp_path / "report.md"
+    write_taxonomy_report(
+        metrics,
+        records,
+        contexts,
+        tmp_path / "manifest.jsonl",
+        tmp_path / "evaluator_only.jsonl",
+        report,
+    )
+    return tmp_path / "manifest.jsonl", metrics, report
 
 
 def test_audit_reports_label_coverage(tmp_path) -> None:

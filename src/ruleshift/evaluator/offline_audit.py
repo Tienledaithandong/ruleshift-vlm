@@ -55,12 +55,38 @@ class OfflineContext:
 
 
 @dataclass(frozen=True)
+class DecisionStratum:
+    """Probe, argmax and regret diagnostics restricted to one slice.
+
+    The aggregated pilot number hid which cells drove it: a single
+    over-probe rate mixes cells that should probe with cells that should not.
+    Strata keep the denominator (and therefore the count) visible.
+    """
+
+    key: str
+    n_contexts: int
+    n_probes: int
+    n_correct_argmax: int
+    #: Decisions whose chosen macro has an exact-solver label.
+    n_labelled: int
+    mean_decision_regret: float | None
+
+    @property
+    def probe_rate(self) -> float:
+        return self.n_probes / self.n_contexts if self.n_contexts else 0.0
+
+    @property
+    def correct_argmax_rate(self) -> float:
+        return self.n_correct_argmax / self.n_contexts if self.n_contexts else 0.0
+
+
+@dataclass(frozen=True)
 class AuditMetrics:
     n_contexts: int
     json_valid_rate: float
     valid_action_rate: float
-    over_probe_rate: float
-    under_probe_rate: float
+    #: Fraction of decisions whose chosen macro is Q*-optimal for the cell.
+    correct_argmax_rate: float
     mean_decision_regret: float
     mean_input_tokens: float
     mean_output_tokens: float
@@ -70,7 +96,23 @@ class AuditMetrics:
     #: Fraction of decisions whose chosen macro has an exact-solver label.
     #: Regret is only averaged over covered decisions.
     label_coverage_rate: float
+    #: Always starts with ``all``, then the ``delta_probe`` sign split and one
+    #: row per probe detour. Over-probing is the probe rate of the
+    #: ``delta_probe<0`` row; under-probing is the complement of the
+    #: ``delta_probe>=0`` row.
+    strata: tuple[DecisionStratum, ...] = ()
 
+
+def _stratum(key: str, rows: list[dict]) -> DecisionStratum:
+    regrets = [row["regret"] for row in rows if row["regret"] is not None]
+    return DecisionStratum(
+        key=key,
+        n_contexts=len(rows),
+        n_probes=sum(row["probe"] for row in rows),
+        n_correct_argmax=sum(row["correct_argmax"] for row in rows),
+        n_labelled=len(regrets),
+        mean_decision_regret=(sum(regrets) / len(regrets)) if regrets else None,
+    )
 
 class _Backend(Protocol):
     model_id: str
@@ -179,7 +221,7 @@ def run_offline_audit(
 
     records: list[dict] = []
     labels: list[dict] = []
-    flags: list[dict] = []
+    scored: list[dict] = []
     call_count = 0
 
     for context in contexts:
@@ -210,9 +252,10 @@ def run_offline_audit(
         chosen = payload["selected_action"] if payload else "WAIT"
         available = set(request.available_actions)
         valid_action = payload is not None and chosen in available
-        over_probe = context.delta_probe < 0 and chosen.startswith("PROBE_")
-        under_probe = context.delta_probe > 0 and not chosen.startswith("PROBE_")
         best_q = max(context.q_values.values())
+        argmax_actions = {
+            action for action, value in context.q_values.items() if value == best_q
+        }
         # An action with no exact label must be reported as uncovered, never
         # scored as if it were worth zero: that silently fabricated regret.
         chosen_q = context.q_values.get(chosen)
@@ -250,7 +293,15 @@ def run_offline_audit(
                 "belief": {f"{k[0]}:{k[1]}": v for k, v in context.belief.items()},
             }
         )
-        flags.append({"over_probe": over_probe, "under_probe": under_probe})
+        scored.append(
+            {
+                "probe": chosen.startswith("PROBE_"),
+                "delta_negative": context.delta_probe < 0,
+                "detour": int(observation.public_costs["probe_detour"]),
+                "correct_argmax": chosen in argmax_actions,
+                "regret": regret,
+            }
+        )
 
     n = max(len(records), 1)
     covered_regrets = [
@@ -261,12 +312,22 @@ def run_offline_audit(
     covered = sum(label["label_covered"] for label in labels)
     model_calls = [record for record in records if not record["cache_hit"]]
     call_denominator = max(len(model_calls), 1)
+    strata = [_stratum("all", scored)]
+    strata.append(
+        _stratum("delta_probe>=0", [row for row in scored if not row["delta_negative"]])
+    )
+    strata.append(
+        _stratum("delta_probe<0", [row for row in scored if row["delta_negative"]])
+    )
+    for detour in sorted({row["detour"] for row in scored}):
+        strata.append(
+            _stratum(f"detour={detour}", [row for row in scored if row["detour"] == detour])
+        )
     metrics = AuditMetrics(
         n_contexts=len(records),
         json_valid_rate=sum(r["json_valid"] for r in records) / n,
         valid_action_rate=sum(not r["invalid_action"] for r in records) / n,
-        over_probe_rate=sum(f["over_probe"] for f in flags) / n,
-        under_probe_rate=sum(f["under_probe"] for f in flags) / n,
+        correct_argmax_rate=sum(row["correct_argmax"] for row in scored) / n,
         mean_decision_regret=(
             sum(covered_regrets) / len(covered_regrets) if covered_regrets else 0.0
         ),
@@ -282,8 +343,22 @@ def run_offline_audit(
         call_count=call_count,
         cache_hit_rate=sum(r["cache_hit"] for r in records) / n,
         label_coverage_rate=covered / n,
+        strata=tuple(strata),
     )
     return records, metrics
+
+
+def _format_regret(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.3f}"
+
+
+def _stratum_rows(strata: tuple[DecisionStratum, ...]) -> str:
+    return "\n".join(
+        f"| {s.key} | {s.n_contexts} | {s.n_probes}/{s.n_contexts} | "
+        f"{s.probe_rate:.3f} | {s.correct_argmax_rate:.3f} | "
+        f"{_format_regret(s.mean_decision_regret)} |"
+        for s in strata
+    )
 
 
 def write_taxonomy_report(
@@ -332,19 +407,28 @@ Privileged labels: `{Path(evaluator_path).name}` (never joined into model input)
 |---|---:|
 | JSON valid rate | {metrics.json_valid_rate:.3f} |
 | Valid action rate | {metrics.valid_action_rate:.3f} |
-| Over-probe rate (probed when exact label says do not) | {metrics.over_probe_rate:.3f} |
-| Under-probe rate (did not probe when label says probe) | {metrics.under_probe_rate:.3f} |
+| Correct-argmax rate vs exact Q* | {metrics.correct_argmax_rate:.3f} |
 | Mean decision regret vs exact Q* (covered decisions only) | {metrics.mean_decision_regret:.3f} |
 | Decisions with an exact label (full macro menu) | {metrics.label_coverage_rate:.3f} |
 | Mean output tokens | {metrics.mean_output_tokens:.1f} |
 | Cache hit rate | {metrics.cache_hit_rate:.3f} |
 
+## Probe decisions by stratum
+
+Probe rate is `PROBE_*` choices over that stratum's contexts. In the
+`delta_probe<0` row it is the over-probe rate; in the `delta_probe>=0` row it
+is the complement of under-probing. Regret is averaged over covered decisions.
+
+| Stratum | n | Probes | Probe rate | Correct argmax | Mean regret |
+|---|---:|---:|---:|---:|---:|
+{_stratum_rows(metrics.strata)}
+
 ## Failure taxonomy measured by this harness
 
 1. Invalid JSON / parse failures — counted, deterministic fallback to `WAIT`.
 2. Invalid macro ids — counted separately from parse failures.
-3. Over-probing — probe chosen in a cell with `delta_probe < 0`.
-4. Under-probing — task action chosen in a cell with `delta_probe > 0`.
+3. Over-probing — probe rate of the `delta_probe < 0` stratum.
+4. Under-probing — complement of the probe rate in the `delta_probe >= 0` stratum.
 5. Outcome-prediction error — schema is captured, accuracy scoring is Week 5.
 6. Cost accounting — tokens, calls, latency and cache hits per decision.
 
