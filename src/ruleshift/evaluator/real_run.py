@@ -70,7 +70,9 @@ def write_real_artifacts(
         f"| Over-probe rate | {metrics.over_probe_rate:.3f} |",
         f"| Under-probe rate | {metrics.under_probe_rate:.3f} |",
         f"| Mean decision regret | {metrics.mean_decision_regret:.3f} |",
-        f"| Mean output tokens | {metrics.mean_output_tokens:.1f} |",
+        f"| Mean input tokens per model call | {metrics.mean_input_tokens:.1f} |",
+        f"| Mean output tokens per model call | {metrics.mean_output_tokens:.1f} |",
+        f"| Mean model-call latency (s) | {metrics.mean_model_latency_ms / 1000:.3f} |",
         f"| Cache hit rate | {metrics.cache_hit_rate:.3f} |",
         "",
         "Public decisions and privileged labels are written to separate files "

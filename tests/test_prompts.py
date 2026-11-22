@@ -22,12 +22,29 @@ def test_template_has_no_copyable_example_answer(name: str) -> None:
 
 
 @pytest.mark.parametrize("name", TEMPLATES)
-def test_template_bounds_the_answer_size(name: str) -> None:
-    """An unbounded answer overflowed the token budget and never parsed."""
+def test_template_asks_for_values_derived_from_the_public_text(name: str) -> None:
     text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
-    assert "at most three entries" in text
-    assert "at most two public outcomes" in text
-    assert "complete and parseable" in text
+    assert "placeholder" in text
+    assert "derive the numbers from the public text" in text
+    assert "different inputs" in text
+
+
+@pytest.mark.parametrize("name", TEMPLATES)
+def test_template_keeps_the_answer_inside_the_token_budget(name: str) -> None:
+    """An unbounded answer overflowed the budget and never closed its JSON."""
+    text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
+    assert "compact on one line" in text
+    assert "within the token budget" in text
+
+
+def test_direct_prompt_limits_predictions_to_fit_the_output_budget() -> None:
+    text = (PROMPTS_DIR / "direct_v1.txt").read_text(encoding="utf-8").lower()
+    assert "exactly one entry, for selected_action" in text
+
+
+def test_outcomes_prompt_limits_predictions_to_fit_the_output_budget() -> None:
+    text = (PROMPTS_DIR / "outcomes_v1.txt").read_text(encoding="utf-8").lower()
+    assert "at most two candidate actions" in text
 
 
 @pytest.mark.parametrize("name", TEMPLATES)
@@ -37,11 +54,3 @@ def test_template_requires_a_public_cost_tradeoff(name: str) -> None:
     assert "decision procedure" in text
     assert "probe_detour" in text
     assert "do not probe by default" in text
-
-
-@pytest.mark.parametrize("name", TEMPLATES)
-def test_template_asks_for_values_derived_from_the_public_text(name: str) -> None:
-    text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
-    assert "placeholder" in text
-    assert "derive the numbers from the public text" in text
-    assert "different inputs" in text

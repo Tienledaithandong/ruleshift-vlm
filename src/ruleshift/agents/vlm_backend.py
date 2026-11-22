@@ -19,7 +19,7 @@ from typing import Mapping, Sequence
 from ruleshift.public_api.schemas import validate_structured_vlm_output
 
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "direct_v1.txt"
-PROMPT_VERSION = "direct_v1"
+PROMPT_VERSION = "direct_v4"
 
 
 @dataclass(frozen=True)

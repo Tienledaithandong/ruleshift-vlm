@@ -62,7 +62,9 @@ class AuditMetrics:
     over_probe_rate: float
     under_probe_rate: float
     mean_decision_regret: float
+    mean_input_tokens: float
     mean_output_tokens: float
+    mean_model_latency_ms: float
     call_count: int
     cache_hit_rate: float
     #: Fraction of decisions whose chosen macro has an exact-solver label.
@@ -257,6 +259,8 @@ def run_offline_audit(
         if label["decision_regret"] is not None
     ]
     covered = sum(label["label_covered"] for label in labels)
+    model_calls = [record for record in records if not record["cache_hit"]]
+    call_denominator = max(len(model_calls), 1)
     metrics = AuditMetrics(
         n_contexts=len(records),
         json_valid_rate=sum(r["json_valid"] for r in records) / n,
@@ -266,7 +270,15 @@ def run_offline_audit(
         mean_decision_regret=(
             sum(covered_regrets) / len(covered_regrets) if covered_regrets else 0.0
         ),
-        mean_output_tokens=sum(r["output_tokens"] for r in records) / n,
+        mean_input_tokens=(
+            sum(record["input_tokens"] for record in model_calls) / call_denominator
+        ),
+        mean_output_tokens=(
+            sum(record["output_tokens"] for record in model_calls) / call_denominator
+        ),
+        mean_model_latency_ms=(
+            sum(record["latency_ms"] for record in model_calls) / call_denominator
+        ),
         call_count=call_count,
         cache_hit_rate=sum(r["cache_hit"] for r in records) / n,
         label_coverage_rate=covered / n,
