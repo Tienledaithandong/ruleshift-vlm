@@ -12,9 +12,42 @@ For each candidate action, imagine each candidate rule and list the possible
 public outcomes with probabilities in [0,1] that sum to 1 per rule. Then give
 the best task action you would take after each potential outcome.
 
-Return ONLY a JSON object with exactly these keys:
-{{"candidate_probabilities": {{"red": 0.34, "blue": 0.33, "green": 0.33}},
-  "action_predictions": [{{"action_id": "PROBE_RED", "under_rules": [{{"rule_id": "red", "possible_outcomes": [{{"observation": "accept", "p": 0.5}}, {{"observation": "reject", "p": 0.5}}]}}], "estimated_future_best_action": "COMMIT_RED"}}],
-  "selected_action": "PROBE_RED"}}
+Describe the result as one JSON object with the shape below. Every <...> is a
+placeholder, not a value: replace it with something you derived from THIS input.
 
-Probabilities must be in [0,1] and sum to 1. The selected action must be one of the available macro actions.
+{{
+  "candidate_probabilities": {{"<rule id from the candidate list>": <number in [0,1]>}},
+  "action_predictions": [
+    {{
+      "action_id": "<macro id from the candidate list>",
+      "under_rules": [
+        {{
+          "rule_id": "<rule id from the candidate list>",
+          "possible_outcomes": [
+            {{"observation": "<one public outcome word>", "p": <number in [0,1]>}}
+          ]
+        }}
+      ],
+      "estimated_future_best_action": "<macro id from the available list>"
+    }}
+  ],
+  "selected_action": "<macro id from the available list>"
+}}
+
+Rules:
+- candidate_probabilities: exactly one entry per candidate rule id above; the
+  numbers lie in [0,1] and sum to 1.
+- action_predictions: one entry per candidate action you evaluated, using each
+  candidate action at most once; include the action you select.
+- under_rules: one entry per candidate rule id, each at most once. For each
+  rule, possible_outcomes lists the public outcomes you consider possible, and
+  their probabilities lie in [0,1] and sum to 1.
+- observation: use only these public outcome words: accept, reject, success,
+  failure, none.
+- selected_action and estimated_future_best_action must be available macro ids.
+- Derive the numbers from the public text. An answer that repeats the same
+  probabilities or the same action across different inputs, or that ignores the
+  uncertainty the public text describes, is wrong. Choose the action whose
+  expected control value best justifies its public cost.
+
+Return ONLY the JSON object: no prose, no code fence.
