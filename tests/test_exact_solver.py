@@ -189,3 +189,39 @@ def test_in_macro_shift_is_visible_to_the_observation() -> None:
     assert sum(branch.probability for branch in rejects) == pytest.approx(1.0)
     assert all(branch.posterior[("blue", True)] == pytest.approx(1.0) for branch in rejects)
     assert all(isinstance(branch, Branch) for branch in branches)
+
+
+def test_delta_probe_requires_one_probe_and_one_task_action() -> None:
+    """Restricted action sets must error, not silently mislabel the delta."""
+
+    task_only = ExactSolver(make_config(), ("COMMIT_RED", "COMMIT_BLUE"))
+    with pytest.raises(ValueError, match="delta_probe"):
+        task_only.delta_probe(uncertain_belief(), 3)
+
+    probe_only = ExactSolver(make_config(), ("PROBE_RED", "WAIT"))
+    with pytest.raises(ValueError, match="delta_probe"):
+        probe_only.delta_probe(uncertain_belief(), 3)
+
+
+def test_family_a_microtask_durations_match_the_macro_executor() -> None:
+    from ruleshift.evaluator.exact_solver import family_a_microtask
+    from ruleshift.envs.macro import Geometry, MacroExecutor
+
+    config = family_a_microtask(
+        probe_detour_steps=3,
+        commit_travel_steps=4,
+        feedback_noise=0.0,
+        lockout_steps=0,
+    )
+    executor = MacroExecutor(
+        Geometry(start=(0, 0), gate=(4, 0), station=(3, 0), grid=(5, 5))
+    )
+    assert next(iter(config.durations["PROBE_BLUE"])) == len(
+        executor.plan("PROBE_BLUE", (0, 0)).ops
+    )
+    assert next(iter(config.durations["COMMIT_RED"])) == len(
+        executor.plan("COMMIT_RED", (0, 0)).ops
+    )
+    # The test outcome is observed after the outbound leg, not at the start.
+    assert config.observation_steps["PROBE_BLUE"] == 3
+    assert config.observation_steps["COMMIT_RED"] == 4

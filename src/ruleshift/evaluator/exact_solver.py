@@ -10,10 +10,14 @@ reference and must be labelled as such.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from ruleshift.evaluator.bayes_filter import RuleShiftFilter
-from ruleshift.public_api.schemas import COMMIT_ACTIONS, PROBE_ACTIONS
+from ruleshift.public_api.schemas import (
+    COMMIT_ACTIONS,
+    FAMILY_A_ACTIONS,
+    PROBE_ACTIONS,
+)
 
 Belief = dict[tuple[str, bool], float]
 FrozenBelief = tuple[tuple[tuple[str, bool], float], ...]
@@ -158,6 +162,60 @@ def macro_branches(
     return tuple(results)
 
 
+def family_a_microtask(
+    *,
+    probe_detour_steps: int,
+    commit_travel_steps: int,
+    feedback_noise: float,
+    lockout_steps: int,
+    actions: Sequence[str] = FAMILY_A_ACTIONS,
+    shift_hazard: float = 0.0,
+    step_cost: float = -0.05,
+    reward_success: float = 10.0,
+) -> MicrotaskConfig:
+    """Microtask whose macro durations match ``envs.macro`` exactly.
+
+    A probe costs ``2 * detour + 1`` primitive steps and observes the test
+    result after ``detour`` steps (out, test, back); a commit costs
+    ``commit_travel + 1`` steps and observes the gate after ``commit_travel``
+    steps. Using these instead of a unit-duration abstraction keeps exact
+    labels comparable with what the environment actually charges.
+    """
+
+    if probe_detour_steps < 0:
+        raise ValueError("probe_detour_steps must be non-negative")
+    if commit_travel_steps < 0:
+        raise ValueError("commit_travel_steps must be non-negative")
+
+    probe_duration = 2 * probe_detour_steps + 1
+    commit_duration = commit_travel_steps + 1
+    durations: dict[str, dict[int, float]] = {}
+    observation_steps: dict[str, int] = {}
+    for action in actions:
+        if action.startswith("PROBE_"):
+            durations[action] = {probe_duration: 1.0}
+            observation_steps[action] = probe_detour_steps
+        elif action.startswith("COMMIT_"):
+            durations[action] = {commit_duration: 1.0}
+            observation_steps[action] = commit_travel_steps
+        elif action == "GO_TO_STATION":
+            durations[action] = {max(probe_detour_steps, 1): 1.0}
+            observation_steps[action] = 0
+        else:
+            durations[action] = {1: 1.0}
+            observation_steps[action] = 0
+
+    return MicrotaskConfig(
+        shift_hazard=shift_hazard,
+        feedback_noise=feedback_noise,
+        reward_success=reward_success,
+        step_cost=step_cost,
+        lockout_steps=lockout_steps,
+        durations=durations,
+        observation_steps=observation_steps,
+    )
+
+
 class ExactSolver:
     """Backward dynamic programming over beliefs and remaining horizon."""
 
@@ -206,9 +264,23 @@ class ExactSolver:
         return max(value for _, value in self.q_values(frozen, horizon))
 
     def delta_probe(self, belief: Belief, horizon: int) -> float:
-        """``max_PROBE Q - max_TASK Q`` at this belief and horizon."""
+        """``max_PROBE Q - max_TASK Q`` at this belief and horizon.
+
+        Only actions this solver was constructed with are considered; callers
+        that omit a probe or a task action get an explicit error instead of a
+        silently mislabelled delta.
+        """
 
         q = dict(self.q_values(freeze_belief(belief), horizon))
-        probe_best = max(q[action] for action in PROBE_ACTIONS if action in q)
-        task_best = max(q[action] for action in COMMIT_ACTIONS if action in q)
-        return probe_best - task_best
+        probe_values = [
+            q[action] for action in PROBE_ACTIONS if action in q
+        ]
+        task_values = [
+            q[action] for action in COMMIT_ACTIONS if action in q
+        ]
+        if not probe_values or not task_values:
+            raise ValueError(
+                "delta_probe needs at least one probe and one commit action in "
+                f"this solver, got {sorted(q)}"
+            )
+        return max(probe_values) - max(task_values)

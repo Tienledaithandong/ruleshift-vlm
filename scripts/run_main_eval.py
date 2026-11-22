@@ -69,10 +69,21 @@ def main() -> None:
     parser.add_argument("--out", default="results")
     parser.add_argument("--report", default="reports")
     parser.add_argument("--config", default="configs/preregistered_test.yaml")
+    parser.add_argument(
+        "--call-cap",
+        type=int,
+        default=6,
+        help="per-episode VLM call cap applied to every method",
+    )
     args = parser.parse_args()
 
     scenarios = build_heldout_family_a()
-    result = run_heldout_evaluation(scenarios, tuple(args.methods), tuple(args.seeds))
+    result = run_heldout_evaluation(
+        scenarios,
+        tuple(args.methods),
+        tuple(args.seeds),
+        max_vlm_calls_per_episode=args.call_cap,
+    )
     paths = write_result_files(result, Path(args.out), Path(args.report))
     family_b_path = write_family_b_reference(Path(args.out))
 

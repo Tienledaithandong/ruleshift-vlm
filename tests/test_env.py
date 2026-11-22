@@ -81,20 +81,44 @@ def test_shift_alone_does_not_change_public_view() -> None:
     assert forced_shift.evaluator_state()["mechanic_id"] != "red"
 
 
+@pytest.mark.parametrize("detour", [0, 2, 5])
 @pytest.mark.parametrize(
     "macro, expected",
     [("PROBE_BLUE", "accept"), ("PROBE_RED", "reject")],
 )
-def test_probe_feedback_comes_from_active_mechanic(macro: str, expected: str) -> None:
+def test_probe_feedback_comes_from_active_mechanic(
+    detour: int, macro: str, expected: str
+) -> None:
+    """The probe result must survive the walk back to the start tile.
+
+    With ``detour=0`` the return leg is empty, which previously hid the bug:
+    every real cell uses ``detour >= 1`` and lost the feedback to a ``move``.
+    """
+
     env = make_env(
         initial_mechanic="blue",
         disable_shift=True,
         feedback_noise=0.0,
-        probe_detour_steps=0,
+        probe_detour_steps=detour,
     )
     env.reset(seed=3)
     env.step(macro)
-    assert expected in env.public_view().public_text
+    public = env.public_view()
+    assert expected in public.public_text
+    # The decision-boundary observation is what an agent actually receives.
+    assert env._last_outcome == expected
+    assert public.public_text.endswith(f"last={expected}")
+
+
+def test_commit_travel_is_public_and_matches_the_executor() -> None:
+    for detour in (0, 2, 5):
+        env = make_env(probe_detour_steps=detour)
+        env.reset(seed=1)
+        costs = env.public_view().public_costs
+        plan = env.executor.plan("COMMIT_RED", env.geometry.start)
+        assert int(costs["commit_travel"]) + 1 == len(plan.ops)
+        probe_plan = env.executor.plan("PROBE_RED", env.geometry.start)
+        assert 2 * int(costs["probe_detour"]) + 1 == len(probe_plan.ops)
 
 
 def test_failed_task_action_leaves_public_reject_feedback() -> None:

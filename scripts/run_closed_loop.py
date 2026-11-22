@@ -46,11 +46,21 @@ def main() -> None:
     parser.add_argument("--out", default="reports")
     parser.add_argument("--data", default="data")
     parser.add_argument("--config", default="configs/dev.yaml")
+    parser.add_argument(
+        "--call-cap",
+        type=int,
+        default=6,
+        help="per-episode VLM call cap applied to every method",
+    )
     args = parser.parse_args()
 
     scenarios = build_family_a_scenarios()
     result = run_closed_loop(
-        scenarios, DEFAULT_METHODS, tuple(args.seeds), DEFAULT_COMPARISONS
+        scenarios,
+        DEFAULT_METHODS,
+        tuple(args.seeds),
+        DEFAULT_COMPARISONS,
+        max_vlm_calls_per_episode=args.call_cap,
     )
     data_dir = Path(args.data)
     report_dir = Path(args.out)

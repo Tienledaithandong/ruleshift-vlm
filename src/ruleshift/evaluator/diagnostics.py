@@ -13,7 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ruleshift.agents.cache import ResponseCache
-from ruleshift.agents.value_selector import PublicCostModel, ValueAwareSelector
+from ruleshift.agents.value_selector import (
+    PublicCostModel,
+    ValueAwareSelector,
+    public_macro_durations,
+)
 from ruleshift.agents.vlm_backend import StubVLMBackend
 from ruleshift.evaluator.offline_audit import OfflineContext
 from ruleshift.agents.structured_vlm import run_structured_prediction
@@ -33,6 +37,8 @@ class DiagnosticResult:
     decisions: tuple[dict, ...]
     mean_regret: float
     error_rate: float
+    #: Fraction of decisions whose chosen macro has an exact-solver label.
+    label_coverage_rate: float = 1.0
 
 
 def _rule_marginal(belief: dict[tuple[str, bool], float]) -> dict[str, float]:
@@ -64,14 +70,14 @@ def _true_outcomes(payload: dict) -> dict:
 
 
 def _cost(context: OfflineContext) -> PublicCostModel:
+    """Public cost model with signed step costs and real macro durations."""
+
     costs = context.public_observation.public_costs
-    detour = costs.get("probe_detour", 0.0)
-    return PublicCostModel(
-        step_cost=costs.get("primitive_step", 0.05),
-        success_reward=costs.get("delivery_reward", 10.0),
-        probe_duration=int(2 * detour + 1),
-        commit_duration=1,
-        lockout_steps=int(costs.get("lockout", 0)),
+    probe_duration, commit_duration = public_macro_durations(costs)
+    return PublicCostModel.from_public_costs(
+        costs,
+        probe_duration=probe_duration,
+        commit_duration=commit_duration,
         remaining_horizon=context.horizon,
         learning_rate=0.5,
     )
@@ -107,24 +113,30 @@ def run_diagnostic(
             action = selector.choose(payload, belief, _cost(context))
 
         best_q = max(context.q_values.values())
-        chosen_q = context.q_values.get(action, 0.0)
-        regret = best_q - chosen_q
+        chosen_q = context.q_values.get(action)
+        covered = chosen_q is not None
+        regret = (best_q - chosen_q) if chosen_q is not None else None
         decisions.append(
             {
                 "context_id": context.context_id,
                 "intervention": intervention,
                 "chosen_action": action,
                 "decision_regret": regret,
+                "label_covered": covered,
                 "parse_errors": len(errors),
             }
         )
 
     count = max(len(decisions), 1)
+    covered_rows = [d for d in decisions if d["label_covered"]]
+    covered_count = max(len(covered_rows), 1)
     return DiagnosticResult(
         intervention=intervention,
         decisions=tuple(decisions),
-        mean_regret=sum(d["decision_regret"] for d in decisions) / count,
-        error_rate=sum(d["decision_regret"] > 1e-6 for d in decisions) / count,
+        mean_regret=sum(d["decision_regret"] for d in covered_rows) / covered_count,
+        error_rate=sum(d["decision_regret"] > 1e-6 for d in covered_rows)
+        / covered_count,
+        label_coverage_rate=len(covered_rows) / count,
     )
 
 
@@ -154,17 +166,19 @@ def write_diagnostic_report(
         "The dev contexts use a fixed rule prior; the oracle-belief intervention "
         "replaces it with the known scenario start rule (red). The oracle-outcome "
         "intervention replaces VLM outcome predictions with noise-free public "
-        "rule semantics. The public-text intervention is currently identical to "
-        "baseline because the stub has no image path — a stated limitation, "
-        "not a measured zero.",
+        "rule semantics. The public-text row is a **control**: the stub backend "
+        "has no image path, so the intervention changes nothing by construction. "
+        "It is listed to show the row exists, not as a measured zero effect.",
         "",
-        "| Intervention | Mean regret | Error rate | Regret reduction vs baseline |",
-        "|---|---:|---:|---:|",
+        "| Intervention | Mean regret | Error rate | Regret reduction vs baseline "
+        "| Label coverage |",
+        "|---|---:|---:|---:|---:|",
     ]
     for name, result in results.items():
         lines.append(
             f"| {name} | {result.mean_regret:.3f} | {result.error_rate:.3f} | "
-            f"{baseline - result.mean_regret:+.3f} |"
+            f"{baseline - result.mean_regret:+.3f} | "
+            f"{result.label_coverage_rate:.3f} |"
         )
     lines += [
         "",

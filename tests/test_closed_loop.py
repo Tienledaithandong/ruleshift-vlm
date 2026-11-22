@@ -6,7 +6,12 @@ import json
 
 import pytest
 
+from ruleshift.envs.config import EnvConfig
+from ruleshift.envs.gate_lock import RuleShiftEnv
 from ruleshift.evaluator.closed_loop import (
+    DEFAULT_VLM_CALL_CAP,
+    _StubMethod,
+    _last_outcome,
     build_family_a_scenarios,
     run_closed_loop,
     run_episode,
@@ -85,3 +90,99 @@ def test_paired_summaries_are_computed_with_scenario_unit(tmp_path) -> None:
     text = report.read_text(encoding="utf-8")
     assert "SYNTHETIC" in text
     assert "paired" in text.lower()
+
+
+# ---------------------------------------------------------------------------
+# Budget, log integrity and clustering regressions.
+# ---------------------------------------------------------------------------
+def _config(**overrides: object) -> EnvConfig:
+    base = dict(
+        feedback_noise=0.0,
+        lockout_steps=3,
+        probe_detour_steps=2,
+        disable_shift=True,
+        initial_mechanic="red",
+    )
+    base.update(overrides)
+    return EnvConfig(**base)  # type: ignore[arg-type]
+
+
+def test_probe_feedback_reaches_the_method_through_public_text() -> None:
+    """A completed probe must hand accept/reject to the policy, not "none"."""
+
+    env = RuleShiftEnv(config=_config())
+    env.reset(seed=1)
+    env.step("PROBE_RED")
+    outcome = _last_outcome(env.public_view().public_text)
+    assert outcome == "accept"
+
+    method = _StubMethod("m1")
+    before = method.belief["red"]
+    method.record("PROBE_RED", outcome)
+    assert method.belief["red"] > before
+
+
+def test_call_cap_is_enforced_for_every_model_method() -> None:
+    config = build_family_a_scenarios()[0][1]
+    for method in ("direct_stub", "m1_stub", "diva_stub"):
+        episode = run_episode(
+            config,
+            method,
+            seed=1,
+            scenario_id="cap",
+            max_vlm_calls_per_episode=3,
+        )
+        assert episode.vlm_calls <= 3
+        assert episode.call_cap_hits > 0
+        assert sum(row["vlm_calls_used"] for row in episode.public_rows) == (
+            episode.vlm_calls
+        )
+
+
+def test_default_call_cap_matches_the_preregistered_budget() -> None:
+    assert DEFAULT_VLM_CALL_CAP == 6
+    config = build_family_a_scenarios()[0][1]
+    episode = run_episode(config, "m1_stub", seed=2, scenario_id="cap")
+    assert episode.vlm_calls <= DEFAULT_VLM_CALL_CAP
+
+
+def test_public_rows_are_unique_per_scenario_seed_decision() -> None:
+    scenarios = build_family_a_scenarios()[:2]
+    result = run_closed_loop(
+        scenarios, ("never_probe", "m1_stub"), seeds=(1, 2),
+        comparisons=(("m1_stub", "never_probe"),),
+    )
+    keys = [
+        (row["scenario_id"], row["seed"], row["method"], row["decision_id"])
+        for episode in result.episodes.values()
+        for row in episode.public_rows
+    ]
+    assert len(keys) == len(set(keys))
+    # Seeds must be visible in the flattened log, otherwise they collide.
+    assert {row["seed"] for episode in result.episodes.values() for row in episode.public_rows} == {1, 2}
+
+
+def test_paired_summary_clusters_seeds_within_scenario() -> None:
+    scenarios = build_family_a_scenarios()[:3]
+    result = run_closed_loop(
+        scenarios,
+        ("never_probe", "m1_stub"),
+        seeds=(1, 2, 3),
+        comparisons=(("m1_stub", "never_probe"),),
+    )
+    summary = result[("m1_stub", "never_probe")]
+    assert summary.n_scenarios == len(scenarios)
+    assert summary.n_episodes == len(scenarios) * 3
+
+
+def test_documented_method_ids_without_the_stub_suffix_are_accepted() -> None:
+    """docs/RUNBOOK.md uses ``m1``/``direct``; those ids must work."""
+
+    scenarios = build_family_a_scenarios()[:1]
+    result = run_closed_loop(
+        scenarios,
+        ("never_probe", "direct", "m1", "diva"),
+        seeds=(1,),
+        comparisons=(("m1", "direct"),),
+    )
+    assert ("m1", "direct") in result.summaries

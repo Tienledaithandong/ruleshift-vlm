@@ -12,6 +12,9 @@ from .cache import ResponseCache
 from .vlm_backend import ModelRequest, ModelResponse, parse_structured_output
 
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "outcomes_v1.txt"
+#: Stamped into the request fingerprint so caches record the template actually
+#: used (``ModelRequest`` cannot default to this because it is backend-agnostic).
+OUTCOMES_PROMPT_VERSION = "outcomes_v1"
 
 
 def render_outcomes_prompt(observation: PublicObservation) -> str:
@@ -61,6 +64,7 @@ def run_structured_prediction(
         available_actions=tuple(observation.available_actions),
         candidate_hash=candidate_hash,
         decoding_seed=decoding_seed,
+        prompt_version=OUTCOMES_PROMPT_VERSION,
     )
     cached = cache.get(request)
     if cached is None:
