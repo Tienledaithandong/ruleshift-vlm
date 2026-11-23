@@ -46,12 +46,16 @@ stamps the commit it copied in two places:
 
 `kaggle/kernel/run.py` reads `SOURCE_COMMIT` right after copying the snapshot,
 prints the commit and subject, and exits unless the marker holds a full 40-hex
-commit id. It also fails on a mismatch when `RULESHIFT_EXPECTED_COMMIT` is set,
-so a run can be pinned to one revision:
+commit id. It also fails on a mismatch when `RULESHIFT_EXPECTED_COMMIT` is set
+*inside the kernel environment*, so a run can be pinned to one revision:
 
-```bash
-RULESHIFT_EXPECTED_COMMIT=$(git rev-parse HEAD) python scripts/stage_kaggle_dataset.py
+```python
+os.environ["RULESHIFT_EXPECTED_COMMIT"] = "<full sha>"
 ```
+
+The staging script does not read that variable (it stamps the commit it
+already copied), and staging a dirty tree is refused, so the stamp always
+describes exactly the files in the snapshot.
 
 Because Kaggle mounts the dataset's latest version, re-run the staging and
 `datasets version` steps after every commit you want the kernel to see.
