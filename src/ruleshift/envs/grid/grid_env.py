@@ -15,8 +15,8 @@ import numpy as np
 from gymnasium import Env, spaces
 
 from ruleshift.envs.events import SemanticRNG
-from ruleshift.envs.observations import digest
 from ruleshift.public_api.grid_rules import (
+    GRID_HYPOTHESES,
     RULE_BY_ID,
     Coord,
     PublicGridMap,
@@ -28,21 +28,19 @@ from ruleshift.public_api.grid_schemas import (
     GRID_ACTIONS,
     GRID_ACTIONS_FROZEN,
     GRID_PHYSICAL_ACTIONS,
-    GRID_RULE_IDS,
     GRID_TOOL_ACTIONS,
     GridAction,
     GridPublicObservation,
 )
-from ruleshift.public_api.interface import CandidateRule
 
 from .config import GridConfig
 from .entities import GridMap, GridScenario
 from .mapgen import generate_solvable_map
 from .noise import draw_inspect, draw_move
+from .observations import PublicPayloadSpace, build_grid_observation
+from .render import RENDER_SIZE, render_grid
 from .rules import sample_scenario
 from .tools import inspect_cell, read_sign, sign_side, tool_cost, validate_tool_action
-
-_PIXELS_PER_CELL = 16
 
 
 @dataclass
@@ -106,20 +104,34 @@ class GridEnv(Env):
                 "target": spaces.MultiDiscrete([cfg.width, cfg.height]),
             }
         )
+        # The declared space must describe every key returned by ``_obs()``.
+        # The payload uses plain Python lists/dicts (and ``None`` cells), so
+        # the complex fields use a permissive value space rather than a gym
+        # Sequence/Box that would reject those legitimate payload types.
         observation_space: dict[str, Any] = {
-            "public_text": spaces.Text(max_length=4096),
-            "action_mask": spaces.MultiBinary(len(GRID_ACTIONS)),
+            "observation_id": PublicPayloadSpace(),
+            "public_obs_hash": PublicPayloadSpace(),
+            "public_history_hash": PublicPayloadSpace(),
+            "public_history": PublicPayloadSpace(),
+            "public_text": PublicPayloadSpace(),
+            "available_actions": PublicPayloadSpace(),
+            "candidate_rules": PublicPayloadSpace(),
+            "public_costs": PublicPayloadSpace(),
+            "public_map": PublicPayloadSpace(),
+            "agent_position": PublicPayloadSpace(),
+            "health": PublicPayloadSpace(),
+            "inventory": PublicPayloadSpace(),
+            "door_open": PublicPayloadSpace(),
+            "steps": PublicPayloadSpace(),
+            "action_mask": PublicPayloadSpace(),
             "tool_budget_remaining": spaces.Discrete(cfg.tool_budget + 1),
+            "image_hash": PublicPayloadSpace(),
         }
         if observation_mode == "visual":
             observation_space["image"] = spaces.Box(
                 low=0,
                 high=255,
-                shape=(
-                    cfg.height * _PIXELS_PER_CELL,
-                    cfg.width * _PIXELS_PER_CELL,
-                    3,
-                ),
+                shape=(RENDER_SIZE, RENDER_SIZE, 3),
                 dtype=np.uint8,
             )
         self.observation_space = spaces.Dict(observation_space)
@@ -475,9 +487,7 @@ class GridEnv(Env):
         view = self.public_view()
         payload = view.to_payload()
         if self.observation_mode == "visual":
-            payload["image"] = np.zeros(
-                self.observation_space["image"].shape, dtype=np.uint8
-            )
+            payload["image"] = view.image
         return payload
 
     def _info(self) -> dict[str, Any]:
@@ -496,28 +506,7 @@ class GridEnv(Env):
             raise RuntimeError("call reset() before public_view()")
         state = self._state
         config = self._episode_config
-
-        visible_state = {
-            "position": list(state.position),
-            "health": state.health,
-            "inventory": list(state.inventory),
-            "door_open": state.door_open,
-            "steps": state.steps,
-            "tool_budget": state.tool_budget,
-        }
-        history_lines = [
-            f"Step {index}: {action.upper()}"
-            + (f" {detail.upper()}" if detail else "")
-            + f" -> {outcome or 'none'}"
-            for index, (action, detail, outcome) in enumerate(self._history, 1)
-        ]
-        public_history = "; ".join(history_lines) if history_lines else "no prior steps"
-        public_text = (
-            f"step={state.steps} pos=({state.position[0]},{state.position[1]}) "
-            f"health={state.health} inventory={','.join(state.inventory) or 'none'} "
-            f"door={'open' if state.door_open else 'closed'} "
-            f"budget={state.tool_budget} last={state.last_outcome}"
-        )
+        public_map = self._grid_map.public
         public_costs = {
             "step_cost": config.step_cost,
             "goal_reward": config.goal_reward,
@@ -526,28 +515,21 @@ class GridEnv(Env):
             "advisor_cost": config.advisor_cost,
             "tool_budget": config.tool_budget,
         }
-        return GridPublicObservation(
-            observation_id=f"grid-obs-{state.steps}",
-            public_obs_hash=digest(visible_state),
-            public_history_hash=digest(list(self._history)),
-            public_history=public_history,
-            public_text=public_text,
-            available_actions=tuple(GRID_ACTIONS),
-            candidate_rules=tuple(
-                CandidateRule(rule_id=rule_id, description=RULE_BY_ID[rule_id].description)
-                for rule_id in GRID_RULE_IDS
-            ),
+        image = (
+            render_grid(public_map, state)
+            if self.observation_mode == "visual"
+            else None
+        )
+        return build_grid_observation(
+            public_map=public_map,
+            state=state,
+            history=self._history,
+            last_outcome=state.last_outcome,
+            candidate_rules=GRID_HYPOTHESES,
             public_costs=public_costs,
-            public_map=self._grid_map.public,
-            agent_position=tuple(state.position),
-            health=state.health,
-            inventory=tuple(state.inventory),
-            door_open=state.door_open,
-            steps=state.steps,
             action_mask=self._action_mask(),
             tool_budget_remaining=state.tool_budget,
-            image=None,
-            image_hash="",
+            image=image,
         )
 
     def evaluator_state(self) -> dict[str, Any]:
@@ -576,9 +558,12 @@ class GridEnv(Env):
             "truncated": state.truncated,
         }
 
-    def render(self) -> None:
-        # Task 6 implements the 224x224 renderer.
-        return None
+    def render(self) -> Any | None:
+        """Return the visual frame in visual mode, else ``None``."""
+
+        if self.observation_mode != "visual":
+            return None
+        return self.public_view().image
 
 
 __all__ = ["GridEnv", "GridState"]
