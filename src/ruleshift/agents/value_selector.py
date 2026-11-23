@@ -17,6 +17,12 @@ from ruleshift.public_api.schemas import COMMIT_ACTIONS
 
 from .consistency import Belief, HistoryConsistencyUpdater
 
+#: The multi-step Vhat branches over every predicted action and outcome, so its
+#: state space grows exponentially with the horizon. A closed-loop episode can
+#: have a much longer budget; bound the lookahead so one decision stays cheap.
+#: Five primitive steps still spans a probe plus several later decisions.
+MAX_MULTI_STEP_HORIZON = 5
+
 
 @dataclass(frozen=True)
 class PublicCostModel:
@@ -353,7 +359,7 @@ def multi_step_q_hat_from_prediction(
         return best if best != float("-inf") else 0.0
 
     estimates: dict[str, float] = {}
-    horizon = cost.remaining_horizon
+    horizon = min(cost.remaining_horizon, MAX_MULTI_STEP_HORIZON)
     for prediction in payload.get("action_predictions", []):
         action = prediction.get("action_id")
         if not isinstance(action, str):

@@ -184,12 +184,14 @@ def multi_step_optimal(
     return best_action, best_value
 
 # ---------------------------------------------------------------------------
-# Microtask A: probe is valuable across many future decisions (long horizon,
-# cheap probe, expensive lockout). Exact optimum = probe. M1 one-step = commit.
+# Microtask A: probe is valuable across the remaining decisions (finite
+# horizon, cheap probe, expensive lockout). Exact optimum = probe. M1 one-step
+# = commit. The horizon is kept small because the brute-force exact solver is
+# exponential; the point is the probe/commit gap, not the horizon length.
 # ---------------------------------------------------------------------------
 
 def test_microtask_A_probe_valuable_but_m1_picks_commit() -> None:
-    """Long horizon: probing RED identifies the rule and avoids costly lockouts.
+    """Finite horizon: probing RED identifies the rule and avoids costly lockouts.
 
     Exact multi-step optimum chooses PROBE_RED. M1 one-step continuation is
     added to the successful-commit branch too, so it double-counts future
@@ -203,12 +205,12 @@ def test_microtask_A_probe_valuable_but_m1_picks_commit() -> None:
         probe_duration=1,
         commit_duration=1,
         lockout_steps=3,
-        remaining_horizon=10,
+        remaining_horizon=4,
         learning_rate=0.3,
     )
     payload = _fixed_payload()
 
-    exact_action, exact_value = multi_step_optimal(belief, cost, horizon=10)
+    exact_action, exact_value = multi_step_optimal(belief, cost, horizon=4)
     assert exact_action == "PROBE_RED", f"exact optimum should probe, got {exact_action}"
 
     estimates = q_hat_from_prediction(payload, belief, cost, account_continuation=True)
