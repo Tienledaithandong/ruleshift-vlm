@@ -100,19 +100,29 @@ class GridBelief:
         self.states: dict[_State, float] = {
             (rule, None): masses[rule] / total for rule in self.hypotheses
         }
+        # The hazard is a per-physical-step rate: repeated predictions at the
+        # same step must not compound it. Copies inherit this marker.
+        self._last_predicted_step: int | None = None
 
     # ------------------------------------------------------------------
     # Prediction and conditioning
     # ------------------------------------------------------------------
 
     def predict(self, step: int) -> None:
-        """Apply one change-point hazard step in place.
+        """Apply the change-point hazard for ``step`` in place.
 
-        Outside ``shift_window`` the hazard is zero and the distribution is
-        unchanged. Inside it, each state ``(rule, tau)`` keeps its rule and
-        either retains ``tau`` (probability ``1 - p_shift``) or records a new
-        change point at ``step`` (probability ``p_shift``).
+        The hazard is a rate *per physical step*, so this method is idempotent
+        within a step: a second call with the same ``step`` is a no-op, which
+        allows several observation updates at one step without compounding the
+        hazard. A higher step advances the hazard normally. Outside
+        ``shift_window`` the hazard is zero and the distribution is unchanged.
+        Inside it, each state ``(rule, tau)`` keeps its rule and either retains
+        ``tau`` (probability ``1 - p_shift``) or records a change point at
+        ``step`` (probability ``p_shift``).
         """
+        if step == self._last_predicted_step:
+            return
+        self._last_predicted_step = step
         start, end = self.shift_window
         hazard = self.p_shift if start <= step <= end else 0.0
         if hazard <= 0.0:
@@ -134,6 +144,7 @@ class GridBelief:
         """Predict, multiply by ``likelihood(rule_id)``, and renormalize."""
 
         before = dict(self.states)
+        before_step = self._last_predicted_step
         self.predict(step)
         weighted: dict[_State, float] = {}
         total = 0.0
@@ -144,6 +155,7 @@ class GridBelief:
         if total <= 0.0:
             # Never let a degenerate likelihood destroy the belief.
             self.states = before
+            self._last_predicted_step = before_step
             return
         self.states = {key: value / total for key, value in weighted.items()}
 

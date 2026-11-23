@@ -85,3 +85,23 @@ def test_change_point_belief_detects_shift():
         belief.update_move((3, 3), "UP", (3, 4), MAP, step=step)
     assert belief.most_likely() == "remap_swap"
     assert belief.shift_probability() > 0.5
+
+
+def test_predict_is_idempotent_within_a_step():
+    belief = GridBelief(p_shift=0.3, shift_window=(0, 60))
+    belief.predict(0)
+    once = belief.shift_probability()
+    assert abs(once - 0.3) < 1e-9
+
+    belief.predict(0)
+    assert abs(belief.shift_probability() - once) < 1e-9
+
+    belief.predict(1)
+    assert abs(belief.shift_probability() - (1 - 0.7 ** 2)) < 1e-9
+
+
+def test_multiple_updates_at_one_step_do_not_compound_hazard():
+    belief = GridBelief(p_shift=0.3, shift_window=(0, 60))
+    for _ in range(4):
+        belief.update_interact("nothing", step=0)  # uninformative observation
+    assert abs(belief.shift_probability() - 0.3) < 1e-9
