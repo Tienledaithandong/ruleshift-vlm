@@ -195,6 +195,43 @@ def test_validators_never_raise_for_bad_payload_types():
     assert validate_grid_action("not an action", GRID_ACTIONS, (7, 7))
 
 
+def test_validators_never_raise_for_unhashable_membership_values():
+    vlm = {"hypothesis_probabilities": _uniform_probabilities(), "action": ["UP"]}
+    assert validate_grid_vlm_output(vlm)
+    vlm["action"] = {"kind": "UP"}
+    assert validate_grid_vlm_output(vlm)
+
+    observation = make_observation().to_payload()
+    nested = dict(observation)
+    nested["available_actions"] = [{"x": 1}]
+    assert validate_grid_public_observation(nested)
+    nested = dict(observation)
+    nested["action_mask"] = [["UP"]]
+    assert validate_grid_public_observation(nested)
+
+    assert validate_grid_action(GridAction(["UP"]), GRID_ACTIONS, (7, 7))
+    assert validate_grid_action(GridAction("UP"), [{"x": 1}], (7, 7))
+
+
+def test_validators_never_raise_for_oversized_numbers():
+    huge = 10**400  # Overflows float() conversion.
+    vlm = {
+        "hypothesis_probabilities": _uniform_probabilities(),
+        "action": "UP",
+        "confidence": huge,
+    }
+    assert validate_grid_vlm_output(vlm)
+
+    probabilities = _uniform_probabilities()
+    probabilities["base"] = huge
+    vlm = {"hypothesis_probabilities": probabilities, "action": "UP"}
+    assert validate_grid_vlm_output(vlm)
+
+    observation = make_observation().to_payload()
+    observation["public_costs"] = {"step_cost": huge}
+    assert validate_grid_public_observation(observation)
+
+
 # --- Decision record contract -----------------------------------------------
 
 

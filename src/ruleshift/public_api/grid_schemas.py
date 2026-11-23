@@ -82,11 +82,13 @@ GRID_PUBLIC_OBSERVATION_FIELDS: frozenset[str] = frozenset(
 
 
 def _is_number(value: Any) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(float(value))
-    )
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except (OverflowError, ValueError):
+        # e.g. a Python int too large to convert to a float (10 ** 400).
+        return False
 
 
 def _is_int(value: Any) -> bool:
@@ -99,6 +101,12 @@ def _is_coord(value: Any) -> bool:
         and len(value) == 2
         and all(_is_int(part) for part in value)
     )
+
+
+def _is_grid_action(value: Any) -> bool:
+    """Hash-safe membership test: unhashable payload values must not raise."""
+
+    return isinstance(value, str) and value in GRID_ACTIONS_FROZEN
 
 
 def _sums_to_one(values: list[float], tolerance: float = 1e-6) -> bool:
@@ -251,7 +259,7 @@ def validate_grid_action(action: Any, action_mask: Any, grid_size: Any) -> list[
 
     errors: list[str] = []
     kind = action.kind
-    if kind not in GRID_ACTIONS_FROZEN:
+    if not _is_grid_action(kind):
         errors.append(f"unknown grid action {kind!r}")
     if not _is_sequence(action_mask) or kind not in action_mask:
         errors.append("action is not in action_mask")
@@ -316,7 +324,7 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
                 errors.append("hypothesis_probabilities must sum to 1 within 1e-6")
 
     action = payload.get("action")
-    if action not in GRID_ACTIONS_FROZEN:
+    if not _is_grid_action(action):
         errors.append("action is not a valid grid action")
 
     tool_target = payload.get("tool_target")
@@ -363,15 +371,18 @@ def validate_grid_public_observation(payload: Any) -> list[str]:
     if not _is_sequence(available) or not available:
         errors.append("available_actions must be a non-empty array")
     else:
-        if any(action not in GRID_ACTIONS_FROZEN for action in available):
+        if any(not _is_grid_action(action) for action in available):
             errors.append("available_actions contains an unknown grid action")
-        if len(set(available)) != len(available):
+        # Only string entries can be hashed safely; unhashable entries are
+        # already reported above and must not make the duplicate check raise.
+        string_actions = [action for action in available if isinstance(action, str)]
+        if len(set(string_actions)) != len(string_actions):
             errors.append("available_actions contains duplicates")
 
     mask = payload.get("action_mask")
     if not _is_sequence(mask):
         errors.append("action_mask must be an array")
-    elif any(action not in GRID_ACTIONS_FROZEN for action in mask):
+    elif any(not _is_grid_action(action) for action in mask):
         errors.append("action_mask contains an unknown grid action")
 
     rules = payload.get("candidate_rules")
