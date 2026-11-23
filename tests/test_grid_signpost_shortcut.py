@@ -17,7 +17,8 @@ def test_full_sign_set_is_behaviorally_ambiguous():
         assert len(consistent) >= 2
         signatures = {
             (RULE_BY_ID[rule_id].goal_color,
-             tuple(sorted(RULE_BY_ID[rule_id].move_map.items())))
+             tuple(sorted(RULE_BY_ID[rule_id].move_map.items())),
+             "slippery" if RULE_BY_ID[rule_id].slip_prob >= 0.5 else "baseline")
             for rule_id in consistent
         }
         assert len(signatures) >= 2
