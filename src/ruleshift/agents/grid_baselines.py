@@ -395,11 +395,16 @@ class InfoGainPolicy(_BasePolicy):
     def __init__(self, config: Any | None = None) -> None:
         super().__init__(config)
         self.selector = InfoGainSelector(config)
+        self.information_gain_bits: float | None = None
+
+    def reset(self, observation: Any, info: dict[str, Any]) -> None:
+        super().reset(observation, info)
+        self.information_gain_bits = None
 
     def choose(self, observation: Any, info: dict[str, Any]) -> GridAction:
         observation = as_observation(observation)
         assert self.belief is not None
-        return self.selector.choose(
+        action = self.selector.choose(
             self.belief,
             observation.public_map,
             position=tuple(observation.agent_position),
@@ -409,3 +414,9 @@ class InfoGainPolicy(_BasePolicy):
             action_mask=tuple(observation.action_mask),
             step=int(info.get("env_steps", observation.steps)),
         )
+        # Accumulate the selector's expected IG for this decision so the
+        # evaluator can report a measured episode-wide total (finding 4).
+        chosen_ig = self.selector.last_information_gain_bits
+        if isinstance(chosen_ig, (int, float)) and not isinstance(chosen_ig, bool):
+            self.information_gain_bits = float(self.information_gain_bits or 0.0) + float(chosen_ig)
+        return action

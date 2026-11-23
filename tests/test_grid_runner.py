@@ -251,3 +251,62 @@ def test_random_probe_falls_back_to_base_plan_without_affordable_tools():
     calm.reset(full_obs, full_info)
     calm_baseline.reset(full_obs, full_info)
     assert calm.choose(full_obs, full_info) == calm_baseline.choose(full_obs, full_info)
+
+
+# ---------------------------------------------------------------------------
+# Public tool-value logging and measured information gain (review findings)
+# ---------------------------------------------------------------------------
+
+
+def test_public_row_carries_the_tool_value():
+    class SignOncePolicy(NoAdaptationPolicy):
+        def __init__(self, config):
+            super().__init__(config)
+            self.used = False
+
+        def choose(self, observation, info):
+            if not self.used and "READ_SIGN" in observation.action_mask:
+                self.used = True
+                return GridAction("READ_SIGN")
+            return super().choose(observation, info)
+
+    public = PublicGridMap(
+        7, 7, frozenset(), (3, 3),
+        {"red": (1, 1), "blue": (1, 5), "green": (5, 1)},
+        key=None, door=None, signpost=(3, 4),
+    )
+    config = GridConfig(baseline_slip=0.0, slippery_slip=0.0)
+    spec = scenario()
+    grid_env = GridEnv(config)
+    observation, info = grid_env.reset(
+        seed=0, options={"map": public, "scenario": spec}
+    )
+    episode = run_grid_episode(
+        grid_env, SignOncePolicy(config), config, spec, observation, info
+    )
+    tool_rows = [
+        row for row in episode.public_rows if row["chosen_action"] == "READ_SIGN"
+    ]
+    assert tool_rows
+    assert tool_rows[0]["last_tool_value"]
+
+
+def test_info_gain_policy_records_a_measured_episode_total():
+    from ruleshift.evaluator.grid_metrics import summarize_grid
+
+    config = GridConfig()
+    policy = InfoGainPolicy(config)
+    episode = run(policy)
+
+    assert episode.information_gain_bits is not None
+    assert episode.information_gain_bits > 0.0
+    assert episode.tool_calls_made > 0
+    summary = summarize_grid([episode])
+    assert abs(
+        summary["information_gain_per_tool_call"]
+        - episode.information_gain_bits / episode.tool_calls_made
+    ) < 1e-9
+
+    # A policy that never measured gain produces no IG rows at all.
+    plain = run(NoAdaptationPolicy(config))
+    assert plain.information_gain_bits is None

@@ -207,15 +207,24 @@ def summarize_grid(episodes: Sequence["GridEpisode"]) -> dict[str, float]:
         )
         summary["expected_calibration_error"] = _expected_calibration_error(pairs)
 
-    information_gain = sum(
-        float(getattr(row, "information_gain_bits", 0.0) or 0.0) for row in rows
-    )
-    tool_units = sum(float(row.tool_units) for row in rows)
-    total_cost = sum(float(row.total_cost) for row in rows)
-    if tool_units > 0.0:
-        summary["information_gain_per_tool_call"] = information_gain / tool_units
-    if total_cost > 0.0:
-        summary["information_gain_per_total_cost"] = information_gain / total_cost
+    # Only episodes whose policy actually measured expected information gain
+    # contribute to these metrics. Omit the keys entirely when nobody did.
+    measured_gain = [
+        value
+        for value in (
+            _finite(getattr(row, "information_gain_bits", None)) for row in rows
+        )
+        if value is not None
+    ]
+    if measured_gain:
+        information_gain = sum(measured_gain)
+        # Calls, not tool units: INSPECT spends 2 units but is still one call.
+        tool_calls = sum(int(getattr(row, "tool_calls_made", 0) or 0) for row in rows)
+        total_cost = sum(float(row.total_cost) for row in rows)
+        if tool_calls > 0:
+            summary["information_gain_per_tool_call"] = information_gain / tool_calls
+        if total_cost > 0.0:
+            summary["information_gain_per_total_cost"] = information_gain / total_cost
 
     hazard_damage = []
     deaths = []

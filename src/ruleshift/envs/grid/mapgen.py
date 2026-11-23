@@ -56,13 +56,24 @@ def _reachable(public_map: PublicGridMap, start: Coord, blocked: set[Coord]) -> 
 def is_solvable(
     public_map: PublicGridMap, rule: GridRule, door_required: bool = False
 ) -> bool:
-    """Whether ``rule``'s goal is reachable from the start.
+    """Whether ``rule``'s goal is winnable under the simulator's dynamics.
 
     Walls, out-of-bounds cells and ``rule``'s hazard marker are blocked; the
     other markers stay walkable (they may be hazards under a different rule).
-    When ``door_required``, the key must be reachable before the door is
-    crossed; v1 keeps the key/door colour mapping constant, so the door itself
-    is passable once the key is held.
+
+    The simulator blocks a closed door for *every* movement and opens it only
+    via ``INTERACT`` from an adjacent cell while carrying the matching key.
+    It does this even when ``door_required`` is false, so whenever the map has
+    a door the gate enforces the same three conditions unconditionally:
+
+    1. the key is reachable while the door is still closed;
+    2. a cell adjacent to the door is reachable while it is still closed (so
+       the agent can stand there and open it);
+    3. the goal is reachable once the door is open.
+
+    ``door_required`` is kept for callers that pass it explicitly; the door
+    logic above applies whenever ``public_map.door`` exists, regardless of the
+    flag, so the gate can never accept a map the simulator makes unwinnable.
     """
 
     blocked: set[Coord] = set(public_map.walls)
@@ -71,14 +82,22 @@ def is_solvable(
         blocked.add(hazard)
     goal = public_map.markers[rule.goal_color]
 
-    if door_required:
-        # The key has to be obtainable without first opening the door.
-        key_blocked = blocked | {public_map.door}
-        if public_map.key not in _reachable(public_map, public_map.start, key_blocked):
-            return False
+    if public_map.door is not None:
         if not key_opens(rule, rule.key_color, rule.door_color):
             return False
-        # After the key, the door is open, so goal BFS treats it as walkable.
+        door_closed = blocked | {public_map.door}
+        reachable_closed = _reachable(public_map, public_map.start, door_closed)
+        if public_map.key not in reachable_closed:
+            return False
+        door_x, door_y = public_map.door
+        if not any(
+            0 <= door_x + dx < public_map.width
+            and 0 <= door_y + dy < public_map.height
+            and (door_x + dx, door_y + dy) in reachable_closed
+            for dx, dy in _DELTAS
+        ):
+            return False
+        # With the key held and the door opened, the goal must be reachable.
         return goal in _reachable(public_map, public_map.start, blocked)
 
     return goal in _reachable(public_map, public_map.start, blocked)

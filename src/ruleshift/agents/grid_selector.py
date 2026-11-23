@@ -78,6 +78,9 @@ class InfoGainSelector:
 
     def __init__(self, config: GridSelectorConfig) -> None:
         self.config = config
+        #: Expected information gain, in bits, of the action returned by the
+        #: last ``choose`` call (0.0 when it fell back to the planner).
+        self.last_information_gain_bits: float | None = None
 
     def _cfg(self, name: str, default: Any) -> Any:
         return getattr(self.config, name, default)
@@ -301,6 +304,7 @@ class InfoGainSelector:
 
         best_key: tuple[float, float, int] | None = None
         best: _Candidate | None = None
+        best_ig = 0.0
         for candidate in candidates:
             kind = candidate.action.kind
             if kind in _MOVE_KINDS and self._move_hazard_probability(
@@ -316,8 +320,9 @@ class InfoGainSelector:
             # Highest IG/cost, then lower raw cost, then earlier mask entry.
             key = (information_gain / cost, -float(cost), -candidate.order)
             if best_key is None or key > best_key:
-                best_key, best = key, candidate
+                best_key, best, best_ig = key, candidate, information_gain
 
+        self.last_information_gain_bits = best_ig
         if best is not None:
             return best.action
 

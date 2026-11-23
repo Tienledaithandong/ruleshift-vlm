@@ -347,7 +347,9 @@ class GridVLMPolicy:
         self.last_valid_action = True
         self.last_probabilities: dict[str, float] = {}
         self.last_tool_calls: tuple[Any, ...] = ()
-        self.information_gain_bits = 0.0
+        # The VLM policy does not compute expected information gain, so it is
+        # genuinely unmeasured (reported as None rather than a false 0.0).
+        self.information_gain_bits: float | None = None
 
     def reset(self, observation: Any, info: dict[str, Any]) -> None:
         self._reset_counters()

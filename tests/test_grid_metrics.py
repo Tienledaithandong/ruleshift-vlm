@@ -71,6 +71,23 @@ def test_oracle_return_reads_the_optional_field():
     assert oracle_return(replace(plain, oracle_return=9.5)) == 9.5
 
 
+def test_information_gain_uses_tool_calls_and_omits_unmeasured():
+    from dataclasses import replace
+
+    unmeasured = episode("a", 0, True, 10)
+    summary = summarize_grid([unmeasured])
+    assert "information_gain_per_tool_call" not in summary
+    assert "information_gain_per_total_cost" not in summary
+
+    # 2 calls cost 4 tool units: the denominator must be calls, not units.
+    measured = replace(
+        unmeasured, information_gain_bits=4.0, tool_calls_made=2, tool_units=4
+    )
+    summary = summarize_grid([measured])
+    assert abs(summary["information_gain_per_tool_call"] - 2.0) < 1e-9
+    assert abs(summary["information_gain_per_total_cost"] - 4.0 / 10.0) < 1e-9
+
+
 def test_audit_grid_reports_every_structural_check():
     from ruleshift.envs.grid.config import GridConfig
 

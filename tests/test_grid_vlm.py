@@ -146,3 +146,82 @@ def test_record_works_without_explicit_reset():
 
 def test_prompt_version_is_pinned():
     assert GRID_PROMPT_VERSION == "grid_v1"
+
+
+def test_tool_result_reaches_history_text_and_prompt():
+    """A READ_SIGN value is a public outcome, not just a transient info key."""
+
+    public = PublicGridMap(
+        7, 7, frozenset(), (3, 3),
+        {"red": (1, 1), "blue": (1, 5), "green": (5, 1)},
+        key=None, door=None, signpost=(3, 4),
+    )
+    env = GridEnv(GridConfig(baseline_slip=0.0, slippery_slip=0.0))
+    obs, _ = env.reset(seed=0, options={"map": public})
+    nxt, _, _, _, info = env.step(GridAction("READ_SIGN"))
+
+    clause = info["last_tool_value"]
+    assert clause
+    assert clause in nxt["public_history"]
+    assert clause in nxt["public_text"]
+    # The rendered prompt is what the VLM actually sees.
+    assert clause in render_grid_prompt(as_observation(nxt))
+
+
+def test_parser_rejects_target_outside_inspect_range():
+    import json
+
+    payload = {
+        "hypothesis_probabilities": {rule: 1 / len(GRID_RULE_IDS) for rule in GRID_RULE_IDS},
+        "action": "INSPECT",
+        "tool_target": [6, 6],
+        "confidence": 0.5,
+    }
+    parsed, errors = parse_grid_output(
+        json.dumps(payload),
+        action_mask=("INSPECT",),
+        grid_size=(7, 7),
+        position=(0, 0),
+        inspect_range=2,
+    )
+    assert parsed is None
+    assert any("inspect_range" in error for error in errors)
+
+
+def test_policy_rejects_out_of_range_inspect_target_end_to_end():
+    """The env publishes inspect_range in public_costs so the policy can enforce it."""
+
+    import json
+
+    from ruleshift.agents.vlm_backend import ModelResponse
+    from ruleshift.public_api.grid_schemas import GRID_PHYSICAL_ACTIONS
+
+    class FixedBackend:
+        def generate(self, request):
+            payload = {
+                "hypothesis_probabilities": {
+                    rule: 1 / len(GRID_RULE_IDS) for rule in GRID_RULE_IDS
+                },
+                "action": "INSPECT",
+                "tool_target": [6, 6],
+                "confidence": 0.5,
+            }
+            text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+            return ModelResponse(text, 0, len(text.split()), 0.0, "fixed", "GRID_FIXED")
+
+    public = PublicGridMap(
+        7, 7, frozenset(), (3, 3),
+        {"red": (3, 1), "blue": (1, 5), "green": (5, 1)},
+        key=None, door=None, signpost=None,
+    )
+    env = GridEnv(GridConfig())
+    obs, _ = env.reset(seed=0, options={"map": public})
+    assert obs["public_costs"]["inspect_range"] == 2
+    view = as_observation(obs)
+
+    policy = GridVLMPolicy(FixedBackend(), config=GridVLMConfig(model_id="fixed"))
+    policy.reset(view, {})
+    action = policy.choose(view, {})
+
+    assert policy.last_valid_action is False
+    assert action.kind in GRID_PHYSICAL_ACTIONS

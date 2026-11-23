@@ -25,6 +25,17 @@ def test_info_gain_prefers_an_informative_tool():
     assert action.target is not None
 
 
+def test_selector_exposes_the_chosen_actions_expected_information_gain():
+    belief = GridBelief(hypotheses=("base", "hazard_goal_swap"))
+    selector = InfoGainSelector(GridConfig())
+    action = selector.choose(
+        belief, MAP, position=(1, 1), tool_budget=3, action_mask=MASK, step=0,
+    )
+    assert action.kind == "INSPECT"
+    assert selector.last_information_gain_bits is not None
+    assert selector.last_information_gain_bits > 0.0
+
+
 def test_info_gain_respects_tool_budget():
     belief = GridBelief()
     selector = InfoGainSelector(GridConfig())

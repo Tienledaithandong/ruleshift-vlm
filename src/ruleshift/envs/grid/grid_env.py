@@ -123,6 +123,7 @@ class GridEnv(Env):
                 "read_sign_cost": PublicScalar(),
                 "advisor_cost": PublicScalar(),
                 "tool_budget": PublicScalar(),
+                "inspect_range": PublicScalar(),
             }
         )
         observation_space: dict[str, Any] = {
@@ -378,7 +379,11 @@ class GridEnv(Env):
             result = read_sign(rule, side, config)
             detail = f"side{side}"
 
-        state.last_outcome = kind.lower()
+        # The revealed value is the public outcome of a tool call. Store it as
+        # the history outcome (and the frame's ``last_outcome``) so it reaches
+        # public_history/public_text and the VLM prompt; keep the dedicated
+        # info key as well for the scripted baselines that read it directly.
+        state.last_outcome = str(result.value)
         info = self._info()
         info["last_tool_value"] = result.value
         self._history.append((kind, detail, state.last_outcome))
@@ -533,6 +538,9 @@ class GridEnv(Env):
             "read_sign_cost": config.read_sign_cost,
             "advisor_cost": config.advisor_cost,
             "tool_budget": config.tool_budget,
+            # Published so the VLM parser can validate INSPECT targets against
+            # the simulator's range rule end to end (finding 3).
+            "inspect_range": config.inspect_range,
         }
         image = (
             render_grid(public_map, state)

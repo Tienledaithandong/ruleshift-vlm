@@ -103,3 +103,66 @@ def test_door_required_maps_are_solvable_under_every_hypothesis():
         assert all_hypotheses_solvable(
             result.map.public, GRID_HYPOTHESES, door_required=True
         )
+
+
+def test_map_with_key_behind_closed_door_is_rejected():
+    """A key that is only reachable through the closed door is unwinnable.
+
+    The simulator always blocks a closed door, so the gate must reject this map
+    even though ``door_required`` is left at its false default.
+    """
+
+    public = PublicGridMap(
+        width=5,
+        height=5,
+        walls=frozenset((2, y) for y in range(5) if y != 2),
+        start=(1, 2),
+        markers={"red": (3, 1), "blue": (0, 0), "green": (1, 1)},
+        key=(3, 2),
+        door=(2, 2),
+        signpost=None,
+    )
+    # With the door closed, start (1,2) cannot reach the key at (3,2).
+    for rule in GRID_HYPOTHESES:
+        assert not is_solvable(public, rule)
+        assert not is_solvable(public, rule, door_required=True)
+    # Opening the door would make it winnable, confirming the door is the only
+    # obstacle and the rejection is for the right reason.
+    from dataclasses import replace
+
+    opened = replace(public, walls=frozenset())
+    assert is_solvable(opened, GRID_HYPOTHESES[0])
+
+
+def test_generated_maps_are_winnable_by_oracle_with_deterministic_slip():
+    """Regression: every generated map must actually be winnable.
+
+    Seeds 57 and 149 previously passed ``all_hypotheses_solvable`` while both
+    the key and the goal sat behind the closed door, so the oracle could not
+    finish them within the step budget.
+    """
+
+    from ruleshift.envs.grid.entities import GridScenario
+    from ruleshift.envs.grid.grid_env import GridEnv
+    from ruleshift.evaluator.grid_runner import OraclePolicy, run_grid_episode
+
+    config = GridConfig(baseline_slip=0.0, slippery_slip=0.0)
+    for seed in (0, 1, 2, 3, 5, 7, 57, 149):
+        result = generate_solvable_map(seed, config)
+        scenario = GridScenario(
+            scenario_id=f"oracle-solvability-{seed}",
+            scenario_type="identification",
+            initial_rule="base",
+            shift_rule=None,
+            shift_time=None,
+            map_seed=seed,
+            run_seed=seed,
+        )
+        env = GridEnv(config)
+        observation, info = env.reset(
+            seed=seed, options={"map": result.map, "scenario": scenario}
+        )
+        episode = run_grid_episode(
+            env, OraclePolicy(env, config), config, scenario, observation, info
+        )
+        assert episode.success, f"oracle could not win generated map seed {seed}"

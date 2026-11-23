@@ -19,7 +19,11 @@ from ruleshift.envs.grid.grid_env import GridEnv
 from ruleshift.evaluator.grid_trace import GridEvaluatorTrace
 from ruleshift.public_api.grid_planner import plan_to_goal
 from ruleshift.public_api.grid_rules import RULE_BY_ID
-from ruleshift.public_api.grid_schemas import GRID_RULE_IDS, GridAction
+from ruleshift.public_api.grid_schemas import (
+    GRID_RULE_IDS,
+    GRID_TOOL_ACTIONS,
+    GridAction,
+)
 
 _CHANGE_RULES = ("remap_swap", "slippery", "hazard_goal_swap", "sign_composition")
 _PHYSICAL_KINDS = ("UP", "DOWN", "LEFT", "RIGHT", "INTERACT")
@@ -51,7 +55,11 @@ class GridEpisode:
     output_tokens: int = 0
     cache_hit: bool = False
     tool_calls: tuple[Any, ...] = ()
-    information_gain_bits: float = 0.0
+    #: ``None`` means the policy never measured information gain; a float is
+    #: the episode-wide total it reported (0.0 is a genuine measurement).
+    information_gain_bits: float | None = None
+    #: Number of tool actions actually issued, independent of their unit cost.
+    tool_calls_made: int = 0
 
 
 class OraclePolicy:
@@ -135,9 +143,12 @@ def run_grid_episode(
     rewards: list[float] = []
     public_rows: list[dict[str, Any]] = []
     first_correct_step: int | None = None
+    tool_calls_made = 0
 
     for decision in range(max_decisions):
         action = policy.choose(observation, info)
+        if action.kind in GRID_TOOL_ACTIONS:
+            tool_calls_made += 1
         next_observation, reward, terminated, truncated, next_info = env.step(action)
         next_observation = as_observation(next_observation)
         policy.record(action, next_observation, reward, next_info)
@@ -159,6 +170,9 @@ def run_grid_episode(
                 "valid_action": bool(getattr(policy, "last_valid_action", True)),
                 "output_tokens": int(getattr(policy, "last_output_tokens", 0)),
                 "cache_hit": bool(getattr(policy, "last_cache_hit", False)),
+                # A tool's revealed value must travel with the decision in the
+                # public log, not stay hidden in the transient info dict.
+                "last_tool_value": next_info.get("last_tool_value"),
             }
         )
         public_rows.append(row)
@@ -214,6 +228,13 @@ def run_grid_episode(
         final_rule_estimate=final_rule_estimate,
     ).to_row()
 
+    raw_information_gain = getattr(policy, "information_gain_bits", None)
+    information_gain_bits = (
+        float(raw_information_gain)
+        if isinstance(raw_information_gain, (int, float))
+        and not isinstance(raw_information_gain, bool)
+        else None
+    )
     total_cost = env_steps + int(config.advisor_cost) * advisor_calls
     return GridEpisode(
         scenario_id=scenario.scenario_id,
@@ -238,7 +259,8 @@ def run_grid_episode(
         output_tokens=int(getattr(policy, "last_output_tokens", 0)),
         cache_hit=bool(getattr(policy, "last_cache_hit", False)),
         tool_calls=tuple(getattr(policy, "last_tool_calls", ())),
-        information_gain_bits=float(getattr(policy, "information_gain_bits", 0.0)),
+        information_gain_bits=information_gain_bits,
+        tool_calls_made=tool_calls_made,
     )
 
 
