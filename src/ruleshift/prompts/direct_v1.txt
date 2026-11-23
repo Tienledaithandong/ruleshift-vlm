@@ -1,7 +1,10 @@
-You are controlling a gate-delivery agent. Use ONLY the public information below.
-You are not told which rule is active, when any change occurred, or any action value.
+You are controlling a gate-delivery agent. This is a TEXT-ONLY diagnostic: RGB/image input is deferred to a later stage and is not used here.
 
-Public history: {public_history}
+Use ONLY the public information below. You are not told which rule is active, when any change occurred, hidden noise, or any action value.
+
+Starting prior: unless the public history below justifies a shift, treat every candidate rule as equally likely a priori (a uniform prior over the candidate rule list). Update only from the public history and public text; do not invent hidden rules, hidden noise, or evaluator Q-values.
+
+Public history (public action/outcome history): {public_history}
 Visible public text: {public_text}
 Candidate rules (text only): {candidate_rules}
 Available macro actions: {available_actions}
@@ -31,7 +34,8 @@ placeholder, not a value: replace it with something you derived from THIS input.
 
 Rules:
 - candidate_probabilities: exactly one entry per candidate rule id above; the
-  numbers lie in [0,1] and sum to 1.
+  numbers lie in [0,1] and sum to 1. Start from the uniform prior unless the
+  public history justifies a shift.
 - action_predictions: at most two entries — selected_action and, when it was a
   real alternative, the one action you compared against it. Never add a third
   and never repeat an action.
@@ -42,10 +46,11 @@ Rules:
 - observation: use only these public outcome words: accept, reject, success,
   failure, none.
 - selected_action and estimated_future_best_action must be available macro ids.
-- Derive the numbers from the public text. An answer that repeats the same
-  probabilities or the same action across different inputs, or that ignores the
-  uncertainty the public text describes, is wrong. Choose the action whose
-  expected control value best justifies its public cost.
+- Derive the numbers from the public text and public history only. Do not use
+  the active rule, hidden noise, or any evaluator Q-value. An answer that
+  repeats the same probabilities or the same action across different inputs, or
+  that ignores the uncertainty the public text describes, is wrong. Choose the
+  action whose expected control value best justifies its public cost.
 - Keep the JSON compact on one line and within the token budget.
 
 Decision procedure — apply it, and let it choose selected_action:

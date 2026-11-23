@@ -1,12 +1,29 @@
-You are controlling a gate-delivery agent. Use ONLY the public information below.
-You are not given the active rule, any shift time, hidden noise, action values or a simulator.
+You are controlling a gate-delivery agent. This is a TEXT-ONLY diagnostic: RGB/image input is deferred to a later stage and is not used here.
 
-Public history: {public_history}
+Use ONLY the public information below. You are not given the active rule, any shift time, hidden noise, action values or a simulator.
+
+Prior: uniform over every candidate rule, P(rule) = {prior} for each ({num_rules} rules). The initial rule is unknown; only the public history and text may shift it.
+
 Visible public text: {public_text}
-Candidate rules (text only): {candidate_rules}
+Public costs (per primitive step {step_cost}): {public_costs}
+
+== RULES (PAYOFF TABLE) ==
+{rules_table}
+
+== PROBE SEMANTICS ==
+PROBE_<colour> is a multi-step macro: it moves the agent to the station
+(probe_detour primitive steps), probes the card once, then returns home,
+ending with one aggregate public outcome:
+  accept = the probed colour is consistent with the active rule
+  reject = the probed colour is inconsistent
+The belief update happens once, from the aggregate outcome.
+
+== ACTION MENU ==
 Available macro actions: {available_actions}
 Candidate actions to evaluate: {candidate_actions}
-Public costs: {public_costs}
+
+== OBSERVATION HISTORY ==
+{public_history}
 
 For each candidate action, imagine each candidate rule and list the possible
 public outcomes with probabilities in [0,1] that sum to 1 per rule. Then give
@@ -36,7 +53,8 @@ placeholder, not a value: replace it with something you derived from THIS input.
 
 Rules:
 - candidate_probabilities: exactly one entry per candidate rule id above; the
-  numbers lie in [0,1] and sum to 1.
+  numbers lie in [0,1] and sum to 1. Start from the uniform prior unless the
+  public history justifies a shift.
 - action_predictions: evaluate at most two candidate actions, one task action
   and one probe action when both are available. Choose them from candidate_actions,
   include selected_action, and include each evaluated action only once.
@@ -47,10 +65,11 @@ Rules:
 - observation: use only these public outcome words: accept, reject, success,
   failure, none.
 - selected_action and estimated_future_best_action must be available macro ids.
-- Derive the numbers from the public text. An answer that repeats the same
-  probabilities or the same action across different inputs, or that ignores the
-  uncertainty the public text describes, is wrong. Choose the action whose
-  expected control value best justifies its public cost.
+- Derive the numbers from the public text and public history only. Do not use
+  the active rule, hidden noise, or any evaluator Q-value. An answer that
+  repeats the same probabilities or the same action across different inputs, or
+  that ignores the uncertainty the public text describes, is wrong. Choose the
+  action whose expected control value best justifies its public cost.
 - Keep the JSON compact on one line and within the token budget.
 
 Decision procedure — apply it, and let it choose selected_action:

@@ -62,6 +62,7 @@ PUBLIC_OBSERVATION_FIELDS: frozenset[str] = frozenset(
         "observation_id",
         "public_obs_hash",
         "public_history_hash",
+        "public_history",
         "public_text",
         "available_actions",
         "candidate_rules",

@@ -24,20 +24,28 @@ def render_outcomes_prompt(observation: PublicObservation) -> str:
     descriptions = [
         f"{rule.rule_id}: {rule.description}" for rule in observation.candidate_rules
     ]
+    rules_table = "\n".join(f"  {d}" for d in descriptions)
     candidate_actions = [
         action
         for action in observation.available_actions
         if action.startswith(("PROBE_", "COMMIT_"))
     ]
+    public_costs_str = ", ".join(
+        f"{key}={value}" for key, value in sorted(observation.public_costs.items())
+    )
+    step_cost = observation.public_costs.get("primitive_step", 1.0)
+    num_rules = len(observation.candidate_rules)
+    prior = f"1/{num_rules}"
     return template.format(
-        public_history=observation.public_text,
+        public_history=observation.public_history,
         public_text=observation.public_text,
-        candidate_rules=", ".join(descriptions),
+        rules_table=rules_table,
+        prior=prior,
+        num_rules=num_rules,
+        step_cost=step_cost,
+        public_costs=public_costs_str,
         available_actions=", ".join(observation.available_actions),
         candidate_actions=", ".join(candidate_actions),
-        public_costs=", ".join(
-            f"{key}={value}" for key, value in sorted(observation.public_costs.items())
-        ),
     )
 
 

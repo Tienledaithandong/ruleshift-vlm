@@ -20,6 +20,7 @@ def public_observation() -> PublicObservation:
         observation_id="obs-1",
         public_obs_hash="sha256:a",
         public_history_hash="sha256:b",
+        public_history="Step 1: COMMIT_RED -> reject.",
         public_text="step=5 gate=open last=reject",
         available_actions=("COMMIT_RED", "COMMIT_BLUE", "PROBE_RED", "WAIT"),
         candidate_rules=tuple(

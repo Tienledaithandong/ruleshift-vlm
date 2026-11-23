@@ -55,3 +55,16 @@ def test_template_requires_a_public_cost_tradeoff(name: str) -> None:
     assert "decision procedure" in text
     assert "probe_detour" in text
     assert "do not probe by default" in text
+
+
+@pytest.mark.parametrize("name", ["outcomes_v1.txt"])
+def test_new_input_sections_present(name: str) -> None:
+    text = (PROMPTS_DIR / name).read_text(encoding="utf-8")
+    assert "Prior: uniform over every candidate rule" in text
+    assert "RULES (PAYOFF TABLE)" in text
+    assert "PROBE SEMANTICS" in text
+    assert "multi-step macro" in text
+    assert "probe_detour primitive steps" in text
+    assert "{rules_table}" in text
+    assert "{prior}" in text
+    assert "{num_rules}" in text

@@ -38,6 +38,8 @@ class PublicCostModel:
     lockout_steps: int = 0
     remaining_horizon: int = 3
     learning_rate: float = 0.3
+    noise_floor: float = 0.02
+    relevance_decay: float = 0.01
 
     def __post_init__(self) -> None:
         if self.step_cost > 0.0:
@@ -155,7 +157,10 @@ def q_hat_from_prediction(
     """
 
     updater = HistoryConsistencyUpdater(
-        rules=tuple(belief.keys()), learning_rate=cost.learning_rate
+        rules=tuple(belief.keys()),
+        learning_rate=cost.learning_rate,
+        noise_floor=cost.noise_floor,
+        relevance_decay=cost.relevance_decay,
     )
     estimates: dict[str, float] = {}
 
@@ -207,6 +212,7 @@ class ImmediateOnlySelector:
 #: Ablation menu used by the Week 6 comparison matrix.
 ABLATION_NAMES: tuple[str, ...] = (
     "M1",
+    "M1_multi_step",
     "M1_minus_belief",
     "M1_minus_outcome",
     "M1_minus_cost",
@@ -224,6 +230,9 @@ def ablation_choose(
         raise ValueError(f"unknown ablation: {name}")
     if name == "M1_minus_selector":
         return payload.get("selected_action", "WAIT")
+
+    if name == "M1_multi_step":
+        return MultiStepValueAwareSelector().choose(payload, belief, cost)
 
     if name == "M1_minus_cost":
         free_cost = replace(
@@ -257,3 +266,135 @@ def ablation_choose(
         return ValueAwareSelector().choose(deterministic, belief, cost)
 
     return ValueAwareSelector().choose(payload, belief, cost)
+
+
+# ---------------------------------------------------------------------------
+# Multi-step Vhat: finite-horizon recursion over public predictions only.
+#
+# This is the deeper ``Vhat`` mentioned in the docstring of
+# ``q_hat_from_prediction``. It recurses over the remaining horizon: a probe
+# updates the public belief and consumes ``probe_duration`` steps; a commit
+# ends the current delivery but the agent may continue with the steps left.
+# No simulator, no oracle, no hidden transitions are used.
+# ---------------------------------------------------------------------------
+
+
+def multi_step_q_hat_from_prediction(
+    payload: dict,
+    belief: Belief,
+    cost: PublicCostModel,
+) -> dict[str, float]:
+    """Finite-horizon multi-step Vhat using only public costs and VLM
+    predictions.
+
+    Recurses over the remaining horizon. At each step the agent may probe any
+    predicted action or commit any commit action. Probe feedback updates the
+    public belief (via :class:`HistoryConsistencyUpdater`) and consumes
+    ``probe_duration`` steps; a commit consumes ``commit_duration`` (plus
+    lockout on reject) and ends the current delivery, but the agent may keep
+    acting while steps remain.
+    """
+
+    from functools import lru_cache
+
+    # Index VLM predictions by action -> rule -> {observation: p}.
+    action_models: dict[str, dict[str, dict[str, float]]] = {}
+    for prediction in payload.get("action_predictions", []):
+        action = prediction.get("action_id")
+        if not isinstance(action, str):
+            continue
+        rule_models: dict[str, dict[str, float]] = {}
+        for rule_pred in prediction.get("under_rules", []):
+            rule = rule_pred.get("rule_id")
+            obs_map: dict[str, float] = {}
+            for oc in rule_pred.get("possible_outcomes", []):
+                obs_map[oc.get("observation")] = float(oc.get("p", 0.0))
+            rule_models[rule] = obs_map
+        action_models[action] = rule_models
+
+    actions = list(action_models.keys())
+    updater = HistoryConsistencyUpdater(
+        rules=tuple(belief.keys()),
+        learning_rate=cost.learning_rate,
+        noise_floor=cost.noise_floor,
+        relevance_decay=cost.relevance_decay,
+    )
+
+    @lru_cache(maxsize=None)
+    def V(
+        belief_tuple: tuple[tuple[str, float], ...], steps_left: int
+    ) -> float:
+        if steps_left <= 0:
+            return 0.0
+        b = dict(belief_tuple)
+        best = float("-inf")
+        for action in actions:
+            total = 0.0
+            feasible = False
+            for rule, rule_prob in b.items():
+                if rule_prob <= 0.0:
+                    continue
+                for obs, p in action_models[action].get(rule, {}).items():
+                    if p <= 0.0:
+                        continue
+                    duration = _duration(action, obs, cost)
+                    if duration > steps_left:
+                        continue
+                    feasible = True
+                    reward = _immediate_reward(action, obs, cost)
+                    posterior = updater.update(b, action, obs)
+                    future = V(
+                        tuple(sorted((rule, round(p, 6)) for rule, p in posterior.items())),
+                        steps_left - duration,
+                    )
+                    total += rule_prob * p * (reward + future)
+            if feasible:
+                best = max(best, total)
+        return best if best != float("-inf") else 0.0
+
+    estimates: dict[str, float] = {}
+    horizon = cost.remaining_horizon
+    for prediction in payload.get("action_predictions", []):
+        action = prediction.get("action_id")
+        if not isinstance(action, str):
+            continue
+        total = 0.0
+        for rule_pred in prediction.get("under_rules", []):
+            rule = rule_pred.get("rule_id")
+            rule_prob = belief.get(rule, 0.0)
+            if rule_prob <= 0.0:
+                continue
+            for oc in rule_pred.get("possible_outcomes", []):
+                obs = oc.get("observation")
+                p = float(oc.get("p", 0.0))
+                if p <= 0.0:
+                    continue
+                duration = _duration(action, obs, cost)
+                if duration > horizon:
+                    continue
+                reward = _immediate_reward(action, obs, cost)
+                posterior = updater.update(belief, action, obs)
+                future = V(
+                    tuple(sorted((rule, round(p, 6)) for rule, p in posterior.items())),
+                    horizon - duration,
+                )
+                total += rule_prob * p * (reward + future)
+        estimates[action] = total
+    return estimates
+
+
+class MultiStepValueAwareSelector:
+    """Choose the macro with the highest multi-step Vhat estimate.
+
+    Unlike :class:`ValueAwareSelector` (one-step continuation), this selector
+    recurses over the finite horizon, so a probe whose information pays off
+    across several future decisions is valued correctly rather than being
+    crowded out by an immediate commit.
+    """
+
+    def choose(
+        self, payload: dict, belief: Belief, cost: PublicCostModel
+    ) -> str:
+        estimates = multi_step_q_hat_from_prediction(payload, belief, cost)
+        return max(estimates, key=estimates.get) if estimates else "WAIT"
+

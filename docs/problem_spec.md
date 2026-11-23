@@ -321,15 +321,47 @@ descriptions and public cost text. The selector may do arithmetic on
 **VLM-provided** estimates and public constants, but must not access simulator
 likelihoods, `env.copy().step`, Bayes `Q*`, oracle belief or true rules.
 
-Because probes usually have zero immediate reward, a selector using only
-`Σ_m b_hat(m) r_hat(a,m) - cost(a)` systematically undervalues probing. The
-method must estimate at least a one-step continuation value:
+### 12.1 M1 one-step selector — baseline/diagnostic, not proven effective
+
+The reference one-step selector (`ValueAwareSelector`, alias `M1`) uses
 
 ```
-Qhat(a|h) = E_{m~b_hat, o'~Phat}[ rhat(h,a,m,o') + Vhat(h + (a,o')) ]
+Qhat(a|h) = E_{m~b_hat, o'~Phat}[ rhat(h,a,m,o') + Vhat_1(h + (a,o')) ]
 ```
 
-with all `Phat`, `rhat`, `Vhat` from public constants or VLM predictions.
+with `Vhat_1` a **one-step** continuation `max_a rhat(a | posterior)`. This is a
+deliberately shallow baseline, added so that probes (zero immediate reward) are
+not systematically undervalued by pure immediate-reward arithmetic.
+
+**Known limitation, documented rather than hidden:** `Vhat_1` is added to
+*every* outcome branch, including successful commits, so future commits are
+double-counted relative to a probe whose information pays off across several
+future decisions. When both probe and commit durations fit inside the horizon,
+the continuation largely cancels and the comparison collapses to probe cost
+versus commit expected immediate reward. Consequently M1 one-step can select
+an immediate commit even when the exact finite-horizon optimum is a probe
+(see `tests/test_m1_microtasks.py::test_microtask_A_probe_valuable_but_m1_picks_commit`).
+
+Because of this, M1 one-step is presented as a **baseline/diagnostic** for
+Week 1-2 development, not as a claim of an effective probe-vs-task method.
+`Delta_probe` and probe-vs-commit conclusions must not be drawn from M1 one-step
+results alone.
+
+### 12.2 Multi-step Vhat — experimental, diagnostics only
+
+`MultiStepValueAwareSelector` (ablation `M1_multi_step`) replaces `Vhat_1` with
+a finite-horizon recursion `V(b, steps_left)` over public predictions only:
+probe feedback updates the public belief and consumes `probe_duration` steps;
+a commit consumes `commit_duration` (+ lockout on reject) but the agent may
+keep acting while steps remain. No simulator likelihood, no oracle, no hidden
+transitions are used.
+
+This ablation is included in the Week 6 comparison matrix (`ABLATION_NAMES`)
+so that its behavior can be measured against M1 one-step on dev scenarios with
+hand-computed exact optima. It remains **experimental**: outcomes are assumed
+fixed from the initial VLM payload (no re-query per recursion step), and the
+belief updater is a soft heuristic that does not model feedback noise or
+staleness after a shift (see section 15 Q4).
 
 ---
 

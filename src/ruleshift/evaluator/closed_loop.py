@@ -12,7 +12,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, Sequence
 
 from ruleshift.agents.baselines import NeverProbePolicy, RandomProbePolicy
 from ruleshift.agents.cache import ResponseCache
@@ -32,9 +32,6 @@ from ruleshift.evaluator.metrics_ci import PairedSummary, summarize_paired
 from ruleshift.public_api.interface import PublicObservation
 from ruleshift.public_api.schemas import MACRO_ACTIONS_FROZEN
 
-MAX_DECISIONS = 12
-#: Preregistered per-episode VLM call cap (configs/preregistered_test.yaml).
-#: Extra samples and re-tries count toward it; it applies to every method.
 DEFAULT_VLM_CALL_CAP = 6
 _RULES = ("red", "blue", "green")
 
@@ -231,6 +228,20 @@ def build_family_a_scenarios() -> tuple[tuple[str, EnvConfig], ...]:
     return tuple(scenarios)
 
 
+def _clamp_action(action: str, available_actions: Sequence[str]) -> tuple[str, bool]:
+    """Clamp a predicted action to the environment's current public menu.
+
+    Returns ``(action, invalid)``. An action that is not in ``available_actions``
+    is replaced with ``WAIT`` and flagged invalid so the runner can count it as a
+    neutral, budget-neutral decision instead of letting a cross-menu action leak
+    into the environment's step loop.
+    """
+
+    if action in available_actions:
+        return action, False
+    return "WAIT", True
+
+
 def run_episode(
     config: EnvConfig,
     method_name: str,
@@ -264,7 +275,7 @@ def run_episode(
     latency = 0.0
     cap_hits = 0
 
-    for decision in range(MAX_DECISIONS):
+    for decision in range(config.max_env_steps):
         observation = env.public_view()
         if calls >= max_vlm_calls_per_episode:
             action = "WAIT"
@@ -279,9 +290,14 @@ def run_episode(
             used_input = int(getattr(method, "last_input_tokens", 0))
             used_output = int(getattr(method, "last_output_tokens", 0))
             used_latency = float(getattr(method, "last_latency_ms", 0.0))
-        if action not in MACRO_ACTIONS_FROZEN:
-            action = "WAIT"
+        # A method may emit an action that is valid on some families but not on
+        # the family the environment advertises. Clamp to the public menu and
+        # count the miss as an invalid (neutral) action rather than letting it
+        # land as a silent WAIT with no decision credit.
+        clamped_action, action_invalid = _clamp_action(action, observation.available_actions)
+        if action_invalid:
             invalid += 1
+        action = clamped_action
         obs, reward, terminated, truncated, info = env.step(action)
         total += reward
         method.record(action, _last_outcome(env.public_view().public_text))

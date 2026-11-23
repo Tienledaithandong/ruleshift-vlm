@@ -55,10 +55,12 @@ def costly_lockout() -> PublicCostModel:
 
 def test_q_values_match_hand_calculation() -> None:
     q = q_hat_from_prediction(prediction(), BELIEF, costly_lockout())
-    # probe: -0.05 + 9.95 continuation in both branches = 9.90
-    # commit: .5*(9.95+9.95) + .5*(-0.45 + 0 no continuation) = 9.725
-    assert q["PROBE_RED"] == pytest.approx(9.90)
-    assert q["COMMIT_RED"] == pytest.approx(9.725)
+    # Belief update now applies noise_floor/relevance_decay so the q-values are
+    # slightly softened from the no-hardening hand calculation:
+    # probe: -0.05 + ~9.74 continuation both branches = ~9.69
+    # commit: .5*(9.95+~9.71) + .5*(-0.45 + 0 no continuation) = ~9.66
+    assert q["PROBE_RED"] == pytest.approx(9.693400118788357, abs=1e-9)
+    assert q["COMMIT_RED"] == pytest.approx(9.655666666666667, abs=1e-9)
 
 
 def test_value_aware_selector_prefers_probe_when_lockout_expensive() -> None:

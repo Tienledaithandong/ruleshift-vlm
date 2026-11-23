@@ -211,10 +211,11 @@ class RuleShiftEnv(Env):
         return FAMILY_A_ACTIONS[index] if 0 <= index < len(FAMILY_A_ACTIONS) else "WAIT"
 
     def _gate_travel(self) -> int:
-        """Public Manhattan distance from the start tile to the gate tile."""
+        """Public Manhattan distance from the agent's current position to the gate tile."""
 
-        (sx, sy), (gx, gy) = self.geometry.start, self.geometry.gate
-        return abs(gx - sx) + abs(gy - sy)
+        assert self._state is not None
+        (x, y), (gx, gy) = self._state.position, self.geometry.gate
+        return abs(gx - x) + abs(gy - y)
 
     def _render_state(self) -> RenderState:
         assert self._state is not None

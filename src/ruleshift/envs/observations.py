@@ -91,10 +91,20 @@ def build_public_observation(
         "deliveries": state.deliveries,
         "steps": state.steps,
     }
+
+    history_steps = []
+    for index, (action, detail, outcome) in enumerate(history, start=1):
+        token = f"{action.upper()}"
+        if detail:
+            token = f"{token} {detail.upper()}"
+        history_steps.append(f"Step {index}: {token} -> {outcome or 'none'}")
+    public_history = "; ".join(history_steps) if history_steps else "no prior steps"
+
     return PublicObservation(
         observation_id=f"obs-{state.steps}",
         public_obs_hash=digest(state_payload),
         public_history_hash=digest(list(history)),
+        public_history=public_history,
         public_text=build_public_text(geometry, state, last_outcome),
         available_actions=tuple(available_actions),
         candidate_rules=tuple(
