@@ -38,8 +38,9 @@ from ruleshift.public_api.interface import CandidateRule
 from .config import GridConfig
 from .entities import GridMap, GridScenario
 from .mapgen import generate_solvable_map
-from .noise import draw_move
+from .noise import draw_inspect, draw_move
 from .rules import sample_scenario
+from .tools import inspect_cell, read_sign, sign_side, tool_cost, validate_tool_action
 
 _PIXELS_PER_CELL = 16
 
@@ -63,6 +64,24 @@ class GridState:
 
 def _manhattan(a: Coord, b: Coord) -> int:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def _inspect_target_available(
+    public: PublicGridMap, position: Coord, config: GridConfig
+) -> bool:
+    """Whether any marker/key/door cell is within INSPECT reach."""
+
+    candidates = list(public.markers.values())
+    if public.key is not None:
+        candidates.append(public.key)
+    if public.door is not None:
+        candidates.append(public.door)
+    return any(
+        0 <= coord[0] < public.width
+        and 0 <= coord[1] < public.height
+        and _manhattan(position, coord) <= config.inspect_range
+        for coord in candidates
+    )
 
 
 class GridEnv(Env):
@@ -190,10 +209,7 @@ class GridEnv(Env):
             return self._obs(), 0.0, self._state.terminated, self._state.truncated, self._info()
 
         if grid_action.kind in GRID_TOOL_ACTIONS:
-            # Task 5 implements the epistemic tools; for now the action is
-            # rejected without consuming a physical step.
-            self._state.last_outcome = "tool_not_available"
-            return self._obs(), 0.0, self._state.terminated, self._state.truncated, self._info()
+            return self._apply_tool(grid_action)
 
         if grid_action.kind not in self._action_mask():
             self._state.last_outcome = "invalid_action"
@@ -272,6 +288,76 @@ class GridEnv(Env):
         self._maybe_shift()
         self._check_truncation()
         return self._finish(action.kind, reward)
+
+    def _apply_tool(
+        self, action: GridAction
+    ) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+        """Execute one epistemic tool call without advancing physical time."""
+
+        config = self._episode_config
+        state = self._state
+        public = self._grid_map.public
+        kind = action.kind
+        errors = validate_tool_action(
+            kind,
+            action.target,
+            state.position,
+            public,
+            state.tool_budget,
+            config,
+        )
+        if errors:
+            # Budget exhaustion is the binding rejection reason even when the
+            # target is also invalid, so callers can distinguish it cleanly.
+            reason = (
+                "insufficient_budget"
+                if "insufficient_budget" in errors
+                else errors[0]
+            )
+            state.last_outcome = f"rejected:{reason}"
+            info = self._info()
+            info["tool_rejected"] = reason
+            return (
+                self._obs(),
+                0.0,
+                state.terminated,
+                state.truncated,
+                info,
+            )
+
+        cost = tool_cost(kind, config)
+        state.tool_budget -= cost
+        rule = self._rule_object(self._active_rule)
+        # A tool call is one decision; history length keeps its semantic draws
+        # distinct without consuming a physical step.
+        draw_index = len(self._history)
+        if kind == "INSPECT":
+            target = (int(action.target[0]), int(action.target[1]))
+            result = inspect_cell(
+                public,
+                rule,
+                target,
+                draw_inspect(self._rng, draw_index),
+                int(draw_inspect(self._rng, draw_index, attempt=1) * 3),
+                config,
+            )
+            detail = f"({target[0]},{target[1]})"
+        else:
+            side = sign_side(state.position, public.signpost)
+            result = read_sign(rule, side, config)
+            detail = f"side{side}"
+
+        state.last_outcome = kind.lower()
+        info = self._info()
+        info["last_tool_value"] = result.value
+        self._history.append((kind, detail, state.last_outcome))
+        return (
+            self._obs(),
+            0.0,
+            state.terminated,
+            state.truncated,
+            info,
+        )
 
     @staticmethod
     def _sample_outcome(outcomes: dict[Coord, float], draw: float) -> Coord:
@@ -365,9 +451,25 @@ class GridEnv(Env):
     # ------------------------------------------------------------------
 
     def _action_mask(self) -> tuple[str, ...]:
-        # Task 5 enables INSPECT/READ_SIGN; Task 4 exposes physical actions
-        # (including INTERACT) only.
-        return tuple(GRID_PHYSICAL_ACTIONS)
+        # Tools join the mask only when there is a legal, affordable use.
+        mask = list(GRID_PHYSICAL_ACTIONS)
+        if self._state is None or self._grid_map is None:
+            return tuple(mask)
+        state = self._state
+        public = self._grid_map.public
+        config = self._episode_config
+        if (
+            state.tool_budget >= config.inspect_cost
+            and _inspect_target_available(public, state.position, config)
+        ):
+            mask.append("INSPECT")
+        if (
+            public.signpost is not None
+            and state.tool_budget >= config.read_sign_cost
+            and _manhattan(state.position, public.signpost) == 1
+        ):
+            mask.append("READ_SIGN")
+        return tuple(mask)
 
     def _obs(self) -> Any:
         view = self.public_view()
