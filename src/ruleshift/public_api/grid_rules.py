@@ -203,6 +203,27 @@ def sign_clause(rule: GridRule, side: int) -> str:
     return rule.sign_clauses[side]
 
 
+def sign_side(position: Coord, signpost: Coord | None) -> int:
+    """Which face of the signpost an orthogonally adjacent agent reads.
+
+    ``0`` for the south/west faces, ``1`` for east and ``2`` for north. This is
+    the public counterpart of the simulator helper: agents can map a position
+    to a sign face without importing the simulator. Raises ``ValueError``
+    unless the agent is orthogonally adjacent to the signpost.
+    """
+
+    if signpost is None:
+        raise ValueError("no signpost")
+    dx, dy = position[0] - signpost[0], position[1] - signpost[1]
+    if (dx, dy) == (0, -1):
+        return 2
+    if (dx, dy) == (1, 0):
+        return 1
+    if (dx, dy) in ((0, 1), (-1, 0)):
+        return 0
+    raise ValueError("position must be orthogonally adjacent to the signpost")
+
+
 def rules_consistent_with_clause(side: int, clause: str) -> tuple[str, ...]:
     """Rule ids whose ``side`` clause matches ``clause`` exactly."""
 
@@ -308,4 +329,5 @@ __all__ = [
     "rules_consistent_with_all_clauses",
     "rules_consistent_with_clause",
     "sign_clause",
+    "sign_side",
 ]
