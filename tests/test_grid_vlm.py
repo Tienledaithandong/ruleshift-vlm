@@ -137,5 +137,12 @@ def test_policy_tolerates_raw_dict_observations():
     assert find_forbidden_fields(policy.last_public_row()) == []
 
 
+def test_record_works_without_explicit_reset():
+    policy = GridVLMPolicy(GridStubBackend(), config=GridVLMConfig(model_id="stub-grid-v0"))
+    assert policy.advisor_calls == 0
+    policy.record(GridAction("UP"), observation(), 0.0, {})
+    assert policy.last_public_row()["advisor_calls"] == 0
+
+
 def test_prompt_version_is_pinned():
     assert GRID_PROMPT_VERSION == "grid_v1"

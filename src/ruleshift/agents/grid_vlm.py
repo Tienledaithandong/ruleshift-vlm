@@ -333,6 +333,7 @@ class GridVLMPolicy:
         self._reset_counters()
 
     def _reset_counters(self) -> None:
+        self.advisor_calls = 0
         self.output_tokens = 0
         self.input_tokens = 0
         self.latency_ms = 0.0
@@ -350,7 +351,6 @@ class GridVLMPolicy:
 
     def reset(self, observation: Any, info: dict[str, Any]) -> None:
         self._reset_counters()
-        self.advisor_calls = 0
         self._last_row = {}
 
     def _prompt_version(self) -> str:
