@@ -113,13 +113,18 @@ Add, do not mutate:
 - `GRID_PHYSICAL_ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT", "INTERACT")`
 - `GRID_TOOL_ACTIONS = ("INSPECT", "READ_SIGN")`
 - `GRID_ACTIONS = GRID_PHYSICAL_ACTIONS + GRID_TOOL_ACTIONS`
+- `GRID_ACTIONS_FROZEN = frozenset(GRID_ACTIONS)`
 - `GRID_RULE_IDS` for the new rule hypotheses.
 - `GRID_PUBLIC_OBSERVATION_FIELDS` for the optional image payload.
+- `ALL_ACTIONS = MACRO_ACTIONS + GRID_ACTIONS` only for the new grid prompt
+  and the new grid validator.
 
-`MACRO_ACTIONS` becomes the union of the existing macro ids and
-`GRID_ACTIONS`. Existing environments continue to advertise only their own
-subset through `PublicObservation.available_actions`, so their tests and
-behaviour are unchanged.
+`MACRO_ACTIONS` stays exactly as it is. Existing validators, including
+`validate_structured_vlm_output`, keep accepting only the Family A/B macro set.
+The grid has its own `validate_grid_vlm_output` and its own accepted action
+set. This is deliberate: widening the global macro set would let a Family A
+response legally emit `"UP"`, which the closed-loop runner would then clamp and
+count as invalid. Do not do that.
 
 Do not add an image field to `PublicObservation`. Add a separate
 `GridPublicObservation` that carries the existing public fields plus:
@@ -156,44 +161,70 @@ functions, not a breaking rewrite.
   BFS from start to goal under the base rule, with the key and door reachable
   and at least one safe route that does not require crossing a lethal cell.
 - Public geometry is fixed for an episode and shared by every compared method.
-- The hidden rule, shift time, noise draws, and true cell properties are not
-  part of the public map.
+- **Public:** wall positions, tile appearance (colour/shape), start/goal
+  locations, key/door/signpost locations, the agent, the HUD, public costs, and
+  the public history.
+- **Hidden:** which appearance class is currently safe/goal/hazard, which key
+  opens which door, the shift time, noise draws, and true cell properties.
+- A rule shift never repaints the map. A3 swaps the *semantics* of the same
+  visible tiles; it does not swap the icons. The agent must infer the new
+  meaning from interaction outcomes, tool evidence, and the signpost.
+- Solvability is checked under every hypothesis in the finite Tier A set, not
+  only under the base rule. The generator rejects maps that are unwinnable
+  under any hypothesis and logs the rejection rate. This keeps the oracle upper
+  bound and success-rate comparisons meaningful.
 
 ### 3.2 Entities
 
 - `Agent`: position, health, inventory.
 - `Wall`: blocks movement.
-- `Goal`: episode success when reached (or when the door is opened and the
-  goal is reached, depending on the map).
-- `Hazard`: soft damage in Tier A; lethal only in Tier B and only when
+- `Appearance class`: a visible colour/shape tile. The renderer shows the
+  appearance, never the semantic label. For example, a red tile and a blue tile
+  are visible; which one is the goal is rule-dependent.
+- `Goal tile`: the appearance class that currently completes the episode. The
+  agent learns this from reward or interaction, not from a "goal" icon.
+- `Hazard tile`: soft damage in Tier A; lethal only in Tier B and only when
   `INSPECT` is available.
-- `Key`: opens the matching door.
-- `Door`: locked until the matching key is used.
-- `Signpost`: a public text/icon surface for partial, possibly ambiguous
-  evidence. It is not an oracle.
+- `Key`: a visible colour. Which door it opens is hidden and rule-dependent.
+- `Door`: a visible colour. The required key is hidden and rule-dependent.
+- `Signpost`: a visible icon whose text is illegible in the 224x224 frame.
+  `READ_SIGN` is the only way to read a clause. It is not an oracle.
 - `HUD`: public status line (health, inventory, steps, tool budget); it never
   shows the hidden rule.
 
 ### 3.3 Actions and budget
 
+**One decision is one action.** A decision is either a physical action or a
+tool call, never both at once. A physical action advances the environment step
+counter by one. A tool call does not advance the environment step counter; it
+returns a new observation, and the agent decides again. This keeps the MDP and
+the budget accounting unambiguous.
+
 Physical actions cost one environment step:
 
 `UP`, `DOWN`, `LEFT`, `RIGHT`, `INTERACT`
 
-Epistemic tools cost one tool-budget unit, not an environment step:
+Epistemic tools cost tool-budget units, not environment steps:
 
-- `INSPECT(x, y)`: reveal one hidden cell property (hazard/key/door) with a
-  documented sensor error rate; out-of-range or already-inspected cells are
-  rejected or charged according to the public rule.
-- `READ_SIGN()`: return the signpost/HUD text visible at the current position,
-  or a partial clause if the sign is multi-part. The result may be ambiguous.
+- `INSPECT(x, y)`: reveal one hidden semantic property of a cell (current
+  hazard/goal role, or a door's required key) with a documented sensor error
+  rate. The target must be within public Manhattan range 2 of the agent. Cost:
+  2 tool units. The same cell may be inspected again only by paying again.
+- `READ_SIGN()`: the agent must be adjacent to the signpost. It returns one
+  clause from one side of the sign, not the whole rule. Cost: 1 tool unit. The
+  sign has two or three sides; reading another side requires moving around the
+  sign and paying again. The result may be ambiguous.
+- The public tool budget is 3 units per episode. `INSPECT` therefore cannot be
+  used to scan the whole map, which preserves the Tier B risk story.
 
 Total budget for every method:
 
 ```
-TotalCost = N_env_steps + lambda * (N_tool_calls + N_advisor_calls)
+TotalCost = N_env_steps + lambda * (tool_units_used + N_advisor_calls)
 ```
 
+`tool_units_used` is the sum of the public tool costs (`INSPECT` 2,
+`READ_SIGN` 1), not the raw call count. An advisor call costs one unit.
 `lambda` is fixed before the first comparison run and is part of the public
 cost description. Tool calls are logged separately from environment steps.
 
@@ -204,8 +235,12 @@ cost description. Tool calls are logged separately from environment steps.
 - `reset(*, seed=None, options=None) -> (observation, info)`
 - `step(action) -> (observation, reward, terminated, truncated, info)`
 - `render() -> np.ndarray | None`
-- `action_space`: `spaces.Discrete(len(GRID_ACTIONS))` with an action mask in
-  the observation/info.
+- `action_space`: `spaces.Dict({"kind": spaces.Discrete(len(GRID_ACTIONS)),
+  "target": spaces.MultiDiscrete([width, height])})`. `target` is ignored for
+  every action except `INSPECT`. The observation/info carries an action mask.
+- `step()` accepts a `GridAction(kind, target=None)` or the equivalent dict.
+  A physical action increments `env_steps`; a tool action does not.
+  `max_env_steps` counts physical steps only.
 - `observation_space`: a `spaces.Dict` for symbolic mode, or `spaces.Box` for
   visual mode.
 
@@ -224,10 +259,14 @@ action mask. Runs thousands of episodes per second on CPU.
 
 **Visual-semantic (Tier B).** A `224 x 224` RGB frame with:
 
-- distinct icons for agent, wall, goal, hazard, key, door, signpost;
+- distinct appearance classes for agent, wall, goal tile, hazard tile, key,
+  door, and signpost. The render shows colour/shape, not a semantic label;
 - a Set-of-Mark coordinate grid so the VLM can name `(x, y)` for `INSPECT`;
 - a HUD with health, inventory, steps, and tool budget;
-- no pixel that encodes the hidden rule except the public signpost/HUD text.
+- a signpost icon whose text is blurred/illegible at this resolution;
+  `READ_SIGN` is the only way to read a clause;
+- no pixel that encodes the hidden rule. Tile appearance is stable across
+  shifts; only the hidden semantics change.
 
 The renderer is deterministic for a given public state and seed.
 
@@ -235,17 +274,25 @@ The renderer is deterministic for a given public state and seed.
 
 ## 4. Rule shifts
 
-Each episode samples one hidden rule `r*` from a finite hypothesis set. A
-single shift may occur at a hidden time `t_shift`; no-shift control episodes
-use the same maps and noise. Every rule is stochastic; no rule is detectable
-by a single deterministic residual.
+Two scenario types share the same maps, noise, and agent-facing prompt:
+
+- **Identification:** `r*` is sampled at `t=0` from the finite hypothesis set;
+  no shift occurs. This measures initial rule identification and calibration.
+- **Change detection:** the episode starts under the base rule `r0`, then one
+  shift to `r*` occurs at a hidden `t_shift`. **No-shift controls** are the
+  same generative process with no shift sampled. The agent is told the shift
+  window and the hazard rate, but not whether this episode contains a shift.
+  This is what makes false alarms measurable.
+
+Every rule is stochastic; no rule is detectable by a single deterministic
+residual.
 
 | Family | Rule | Mechanism | What the agent can observe | Intended probe |
 |---|---|---|---|---|
 | A1 | Control Remap | Movement keys are remapped (swap or rotate). | Intended vs actual displacement, with slip noise. | Try one safe move and compare likelihoods of the mappings. |
 | A2 | Slippery / Inertia | Baseline slip probability rises; movement may slide two cells or until a wall. | Displacement distribution, not a guaranteed offset. | Probe toward open space, never toward a suspected hazard. |
-| A3 | Hazard/Goal Swap | Hazard and goal semantics swap; key/door colours may swap. | Reward/damage and interaction outcome. | Soft-hazard probe in Tier A; `INSPECT` in Tier B. |
-| B4 | Signpost Composition | The rule is a composition of clauses hinted by the signpost/HUD (e.g. key colour + floor condition). | Partial, ambiguous text/icon; transition evidence. | `READ_SIGN` plus `INSPECT` plus physical evidence; no single call solves it. |
+| A3 | Hazard/Goal Swap | The semantics of the same visible tiles swap; key/door colours may swap meaning. Appearance does not change. | Reward/damage and interaction outcome. | Soft-hazard probe in Tier A; `INSPECT` in Tier B. |
+| B4 | Signpost Composition | The rule is a composition of clauses; the sign gives one clause per side, and at least one clause must be inferred from transition evidence. | Partial, ambiguous text/icon; transition evidence. | `READ_SIGN` plus `INSPECT` plus physical evidence; no single call solves it. |
 
 ### 4.1 Stochasticity parameters (initial defaults)
 
@@ -256,8 +303,10 @@ These are builder calls, not frozen values:
 - `INSPECT` sensor error: `0.05` false positive / `0.05` false negative;
 - `READ_SIGN` ambiguity: one clause is hidden or one clause has two plausible
   readings;
-- shift hazard: one shift per episode with probability `p_shift`; no-shift
-  controls use `p_shift = 0`;
+- shift hazard: one shift per episode with probability `p_shift`; the
+  agent-facing prior is the same for shift and no-shift episodes, so the agent
+  never receives a "this is a control" label. No-shift controls are a dataset
+  slice, not a different prompt;
 - soft hazard damage: `-2` reward and one-step recovery, not death, in Tier A;
 - lethal trap: Tier B only, and only on maps where `INSPECT` is available.
 
@@ -276,16 +325,24 @@ free-form rule.
 
 ### 4.3 Detection is probabilistic
 
-The agent maintains `b_t(h)`, a belief over hypotheses. A transition residual is
-not a shift flag. The update uses the public observation likelihood:
+The agent maintains a belief over `(h, tau)`, where `h` is a hypothesis and
+`tau` is the last shift time (`None` before any shift). The shift window and
+hazard rate are public; the exact time is hidden. For change-detection
+episodes the update is a hazard-rate change-point filter:
 
 ```
-b_{t+1}(h) proportional to P(o_t | s_t, a_t, h) * b_t(h)
+b_{t+1}(h, tau) proportional to
+  P(o_t | s_t, a_t, h) *
+  [ (1 - p_shift) * b_t(h, tau)
+    + p_shift * prior(h) * 1(tau = t) ]
 ```
 
-with a small prior probability of a shift at each step. The trigger is a
-calibrated statistic (posterior entropy, likelihood ratio, or surprise), not
-`actual_pos != predicted_pos`. False alarms are measured on no-shift episodes.
+For identification episodes the filter is static over `h` only. The exact
+state space is `|H| x (T + 1)`, which is small enough to enumerate in Tier A.
+A transition residual is not a shift flag. The trigger is a calibrated
+statistic (posterior entropy, likelihood ratio, or surprise), not
+`actual_pos != predicted_pos`. False alarms are measured on no-shift episodes
+that share the same agent-facing prior.
 
 ### 4.4 Active probing
 
@@ -303,9 +360,14 @@ tools/actions and the selector scores them with the same public objective.
 
 ### 4.5 Belief to control
 
-- **Tier A reference planner:** A* on the highest-probability hypothesis, with
-  the public map and the public action costs. A* is a reference, not the only
-  planner.
+- **Tier A reference planner:** exact change-point belief plus A* on the
+  highest-probability hypothesis, with the public map and the public action
+  costs. This is a point-estimate reference, **not** a full Bayes-optimal POMDP
+  policy. A* is a reference, not the only planner.
+- **Exact Q* scope:** `grid_reference.py` computes Q* only for small microtasks
+  (for example 5 x 5, two hypotheses, short horizon) used in unit tests. It is
+  not the benchmark-scale solver. Do not call the point-estimate baseline
+  "Bayes-optimal".
 - **Planner interface:** a `DynamicsModel` protocol with
   `predict_proba(state, action)` and `sample(state, action, rng)`. A* uses a
   hand-coded implementation of that protocol; a learned MLP/CNN world model can
@@ -337,10 +399,15 @@ Bayes belief, Q*, or oracle return.
 A structured JSON object with:
 
 - `hypothesis_probabilities`: one entry per candidate hypothesis;
-- `tool_call`: `INSPECT(x, y)`, `READ_SIGN`, or `NONE`;
-- `action`: one legal physical action;
+- `action`: one legal grid action, which may be a physical action or a tool
+  call (`INSPECT` or `READ_SIGN`);
+- `tool_target`: optional `(x, y)`, required only for `INSPECT`;
 - `predicted_outcomes`: optional per-hypothesis outcome probabilities;
 - `confidence`: optional scalar, used only for calibration diagnostics.
+
+One output is one decision. A tool result returns a new observation before the
+next decision; the VLM does not choose a tool and a physical action
+simultaneously.
 
 The parser rejects unknown fields and privileged names. The cache key includes
 the image hash, public history hash, action mask, prompt version, and model
@@ -348,14 +415,19 @@ revision.
 
 ### 5.3 Tool semantics
 
-- `INSPECT(x, y)` reveals one hidden property with sensor noise; it does not
-  reveal the rule.
-- `READ_SIGN()` returns one clause or an ambiguous reading; it does not reveal
-  the complete rule.
-- The signpost is placed so that reaching it costs physical steps and the
-  information is partial. A scripted "read sign at t=0, then walk to goal"
-  policy must fail or underperform on the held-out maps; this is an explicit
-  acceptance test.
+- `INSPECT(x, y)` reveals one hidden semantic property with sensor noise; it
+  does not reveal the rule. It is range-limited and budget-limited, so it
+  cannot scan the whole map.
+- `READ_SIGN()` requires adjacency and returns one clause from one side of the
+  sign. The text is not legible in the frame; `READ_SIGN` is the only way to
+  read it. The sign has two or three sides, and reading another side requires
+  moving around the sign and paying again.
+- The full rule is a composition. At least one clause must be inferred from
+  transition evidence; the sign never reveals the complete rule, even if every
+  side is read.
+- The signpost is placed so that reaching it costs physical steps. A scripted
+  "read one side at t=0, then walk to goal" policy must fail or underperform on
+  the held-out maps; this is an explicit acceptance test.
 - Tool calls are charged once, in the same total-cost stream as environment
   steps.
 
@@ -375,33 +447,50 @@ revision.
 
 - At least 100 random maps for development and 100 held-out maps for
   evaluation; 5 seeds per map.
+- Two scenario types: identification (rule sampled at `t=0`, no shift) and
+  change detection (base rule then one shift). No-shift controls are
+  change-detection episodes with no shift sampled; the agent-facing prompt is
+  identical.
 - Four shift families plus no-shift controls.
-- Shift times sampled inside a fixed window; the window is public, the exact
-  time is hidden.
+- Shift times sampled inside a fixed window; the window and hazard rate are
+  public, the exact time is hidden.
 - Held-out maps use different seeds, sizes, and wall densities from
-  development.
+  development. Every map passes solvability under every Tier A hypothesis.
 
-### 6.2 Baselines (all with the same total budget)
+### 6.2 Baselines (same physical-step cap and tool budget)
 
 1. **No-Adaptation:** A* with the base rule for the whole episode.
-2. **Uncertainty-Gated Action Advice:** on a detected discrepancy, ask an
-   advisor for one action; no belief update.
+2. **Uncertainty-Gated Action Advice:** on a detected discrepancy, ask a
+   **public** advisor for one action. The advisor sees only public state, does
+   not reveal the rule, and does not update the agent's belief. Each call costs
+   `lambda` in the total-cost metric. A privileged oracle advisor is reported
+   separately as an upper bound, never as a baseline.
 3. **Random Probing:** on a detected discrepancy, take one or two random
    probes, then update.
 4. **Info-Gain Probing:** the proposed method; choose the probe with maximum
    expected information gain per cost, subject to safety.
 5. **Oracle:** knows the shifted rule at `t_shift`; upper bound, evaluator-only.
-6. **Bayes-optimal Tier A reference:** exact belief plus A*; reference for
-   detection and planning.
+6. **Exact-belief + A* reference:** exact change-point belief plus A*
+   point-estimate planning; reference for detection and planning. This is not
+   a full POMDP policy; the exact Q* microtask reference is separate.
 7. **VLM-only and VLM+tools:** Tier B ablations.
 
-### 6.3 Metrics
+### 6.3 Reward, budget, and metrics
+
+The reward is the same currency for every method: goal `+10`, physical step
+`-0.05`, soft hazard `-2` with one-step recovery, lethal trap `-10` and
+termination in Tier B. `max_env_steps` is `60` for `7 x 7` and `90` for
+`9 x 9`. All methods share the same physical-step cap and the same tool
+budget. `TotalCost` is a reported efficiency metric, **not** an episode
+termination rule. This avoids giving No-Adaptation extra physical steps and
+confounding the probing comparison.
 
 Log from day one:
 
-- success rate before the step limit;
+- success rate before `max_env_steps`;
+- undiscounted return;
 - adaptation steps from `t_shift` to the first correct-rule decision;
-- total cost (`env_steps + lambda * tool_calls`);
+- total cost (`env_steps + lambda * (tool_units_used + advisor_calls)`);
 - false alarm rate on no-shift episodes;
 - detection delay and detection precision/recall;
 - calibration: Brier score and expected calibration error for shift
@@ -418,6 +507,8 @@ Log from day one:
 - Paired scenario-level bootstrap confidence intervals; resample scenarios,
   never individual steps or frames.
 - Report all seeds, not only the best.
+- Calibrate the shift trigger only on validation; report false alarms on the
+  no-shift controls and detection delay on the shifted episodes separately.
 - Pre-register the primary metric and the shift/no-shift split before the
   held-out run.
 - Keep `configs/preregistered_test.yaml` at `DRAFT_NOT_FROZEN` until a real
@@ -439,22 +530,26 @@ Log from day one:
 
 ### Phase 1 — Tier A symbolic (Weeks 1-2)
 
-- `GridConfig`, map generator, solvability check.
-- Entities, actions, stochastic transitions, soft hazards.
+- `GridConfig`, map generator, all-hypothesis solvability check.
+- Entities, appearance classes, actions, stochastic transitions, soft hazards.
 - Rules A1-A3 and the finite hypothesis set.
-- Bayesian belief update, entropy/likelihood trigger.
-- A* reference planner and `DynamicsModel` protocol.
-- Baselines 1-4 and oracle.
-- Metrics, paired CIs, smoke script, tests.
+- Change-point belief update, entropy/likelihood trigger.
+- Exact-belief + A* reference, `DynamicsModel` protocol, Q* only for microtasks.
+- Public advisor, baselines 1-4, oracle.
+- Matched physical-step and tool budgets; metrics, paired CIs, smoke script,
+  tests.
 
 ### Phase 2 — Visual and tools (Weeks 2-3)
 
-- 224x224 renderer with Set-of-Mark and HUD.
-- `INSPECT` / `READ_SIGN` semantics and costs.
-- `GridPublicObservation` with image.
-- Frozen-VLM prompt, parser, cache, permission checks.
+- 224x224 renderer with Set-of-Mark and HUD; illegible signpost icon.
+- `INSPECT` / `READ_SIGN` semantics, range, adjacency, and costs.
+- `GridPublicObservation` with image and action mask.
+- Frozen-VLM prompt with one action per decision; parser, cache, permission
+  checks.
 - Signpost-shortcut acceptance test.
-- Tier B smoke on a small map subset.
+- Tier B smoke on a small map subset, run on the existing Kaggle path. Local
+  CI uses the stub backend and parser/permission tests only; a real-VLM run is
+  a remote gate, not a local requirement.
 
 ### Phase 3 — Learned planner (after Tier A is validated)
 
@@ -470,16 +565,21 @@ Log from day one:
 The addition is acceptable only when:
 
 1. The existing 217 tests still pass unchanged.
-2. New tests cover map solvability, stochastic transitions, soft hazards,
-   partial signposts, tool costs, budget accounting, belief updates, action
-   masks, renderer determinism, and the agent/evaluator permission boundary.
+2. New tests cover all-hypothesis map solvability, stochastic transitions,
+   soft hazards, partial signposts, tool range/adjacency/costs, budget
+   accounting, one-action-per-decision semantics, change-point belief updates,
+   action masks, renderer determinism, and the agent/evaluator permission
+   boundary.
 3. A no-shift control produces a measurable false-alarm rate, and a
    deterministic-residual detector is explicitly shown to be inadequate.
-4. A scripted signpost-only policy fails or underperforms on held-out maps.
+4. A scripted signpost-only policy fails or underperforms on held-out maps,
+   even if it reads every side of the sign.
 5. `INSPECT` improves outcomes only when its cost is included in the total.
-6. Tier A smoke runs at least 100 maps x 5 seeds for every baseline.
+6. Tier A smoke runs at least 100 maps x 5 seeds for every baseline with
+   matched physical-step and tool budgets.
 7. Tier B smoke produces valid JSON with a real frozen VLM and no privileged
-   leakage.
+   leakage on the Kaggle path; local CI only needs the stub, parser, and
+   permission tests.
 8. No generated result is presented as a scientific finding before
    preregistration and a real validation run.
 
@@ -491,13 +591,25 @@ These are sensible defaults; the human can override them before
 implementation:
 
 - default grid `7 x 7`, stress `9 x 9`;
+- public appearance, hidden semantics; a shift never repaints the map;
+- one action per decision; tools return a new observation without advancing
+  the environment step counter;
+- change-point belief over `(hypothesis, shift time)`; public window and hazard
+  rate, hidden exact time;
+- exact-belief + A* reference; Q* only for microtasks; no full POMDP solver;
+- all-hypothesis solvability for Tier A maps;
+- public advisor baseline; privileged oracle advisor only as an upper bound;
 - baseline slip `0.10`, slippery slip `0.80`;
-- `INSPECT` error `0.05`, `READ_SIGN` cost `2` tool units;
+- `INSPECT` error `0.05`, range 2, cost 2 tool units; `READ_SIGN` cost 1 tool
+  unit, adjacency required, one clause per call;
+- tool budget 3 units per episode;
 - `lambda = 2` for the first comparison;
 - soft hazard damage `-2` and one-step recovery in Tier A;
 - one shift per episode, sampled uniformly in a public window;
 - A1/A2/A3 use the existing `red`/`blue`/`green` colour vocabulary where
-  possible; B4 adds compositional clause ids.
+  possible; B4 adds compositional clause ids;
+- separate `GRID_ACTIONS` and grid validators; do not widen `MACRO_ACTIONS`;
+- Tier B real-VLM smoke is a remote Kaggle gate, not local CI.
 
 ## 10. Open questions for the human
 
@@ -507,7 +619,8 @@ Only these change what gets built:
    scaffolded in the same change?
 2. Should the default map be `7 x 7` or `9 x 9` for the first benchmark table?
 3. Is `lambda = 2` the intended exchange rate between one environment step and
-   one tool/advisor call, or should the first run use a different value?
+   one tool unit / one advisor call, or should the first run use a different
+   value?
 
 ## 11. Risks and mitigations
 
@@ -522,3 +635,25 @@ Only these change what gets built:
   the frozen model revision.
 - **Metric ambiguity.** Fix the total-cost formula and log env steps and tool
   calls separately.
+
+---
+
+## 12. Review resolutions
+
+The independent builder review raised eleven ambiguities. They are resolved
+here as builder calls; the three questions in section 10 are the only ones
+that still need a human decision.
+
+| Review question | Resolution |
+|---|---|
+| What is public vs. hidden, and what changes visually on a shift? | Geometry and tile appearance are public; semantic roles, key-door mapping, shift time, and noise are hidden. A shift never repaints the map. `INSPECT` reveals hidden semantics. |
+| What is one decision? | One action per decision, either physical or tool, never both. A tool returns a new observation without advancing the env step counter. `INSPECT` has a target, range 2, cost 2; `READ_SIGN` requires adjacency, cost 1. |
+| Identification or base-then-shift? | Both. Identification samples `r*` at `t=0`; change detection starts at `r0` and shifts. No-shift controls are change-detection episodes with no shift sampled and an identical agent-facing prompt. |
+| Static or change-point belief? | Change-point hazard filter over `(h, tau)` for change detection; static filter for identification. Window and hazard rate are public; exact time is hidden. |
+| Objective and budget? | Goal `+10`, step `-0.05`, soft hazard `-2`, lethal trap `-10`; max 60/90 physical steps. All methods share the physical-step cap and the tool budget. `TotalCost` is reported, not used to truncate. |
+| Which Tier A reference? | Exact belief + A* point-estimate reference; Q* only for microtasks. No full POMDP solver. |
+| Solvability under which rules? | Every hypothesis in the finite Tier A set; reject and log unwinnable maps. |
+| What is the advisor? | A public advisor that returns one action and no rule; privileged oracle advisor is a separate upper bound. |
+| Does `READ_SIGN` add information? | The sign text is illegible in the frame; `READ_SIGN` is the only way to read it. One clause per side, adjacency required, repeated reads cost; at least one clause must come from transition evidence. |
+| Union `MACRO_ACTIONS`? | No. Keep `MACRO_ACTIONS` unchanged; add `GRID_ACTIONS` and separate grid validators. |
+| Where does the real-VLM smoke run? | Kaggle remote gate. Local CI uses the stub, parser, and permission tests. |
