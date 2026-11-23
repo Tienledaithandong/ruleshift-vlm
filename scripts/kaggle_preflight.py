@@ -30,12 +30,15 @@ def main() -> None:
     has_kaggle = importlib.util.find_spec("kaggle") is not None
     messages.append(f"INFO: kaggle package installed = {has_kaggle}")
 
-    credential_path = Path.home() / ".kaggle" / "kaggle.json"
-    has_file = credential_path.exists()
+    kaggle_dir = Path.home() / ".kaggle"
+    has_file = (kaggle_dir / "kaggle.json").exists()
+    has_token_file = (kaggle_dir / "access_token").exists()
     has_env = bool(os.environ.get("KAGGLE_USERNAME") and os.environ.get("KAGGLE_KEY"))
+    has_token_env = bool(os.environ.get("KAGGLE_API_TOKEN"))
     messages.append(f"INFO: kaggle.json present = {has_file}")
     messages.append(f"INFO: KAGGLE_USERNAME/KAGGLE_KEY set = {has_env}")
-    if not (has_file or has_env):
+    messages.append(f"INFO: KAGGLE_API_TOKEN or access_token file present = {has_token_env or has_token_file}")
+    if not (has_file or has_env or has_token_env or has_token_file):
         messages.append("BLOCK: no Kaggle credentials found")
 
     cuda = False
