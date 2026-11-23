@@ -132,14 +132,17 @@ _REMAP_SWAP_RULE = replace(
     rule_id="remap_swap",
     description="Up/down and left/right are swapped; the red tile is the goal.",
     move_map=dict(_SWAP_MOVE_MAP),
-    sign_clauses=(_RED_NOT_HAZARD, _MAY_REMAP, _SHARED_KEY_CLAUSE),
+    # These rules slip too (baseline slip_prob > 0), so MAY_SLIP is truthful.
+    # Keeping the red-goal rules in one full-sign-set group leaves several
+    # behaviourally distinct rules after reading all three sides.
+    sign_clauses=(_RED_NOT_HAZARD, _MAY_SLIP, _SHARED_KEY_CLAUSE),
 )
 _REMAP_ROTATE_RULE = replace(
     BASE_RULE,
     rule_id="remap_rotate",
     description="Movement is rotated clockwise; the red tile is the goal.",
     move_map=dict(_ROTATE_MOVE_MAP),
-    sign_clauses=(_RED_NOT_HAZARD, _MAY_REMAP, _SHARED_KEY_CLAUSE),
+    sign_clauses=(_RED_NOT_HAZARD, _MAY_SLIP, _SHARED_KEY_CLAUSE),
 )
 _SLIPPERY_RULE = replace(
     BASE_RULE,
