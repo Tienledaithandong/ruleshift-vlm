@@ -1,7 +1,10 @@
 # RuleShift-Grid: additive benchmark design
 
-**Status:** draft for human approval
+**Status:** approved for implementation planning (2026-11-23)
 **Date:** 2026-11-23
+**Approved scope:** Tier A CPU environment plus Tier B renderer/tool/VLM
+scaffold; default map `7 x 7`; advisor cost `lambda = 2`. The real frozen-VLM
+run remains a remote Kaggle gate.
 **Scope:** add a new grid environment beside the existing Family A/B
 environments. Do not replace, rename, or weaken Family A/B.
 **Primary track:** value-aware probing under hidden dynamics shifts with a
@@ -77,39 +80,61 @@ The existing package boundaries stay intact:
 ### 2.1 New files
 
 ```
+src/ruleshift/public_api/
+  grid_schemas.py    # grid actions, observation, decision record, validators
+  grid_rules.py      # public hypothesis set and transition semantics
+  grid_planner.py    # DynamicsModel protocol, hypothesis model, A* reference
 src/ruleshift/envs/grid/
   __init__.py
   config.py          # GridConfig, defaults, YAML loading
-  mapgen.py          # controlled random maps + solvability check
-  entities.py        # CellType, Entity, GridState
-  rules.py           # rule hypotheses and shift families
-  noise.py           # aleatoric observation/transition models
+  mapgen.py          # controlled random maps + all-hypothesis solvability
+  entities.py        # CellType, Entity, GridState, GridMap
+  rules.py           # shift schedule and active-rule application
+  noise.py           # aleatoric transition and sensor models
   grid_env.py        # Gymnasium Env: reset/step/render
   observations.py    # symbolic and visual public views
   render.py          # 224x224 RGB, Set-of-Mark, HUD
   tools.py           # INSPECT / READ_SIGN semantics and costs
+src/ruleshift/agents/
+  grid_belief.py     # change-point belief filter
+  grid_selector.py   # info-gain and public advisor policies
+  grid_baselines.py  # no-adaptation and random-probing baselines
+  grid_vlm.py        # grid prompt, parser, cache, policy adapter
 src/ruleshift/evaluator/
   grid_trace.py      # privileged GridEvaluatorTrace
-  grid_reference.py  # exact belief, Q*, oracle return for Tier A
+  grid_reference.py  # exact belief, Q* microtasks, oracle return
   grid_metrics.py    # detection/probing/tool metrics
+  grid_runner.py     # closed-loop grid runner and oracle policy
+src/ruleshift/prompts/
+  grid_v1.txt        # public-only grid prompt
 scripts/
   run_grid_smoke.py
   run_grid_audit.py
+  run_grid_real_pilot.py
 configs/
   grid_dev.yaml
 tests/
+  test_grid_schemas.py
+  test_grid_rules.py
   test_grid_mapgen.py
   test_grid_env.py
   test_grid_noise.py
   test_grid_belief.py
   test_grid_tools.py
+  test_grid_planner.py
+  test_grid_selector.py
+  test_grid_runner.py
   test_grid_metrics.py
+  test_grid_observations.py
+  test_grid_render.py
+  test_grid_vlm.py
   test_grid_permissions.py
+  test_grid_signpost_shortcut.py
 ```
 
 ### 2.2 Contract extensions
 
-Add, do not mutate:
+Add, do not mutate, in `src/ruleshift/public_api/grid_schemas.py`:
 
 - `GRID_PHYSICAL_ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT", "INTERACT")`
 - `GRID_TOOL_ACTIONS = ("INSPECT", "READ_SIGN")`
@@ -624,16 +649,16 @@ implementation:
 - separate `GRID_ACTIONS` and grid validators; do not widen `MACRO_ACTIONS`;
 - Tier B real-VLM smoke is a remote Kaggle gate, not local CI.
 
-## 10. Open questions for the human
+## 10. Approved decisions
 
-Only these change what gets built:
+The three scope questions were answered on 2026-11-23:
 
-1. Is the first deliverable Tier A only, or do you want the Tier B VLM path
-   scaffolded in the same change?
-2. Should the default map be `7 x 7` or `9 x 9` for the first benchmark table?
-3. Is `lambda = 2` the intended exchange rate between one environment step and
-   one advisor (VLM) call, or should the first run use a different value? Tool
-   units are priced separately by the 3-unit budget.
+1. **Tier B scope:** Tier A CPU environment plus Tier B renderer, tool,
+   prompt/parser, and stub tests. The real frozen-VLM run is a remote Kaggle
+   gate, not part of the local build.
+2. **Default map:** `7 x 7`; `9 x 9` remains a stress condition.
+3. **Advisor cost:** `lambda = 2` per advisor (VLM) call. Tool units are priced
+   separately by the 3-unit budget.
 
 ## 11. Risks and mitigations
 
@@ -654,8 +679,8 @@ Only these change what gets built:
 ## 12. Review resolutions
 
 The independent builder review raised eleven ambiguities. They are resolved
-here as builder calls; the three questions in section 10 are the only ones
-that still need a human decision.
+here as builder calls; the three scope questions in section 10 were answered
+by the human on 2026-11-23.
 
 | Review question | Resolution |
 |---|---|
