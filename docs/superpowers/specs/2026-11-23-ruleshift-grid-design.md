@@ -59,7 +59,8 @@ These are failure conditions even if the code runs:
 - a signpost or HUD that reveals the complete active rule at no cost;
 - irreversible death as the normal Tier A probing cost;
 - A* hard-coded as the only possible planner;
-- metrics that mix env steps with tool calls without a fixed exchange rate;
+- metrics that mix env steps, tool units, and advisor calls without a stated
+  accounting rule;
 - any agent import of `ruleshift.envs` or `ruleshift.evaluator`.
 
 ---
@@ -157,9 +158,10 @@ functions, not a breaking rewrite.
 - Generated from a seed with a fixed, documented distribution:
   wall density, start/goal placement, key/door placement, hazard count,
   signpost placement.
-- Every generated map must pass a solvability check before it is used:
-  BFS from start to goal under the base rule, with the key and door reachable
-  and at least one safe route that does not require crossing a lethal cell.
+- Every generated map must pass a solvability check before it is used: for
+  every hypothesis in the finite Tier A set, BFS from start to goal with the
+  key and door reachable and at least one safe route that does not require
+  crossing a lethal cell.
 - Public geometry is fixed for an episode and shared by every compared method.
 - **Public:** wall positions, tile appearance (colour/shape), start/goal
   locations, key/door/signpost locations, the agent, the HUD, public costs, and
@@ -220,13 +222,13 @@ Epistemic tools cost tool-budget units, not environment steps:
 Total budget for every method:
 
 ```
-TotalCost = N_env_steps + lambda * (tool_units_used + N_advisor_calls)
+TotalCost = N_env_steps + lambda * N_advisor_calls
 ```
 
-`tool_units_used` is the sum of the public tool costs (`INSPECT` 2,
-`READ_SIGN` 1), not the raw call count. An advisor call costs one unit.
-`lambda` is fixed before the first comparison run and is part of the public
-cost description. Tool calls are logged separately from environment steps.
+Tool calls are priced by the separate tool budget, not by `lambda`: the
+budget is 3 units, `INSPECT` costs 2, and `READ_SIGN` costs 1. Tool units and
+advisor calls are logged separately from environment steps. `lambda` is fixed
+before the first comparison run and is part of the public cost description.
 
 ### 3.4 Gymnasium API
 
@@ -347,16 +349,22 @@ that share the same agent-facing prior.
 ### 4.4 Active probing
 
 When the trigger fires, the agent chooses a probe that maximizes expected
-information gain per total cost:
+information gain subject to the public tool budget and the safety constraint:
 
 ```
-a_probe = argmax_a  I(H; O | s, a, b) / (env_cost(a) + lambda * tool_cost(a))
+a_probe = argmax_a  I(H; O | s, a, b)
 ```
 
-subject to a public safety constraint: the estimated probability of taking
-lethal damage is below a threshold. In Tier A the expectation is enumerated
-exactly over the finite hypothesis set. In Tier B the VLM proposes candidate
-tools/actions and the selector scores them with the same public objective.
+subject to:
+
+- `tool_cost(a) <= tool_budget_remaining`;
+- the estimated probability of taking lethal damage is below the public
+  threshold;
+- ties are broken by lower `env_cost(a)`, then lower `tool_cost(a)`.
+
+In Tier A the expectation is enumerated exactly over the finite hypothesis
+set. In Tier B the VLM proposes candidate tools/actions and the selector
+scores them with the same public objective.
 
 ### 4.5 Belief to control
 
@@ -490,7 +498,8 @@ Log from day one:
 - success rate before `max_env_steps`;
 - undiscounted return;
 - adaptation steps from `t_shift` to the first correct-rule decision;
-- total cost (`env_steps + lambda * (tool_units_used + advisor_calls)`);
+- total cost (`env_steps + lambda * advisor_calls`);
+- tool units used and tool calls by type, separate from total cost;
 - false alarm rate on no-shift episodes;
 - detection delay and detection precision/recall;
 - calibration: Brier score and expected calibration error for shift
@@ -518,7 +527,8 @@ Log from day one:
 
 - Noise level: baseline slip `0.05 / 0.10 / 0.20`.
 - Signpost informativeness: full clause / partial clause / ambiguous clause.
-- Tool cost: `lambda = 1 / 2 / 5`.
+- Advisor cost: `lambda = 1 / 2 / 5`.
+- Tool budget: `1 / 3 / 5` units.
 - Shift family: A1, A2, A3, B4, no-shift.
 - Trigger: entropy / likelihood ratio / fixed threshold.
 - Planner: A* / learned world model + MPC.
@@ -574,7 +584,9 @@ The addition is acceptable only when:
    deterministic-residual detector is explicitly shown to be inadequate.
 4. A scripted signpost-only policy fails or underperforms on held-out maps,
    even if it reads every side of the sign.
-5. `INSPECT` improves outcomes only when its cost is included in the total.
+5. `INSPECT` improves outcomes under the matched 3-unit tool budget; an
+   unlimited-tool ablation shows that the budget, not free information,
+   creates the trade-off.
 6. Tier A smoke runs at least 100 maps x 5 seeds for every baseline with
    matched physical-step and tool budgets.
 7. Tier B smoke produces valid JSON with a real frozen VLM and no privileged
@@ -603,7 +615,8 @@ implementation:
 - `INSPECT` error `0.05`, range 2, cost 2 tool units; `READ_SIGN` cost 1 tool
   unit, adjacency required, one clause per call;
 - tool budget 3 units per episode;
-- `lambda = 2` for the first comparison;
+- `lambda = 2` per advisor (VLM) call; tool units are priced by the tool
+  budget, not by `lambda`;
 - soft hazard damage `-2` and one-step recovery in Tier A;
 - one shift per episode, sampled uniformly in a public window;
 - A1/A2/A3 use the existing `red`/`blue`/`green` colour vocabulary where
@@ -619,8 +632,8 @@ Only these change what gets built:
    scaffolded in the same change?
 2. Should the default map be `7 x 7` or `9 x 9` for the first benchmark table?
 3. Is `lambda = 2` the intended exchange rate between one environment step and
-   one tool unit / one advisor call, or should the first run use a different
-   value?
+   one advisor (VLM) call, or should the first run use a different value? Tool
+   units are priced separately by the 3-unit budget.
 
 ## 11. Risks and mitigations
 
@@ -650,7 +663,7 @@ that still need a human decision.
 | What is one decision? | One action per decision, either physical or tool, never both. A tool returns a new observation without advancing the env step counter. `INSPECT` has a target, range 2, cost 2; `READ_SIGN` requires adjacency, cost 1. |
 | Identification or base-then-shift? | Both. Identification samples `r*` at `t=0`; change detection starts at `r0` and shifts. No-shift controls are change-detection episodes with no shift sampled and an identical agent-facing prompt. |
 | Static or change-point belief? | Change-point hazard filter over `(h, tau)` for change detection; static filter for identification. Window and hazard rate are public; exact time is hidden. |
-| Objective and budget? | Goal `+10`, step `-0.05`, soft hazard `-2`, lethal trap `-10`; max 60/90 physical steps. All methods share the physical-step cap and the tool budget. `TotalCost` is reported, not used to truncate. |
+| Objective and budget? | Goal `+10`, step `-0.05`, soft hazard `-2`, lethal trap `-10`; max 60/90 physical steps. All methods share the physical-step cap and the 3-unit tool budget. `TotalCost = env_steps + lambda * advisor_calls`; tools are priced by the separate tool budget. `TotalCost` is reported, not used to truncate. |
 | Which Tier A reference? | Exact belief + A* point-estimate reference; Q* only for microtasks. No full POMDP solver. |
 | Solvability under which rules? | Every hypothesis in the finite Tier A set; reject and log unwinnable maps. |
 | What is the advisor? | A public advisor that returns one action and no rule; privileged oracle advisor is a separate upper bound. |
