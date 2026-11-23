@@ -27,3 +27,21 @@ class MapGenResult:
 
     map: GridMap
     attempts: int
+
+
+@dataclass(frozen=True)
+class GridScenario:
+    """One episode specification.
+
+    ``map_seed`` drives map generation while ``run_seed`` drives noise draws;
+    keeping them separate means changing the noise seed never changes the map.
+    The trailing default keeps the original six-argument constructions valid.
+    """
+
+    scenario_id: str
+    scenario_type: str
+    initial_rule: str
+    shift_rule: str | None
+    shift_time: int | None
+    map_seed: int
+    run_seed: int = 0

@@ -73,7 +73,14 @@ class PublicGridMap:
     signpost: Coord
 
     def to_payload(self) -> dict[str, Any]:
-        """Serialize to a JSON-serializable, deterministic public dict."""
+        """Serialize to a JSON-serializable, deterministic public dict.
+
+        ``key``, ``door`` and ``signpost`` are optional in a public map; an
+        absent cell serializes as ``None`` (JSON ``null``) rather than raising.
+        """
+
+        def cell(coord: Coord | None) -> list[int] | None:
+            return list(coord) if coord is not None else None
 
         return {
             "width": self.width,
@@ -83,9 +90,9 @@ class PublicGridMap:
             "markers": {
                 color: list(coord) for color, coord in sorted(self.markers.items())
             },
-            "key": list(self.key),
-            "door": list(self.door),
-            "signpost": list(self.signpost),
+            "key": cell(self.key),
+            "door": cell(self.door),
+            "signpost": cell(self.signpost),
         }
 
 
