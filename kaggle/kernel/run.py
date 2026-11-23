@@ -8,7 +8,9 @@ so the files appear with their original paths (src/, scripts/, configs/, ...).
 Runtime settings: GPU T4x2/P100, internet enabled.
 """
 
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -32,6 +34,24 @@ print("source dataset:", SOURCE, flush=True)
 if PROJECT.exists():
     shutil.rmtree(PROJECT)
 shutil.copytree(SOURCE, PROJECT)
+
+# The snapshot must be traceable to the commit it was staged from.
+marker = PROJECT / "SOURCE_COMMIT"
+if not marker.exists():
+    print("dataset root:", sorted(p.name for p in PROJECT.iterdir()), flush=True)
+    raise SystemExit("SOURCE_COMMIT marker missing: source dataset is not traceable")
+stamp = json.loads(marker.read_text(encoding="utf-8"))
+commit = str(stamp.get("commit", ""))
+print("source commit:", commit, stamp.get("short_commit"), flush=True)
+print("source subject:", stamp.get("subject"), flush=True)
+if not re.fullmatch(r"[0-9a-f]{40}", commit):
+    raise SystemExit(f"SOURCE_COMMIT does not hold a full commit id: {commit!r}")
+expected = os.environ.get("RULESHIFT_EXPECTED_COMMIT", "").strip()
+if expected and expected != commit:
+    raise SystemExit(
+        f"source commit mismatch: dataset has {commit}, expected {expected}"
+    )
+print("expected commit check:", expected or "skipped (RULESHIFT_EXPECTED_COMMIT unset)", flush=True)
 
 os.chdir(PROJECT)
 sys.path.insert(0, str(PROJECT / "src"))
