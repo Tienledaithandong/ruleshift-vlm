@@ -37,7 +37,14 @@ from .config import GridConfig
 from .entities import GridMap, GridScenario
 from .mapgen import generate_solvable_map
 from .noise import draw_inspect, draw_move
-from .observations import PublicPayloadSpace, build_grid_observation
+from .observations import (
+    PublicCoord,
+    PublicLabelList,
+    PublicPayloadSpace,
+    PublicScalar,
+    PublicText,
+    build_grid_observation,
+)
 from .render import RENDER_SIZE, render_grid
 from .rules import sample_scenario
 from .tools import inspect_cell, read_sign, sign_side, tool_cost, validate_tool_action
@@ -105,27 +112,39 @@ class GridEnv(Env):
             }
         )
         # The declared space must describe every key returned by ``_obs()``.
-        # The payload uses plain Python lists/dicts (and ``None`` cells), so
-        # the complex fields use a permissive value space rather than a gym
-        # Sequence/Box that would reject those legitimate payload types.
+        # Most fields use typed subspaces that accept the payload's plain
+        # Python values; only the nested ``public_map``/``candidate_rules``
+        # structures need the documented fallback space.
+        cost_space = spaces.Dict(
+            {
+                "step_cost": PublicScalar(),
+                "goal_reward": PublicScalar(),
+                "inspect_cost": PublicScalar(),
+                "read_sign_cost": PublicScalar(),
+                "advisor_cost": PublicScalar(),
+                "tool_budget": PublicScalar(),
+            }
+        )
         observation_space: dict[str, Any] = {
-            "observation_id": PublicPayloadSpace(),
-            "public_obs_hash": PublicPayloadSpace(),
-            "public_history_hash": PublicPayloadSpace(),
-            "public_history": PublicPayloadSpace(),
-            "public_text": PublicPayloadSpace(),
-            "available_actions": PublicPayloadSpace(),
-            "candidate_rules": PublicPayloadSpace(),
-            "public_costs": PublicPayloadSpace(),
-            "public_map": PublicPayloadSpace(),
-            "agent_position": PublicPayloadSpace(),
-            "health": PublicPayloadSpace(),
-            "inventory": PublicPayloadSpace(),
-            "door_open": PublicPayloadSpace(),
-            "steps": PublicPayloadSpace(),
-            "action_mask": PublicPayloadSpace(),
+            "observation_id": PublicText(max_length=64, min_length=1),
+            "public_obs_hash": PublicText(max_length=64, min_length=1),
+            "public_history_hash": PublicText(max_length=64, min_length=1),
+            "public_history": PublicText(max_length=8192),
+            "public_text": PublicText(max_length=8192),
+            "available_actions": PublicLabelList(max_items=len(GRID_ACTIONS)),
+            "candidate_rules": PublicPayloadSpace(sample_value=()),
+            "public_costs": cost_space,
+            "public_map": PublicPayloadSpace(sample_value={}),
+            "agent_position": PublicCoord(
+                max_x=max(cfg.width, 64) - 1, max_y=max(cfg.height, 64) - 1
+            ),
+            "health": spaces.Discrete(cfg.max_health + 1),
+            "inventory": PublicLabelList(),
+            "door_open": spaces.Discrete(2),
+            "steps": spaces.Discrete(cfg.max_env_steps + 1),
+            "action_mask": PublicLabelList(max_items=len(GRID_ACTIONS)),
             "tool_budget_remaining": spaces.Discrete(cfg.tool_budget + 1),
-            "image_hash": PublicPayloadSpace(),
+            "image_hash": PublicText(max_length=64),
         }
         if observation_mode == "visual":
             observation_space["image"] = spaces.Box(

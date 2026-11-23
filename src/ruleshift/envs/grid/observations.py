@@ -7,6 +7,9 @@ every noise draw stay exclusively in ``GridEnv.evaluator_state()``.
 
 from __future__ import annotations
 
+import copy
+import math
+from numbers import Integral
 from typing import TYPE_CHECKING, Any, Sequence
 
 from gymnasium import spaces
@@ -22,26 +25,121 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, avoids an import cycle
     from .grid_env import GridState
 
 
-class PublicPayloadSpace(spaces.Space):
-    """Permissive gym space for a public payload field.
+_ASCII_CHARS = frozenset(chr(code) for code in range(32, 127))
 
-    The canonical ``GridPublicObservation.to_payload()`` uses plain Python
-    lists (not numpy arrays), optional ``None`` cells and an empty image hash
-    in symbolic mode. Gymnasium's ``Sequence`` rejects lists, ``Text`` rejects
-    the empty string and ``Box`` emits a cast warning for those values, so a
-    value space would report a false mismatch. This space documents that the
-    field is part of the public payload shape while accepting every payload
-    value the grid observation legitimately produces.
+
+class PublicPayloadSpace(spaces.Space):
+    """Last-resort space for the two fields gymnasium cannot express cleanly.
+
+    Only ``public_map`` (nested dicts with optional ``None`` cells) and
+    ``candidate_rules`` (a list of structured dicts) use this. Both are already
+    validated by ``validate_grid_public_observation``; this space keeps them in
+    the declared shape. ``sample_value`` gives ``observation_space.sample()``
+    a benign, non-``None`` placeholder instead of a dict of ``None``s.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, sample_value: Any = None) -> None:
         super().__init__()
+        self.sample_value = sample_value
 
     def contains(self, x: Any) -> bool:
         return True
 
-    def sample(self) -> None:  # pragma: no cover - never used by the harness
-        return None
+    def sample(self) -> Any:
+        return copy.deepcopy(self.sample_value)
+
+
+class PublicText(spaces.Space):
+    """Bounded printable-ASCII string; accepts punctuation and empty text.
+
+    Gymnasium's ``Text`` uses a restricted character set and requires a
+    non-empty string, so it rejects the canonical ``public_text`` and the empty
+    symbolic ``image_hash``.
+    """
+
+    def __init__(self, max_length: int = 4096, min_length: int = 0) -> None:
+        super().__init__()
+        self.max_length = int(max_length)
+        self.min_length = int(min_length)
+
+    def contains(self, x: Any) -> bool:
+        return (
+            isinstance(x, str)
+            and self.min_length <= len(x) <= self.max_length
+            and all(char in _ASCII_CHARS for char in x)
+        )
+
+    def sample(self) -> str:
+        return "public"
+
+
+class PublicLabelList(spaces.Space):
+    """Bounded list of short printable-ASCII labels (action lists, inventory).
+
+    Gymnasium's ``Sequence.contains`` only accepts tuples, while the payload
+    owns plain lists; this space accepts both and bounds their contents.
+    """
+
+    def __init__(self, max_items: int = 64, max_label_length: int = 32) -> None:
+        super().__init__()
+        self.max_items = int(max_items)
+        self.max_label_length = int(max_label_length)
+
+    def contains(self, x: Any) -> bool:
+        return (
+            isinstance(x, (list, tuple))
+            and len(x) <= self.max_items
+            and all(
+                isinstance(item, str)
+                and 0 < len(item) <= self.max_label_length
+                and all(char in _ASCII_CHARS for char in item)
+                for item in x
+            )
+        )
+
+    def sample(self) -> list[str]:
+        return []
+
+
+class PublicCoord(spaces.Space):
+    """An in-bounds ``(x, y)`` pair held as a plain list or tuple."""
+
+    def __init__(self, max_x: int, max_y: int) -> None:
+        super().__init__()
+        self.max_x = int(max_x)
+        self.max_y = int(max_y)
+
+    def contains(self, x: Any) -> bool:
+        return (
+            isinstance(x, (list, tuple))
+            and len(x) == 2
+            and all(isinstance(value, Integral) and not isinstance(value, bool) for value in x)
+            and 0 <= int(x[0]) <= self.max_x
+            and 0 <= int(x[1]) <= self.max_y
+        )
+
+    def sample(self) -> list[int]:
+        return [0, 0]
+
+
+class PublicScalar(spaces.Space):
+    """A finite numeric cost held as a plain Python ``int`` or ``float``."""
+
+    def __init__(self, low: float = -1e9, high: float = 1e9) -> None:
+        super().__init__()
+        self.low = float(low)
+        self.high = float(high)
+
+    def contains(self, x: Any) -> bool:
+        return (
+            isinstance(x, (int, float))
+            and not isinstance(x, bool)
+            and math.isfinite(x)
+            and self.low <= x <= self.high
+        )
+
+    def sample(self) -> float:
+        return 0.0
 
 
 def _as_candidate_rules(rules: Sequence[Any]) -> tuple[CandidateRule, ...]:
@@ -157,7 +255,11 @@ def build_grid_observation(
 
 
 __all__ = [
+    "PublicCoord",
+    "PublicLabelList",
     "PublicPayloadSpace",
+    "PublicScalar",
+    "PublicText",
     "build_grid_observation",
     "build_public_text",
 ]

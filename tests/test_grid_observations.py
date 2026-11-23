@@ -1,7 +1,12 @@
+import pytest
+
 from ruleshift.envs.grid.config import GridConfig
 from ruleshift.envs.grid.grid_env import GridEnv
 from ruleshift.public_api.grid_rules import BASE_RULE, PublicGridMap
-from ruleshift.public_api.grid_schemas import GRID_PUBLIC_OBSERVATION_FIELDS
+from ruleshift.public_api.grid_schemas import (
+    GRID_PUBLIC_OBSERVATION_FIELDS,
+    GridAction,
+)
 from ruleshift.permissions import find_forbidden_fields
 
 
@@ -32,3 +37,33 @@ def test_visual_observation_has_224x224_uint8():
 def test_signpost_clause_is_not_in_public_text():
     view = make_env().public_view()
     assert all(clause not in view.public_text for clause in BASE_RULE.sign_clauses)
+
+
+@pytest.mark.parametrize("mode", ["symbolic", "visual"])
+def test_observation_space_contains_obs_at_reset_and_after_step(mode):
+    # make_env() resets the env, so the first _obs() is the reset payload.
+    env = make_env(mode)
+    assert env.observation_space.contains(env._obs())
+    env.step(GridAction("RIGHT"))
+    assert env.observation_space.contains(env._obs())
+
+
+def test_observation_space_actually_validates_typed_fields():
+    env = make_env()
+    obs = env._obs()
+    assert env.observation_space.contains(obs)
+    for key in ("health", "steps", "tool_budget_remaining"):
+        corrupted = dict(obs)
+        corrupted[key] = "not-an-int"
+        assert not env.observation_space.contains(corrupted)
+    corrupted = dict(obs)
+    corrupted["agent_position"] = [-1, 999]
+    assert not env.observation_space.contains(corrupted)
+
+
+def test_observation_space_sample_is_well_formed():
+    for mode in ("symbolic", "visual"):
+        env = make_env(mode)
+        sample = env.observation_space.sample()
+        assert set(sample) == set(env.observation_space.spaces)
+        assert all(value is not None for value in sample.values())
