@@ -22,6 +22,7 @@ def test_stage_grid_chunk_embeds_literal_map_index(tmp_path):
     assert 'os.environ.get("MAP_INDEX"' not in text
     metadata = json.loads((stage / "kernel-metadata.json").read_text(encoding="utf-8"))
     assert metadata["id"].endswith("-007")
+    assert metadata["title"] == "RuleShift grid chunk 007"
     assert metadata["dataset_sources"] == ["tiennamlee/ruleshift-source"]
     assert metadata["machine_shape"] == "NvidiaTeslaT4"
 

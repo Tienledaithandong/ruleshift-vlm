@@ -25,7 +25,7 @@ DOCKER_IMAGE = (
     "gcr.io/kaggle-private-byod/python@"
     "sha256:fc720c15545eb096a510e1f085b17fc118387a007599424d953a4f327b71cacf"
 )
-ENV_LINE = 'map_index = int(os.environ.get("MAP_INDEX", "0"))'
+ENV_LINE = 'map_index = int(os.environ["MAP_INDEX"])'
 
 
 def render_kernel(map_index: int) -> str:
@@ -50,7 +50,7 @@ def build_stage(map_index: int, out: Path) -> Path:
     (out / "run_grid_chunk.py").write_text(rendered, encoding="utf-8")
     metadata = {
         "id": f"{DEFAULT_PREFIX}-{map_index:03d}",
-        "title": f"RuleShift grid chunk {chunk_id}",
+        "title": f"RuleShift grid chunk {map_index:03d}",
         "code_file": "run_grid_chunk.py",
         "language": "python",
         "kernel_type": "script",
