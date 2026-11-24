@@ -10,8 +10,12 @@ human, and the gates below must pass in order.
 - Model revision pinned in configs/models.yaml.
 - preregistered_test.yaml status is DRAFT_NOT_FROZEN until the human freeze
   commit; do not edit that field from an automated agent.
-- Kaggle GPU quota checked before a weekly slice. One 55-episode chunk is about
-  2.2 GPU-hours at 143 s/episode; allow overhead and failed retries.
+- Kaggle GPU quota checked before a weekly slice. The real smoke measured
+  ~8.85 s per model decision on a T4; 55 episodes x up to 60 decisions is an
+  upper bound near 8.1 GPU-hours per chunk, not 2.2. The full 5,500-episode grid
+  is therefore ~800 GPU-hours (about 17 weeks at 27 h/week) before overhead.
+  Treat throughput as a blocking feasibility issue; do not schedule the full
+  grid until inference is materially faster or the design is resized.
 - Never commit results/, reports/, outputs/, or the Kaggle token.
 
 ## 1. Freeze the provenance
@@ -31,10 +35,13 @@ Build and push a source dataset only from a clean commit:
 
     git status --short
     python scripts/stage_kaggle_dataset.py
-    python -m kaggle datasets version -p kaggle/dataset -m "grid smoke <commit>"
+    cd kaggle_stage/ruleshift-source
+    python -m kaggle datasets version -p . -r zip -m "grid smoke <commit>"
 
-Run kaggle/kernel/run_grid.py with RULESHIFT_EXPECTED_COMMIT set to that commit.
-Download the chunk-stamped artifacts and check the report's behavioral gate:
+Push kaggle/kernel/run_grid.py and confirm its printed `source commit` equals the
+frozen commit. Kaggle kernel metadata has no environment field, so
+RULESHIFT_EXPECTED_COMMIT is normally unset; the printed SOURCE_COMMIT marker is
+the traceability check. Download the smoke artifacts and check the behavioral gate:
 
 - full-menu JSON valid rate = 1.0
 - parser fallbacks = 0
@@ -47,8 +54,13 @@ scale to a larger run.
 
 ## 3. Gate B: one 55-episode dry chunk
 
-Set MAP_INDEX=0 in kaggle/kernel/run_grid_chunk.py. The kernel asserts exactly
-55 evaluator rows and 55 unique scenarios. After download:
+Stage a literal map index (Kaggle cannot set MAP_INDEX in kernel metadata):
+
+    python scripts/stage_grid_chunk.py --map-index 0
+    cd kaggle_stage/grid_chunks/m000
+    python -m kaggle kernels push -p . --accelerator NvidiaTeslaT4
+
+The kernel asserts exactly 55 evaluator rows and 55 unique scenarios. After download:
 
     python -c "import json,pathlib; rows=[json.loads(x) for x in pathlib.Path('results/grid_chunks/grid_real_decisions.m000.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]; print(len(rows), sum(r.get('json_valid') is True for r in rows), sum(r.get('fallback') is True for r in rows))"
 
@@ -57,16 +69,18 @@ diversity and movement; a constant-action chunk is a failed gate.
 
 ## 4. Weekly slices
 
-One weekly slice is ten maps = ten chunks:
+One weekly slice is ten maps = ten chunks. Stage each one (the helper writes the
+index into the kernel, so every chunk is traceable even though Kaggle has no env
+field):
 
-    MAP_INDEX=0
-    MAP_INDEX=1
+    python scripts/stage_grid_chunk.py --map-index 0
+    python scripts/stage_grid_chunk.py --map-index 1
     ...
-    MAP_INDEX=9
+    python scripts/stage_grid_chunk.py --map-index 9
 
-Use a fresh Kaggle session per chunk, with the same frozen dataset and
-RULESHIFT_EXPECTED_COMMIT. Download each chunk into the same results/grid_chunks
-directory. Never overwrite an existing mNNN file; move failed artifacts aside.
+Use a fresh Kaggle session per chunk, with the same frozen dataset. Download each
+chunk into the same results/grid_chunks directory. Never overwrite an existing
+mNNN file; move failed artifacts aside.
 
 Suggested weekly order: run all ten chunks first, verify each has 55 scenarios,
 then merge that slice for a sanity check. Do not inspect outcomes to decide
