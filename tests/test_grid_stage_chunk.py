@@ -20,6 +20,7 @@ def test_stage_grid_chunk_embeds_literal_map_index(tmp_path):
     text = (stage / "run_grid_chunk.py").read_text(encoding="utf-8")
     assert "map_index = 7" in text
     assert 'os.environ.get("MAP_INDEX"' not in text
+    assert 'os.environ["MAP_INDEX"]' not in text
     metadata = json.loads((stage / "kernel-metadata.json").read_text(encoding="utf-8"))
     assert metadata["id"].endswith("-007")
     assert metadata["title"] == "RuleShift grid chunk 007"
