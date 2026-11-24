@@ -231,7 +231,7 @@ def test_record_works_without_explicit_reset():
 
 
 def test_prompt_version_is_pinned():
-    assert GRID_PROMPT_VERSION == "grid_v3"
+    assert GRID_PROMPT_VERSION == "grid_v4"
 
 
 def test_tool_result_reaches_history_text_and_prompt():

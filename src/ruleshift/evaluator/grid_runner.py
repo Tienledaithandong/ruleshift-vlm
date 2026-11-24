@@ -173,6 +173,10 @@ def run_grid_episode(
                 "advisor_calls": int(getattr(policy, "advisor_calls", 0)),
                 "json_valid": bool(getattr(policy, "last_json_valid", True)),
                 "valid_action": bool(getattr(policy, "last_valid_action", True)),
+                "fallback": bool(getattr(policy, "last_fallback", False)),
+                "parse_error_count": int(
+                    len(getattr(policy, "last_parse_errors", ()) or ())
+                ),
                 "output_tokens": int(getattr(policy, "last_output_tokens", 0)),
                 "cache_hit": bool(getattr(policy, "last_cache_hit", False)),
                 # A tool's revealed value must travel with the decision in the
