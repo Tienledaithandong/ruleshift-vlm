@@ -54,4 +54,13 @@ Never hand-edit generated files — regenerate from source:
 - Real-VLM pipelines use the `vlm` extra, a local frozen checkpoint (`configs/models.yaml`: `revision`, `local_files_only`, `device`), and the `READY` test config. Held-out data is never used to tune prompts.
 - `data/`, `outputs/`, `results/`, `reports/` (except `experiment_manifest.json`), and `kaggle.json` are generated or secrets — never commit them (see `.gitignore`).
 
+## 6. Multi-week real-VLM grid run
+
+For the planned 100 maps × 5 seeds real-VLM grid, read
+`docs/RUNBOOK_GRID_MULTIWEEK.md` and the implementation plan at
+`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`
+before starting any chunk. The work is split into deterministic weekly Kaggle
+chunks; no local GPU job is permitted, and no result may be claimed before all
+chunks are merged and paired CIs are computed at scenario level.
+
 <!-- omh:agent-instructions:end -->

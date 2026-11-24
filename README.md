@@ -103,6 +103,10 @@ Setup scaffolding exists but has **not been executed remotely**:
 See `docs/COLAB_KAGGLE_SETUP.md`. You must supply the GitHub URL, model revision
 and credentials. No local GPU is used and nothing has been downloaded or run.
 
+For the multi-week real-VLM grid (100 maps x 5 seeds, split into weekly Kaggle
+chunks), see `docs/RUNBOOK_GRID_MULTIWEEK.md` and the plan at
+`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`.
+
 ## Later: real experiment and evaluation
 
 1. Obtain a frozen VLM checkpoint and pin its revision in `configs/models.yaml`.
