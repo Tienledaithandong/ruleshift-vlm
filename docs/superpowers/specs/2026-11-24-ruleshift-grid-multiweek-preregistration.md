@@ -28,6 +28,13 @@ chunks.
 - A weekly slice is ten consecutive chunks (ten maps, 550 episodes). The slice
   is split across five 55-episode Kaggle sessions because one session cannot
   hold 550 episodes at the measured rate.
+- Measured feasibility (2026-11-24, real T4 smoke): mean 8.85 s per model
+  decision over 119 calls. A worst-case 55-episode chunk (60 decisions each) is
+  ~8.1 GPU-hours; ten chunks per weekly slice is ~81 GPU-hours, and the full
+  grid is ~810 GPU-hours before overhead. That is far beyond the ~27 h/week
+  quota, so the current 100x5 design cannot complete as specified. Do not mark
+  this READY or start the full grid until throughput improves materially or the
+  design is resized and re-reviewed.
 - Chunks are run in map order. No optional stopping: every one of the 100
   chunks must be attempted and either merged or explicitly declared failed.
 - A failed chunk may be rerun under the same mNNN id only after preserving the
