@@ -21,7 +21,11 @@ from ruleshift.public_api.grid_rules import (
     PublicGridMap,
     sign_side,
 )
-from ruleshift.public_api.grid_schemas import GRID_PHYSICAL_ACTIONS, GridAction
+from ruleshift.public_api.grid_schemas import (
+    GRID_PHYSICAL_ACTIONS,
+    GRID_TOOL_ACTIONS,
+    GridAction,
+)
 
 __all__ = [
     "GridPolicy",
@@ -396,10 +400,14 @@ class InfoGainPolicy(_BasePolicy):
         super().__init__(config)
         self.selector = InfoGainSelector(config)
         self.information_gain_bits: float | None = None
+        self.tool_information_gain_bits: float | None = None
+        self.move_information_gain_bits: float | None = None
 
     def reset(self, observation: Any, info: dict[str, Any]) -> None:
         super().reset(observation, info)
         self.information_gain_bits = None
+        self.tool_information_gain_bits = None
+        self.move_information_gain_bits = None
 
     def choose(self, observation: Any, info: dict[str, Any]) -> GridAction:
         observation = as_observation(observation)
@@ -414,9 +422,19 @@ class InfoGainPolicy(_BasePolicy):
             action_mask=tuple(observation.action_mask),
             step=int(info.get("env_steps", observation.steps)),
         )
-        # Accumulate the selector's expected IG for this decision so the
-        # evaluator can report a measured episode-wide total (finding 4).
+        # Accumulate the selector's expected IG for this decision, keeping tool
+        # and move information separate so the evaluator never divides move IG
+        # by the tool-call count.
         chosen_ig = self.selector.last_information_gain_bits
         if isinstance(chosen_ig, (int, float)) and not isinstance(chosen_ig, bool):
-            self.information_gain_bits = float(self.information_gain_bits or 0.0) + float(chosen_ig)
+            gain = float(chosen_ig)
+            self.information_gain_bits = float(self.information_gain_bits or 0.0) + gain
+            if action.kind in GRID_TOOL_ACTIONS:
+                self.tool_information_gain_bits = (
+                    float(self.tool_information_gain_bits or 0.0) + gain
+                )
+            else:
+                self.move_information_gain_bits = (
+                    float(self.move_information_gain_bits or 0.0) + gain
+                )
         return action

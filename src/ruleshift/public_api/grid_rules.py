@@ -96,6 +96,24 @@ class PublicGridMap:
         }
 
 
+def effective_map(public_map: PublicGridMap, door_open: bool = False) -> PublicGridMap:
+    """Return ``public_map`` with every movement-blocking cell in ``walls``.
+
+    The simulator and the public reference dynamics both block walls, the
+    signpost, and a door while it is closed. Agents only receive the public map
+    and a door-open flag, so this helper is the single place that turns those
+    public facts into the geometry used by ``movement_outcomes``. It never
+    changes markers, key, door or signpost coordinates.
+    """
+
+    blocked = set(public_map.walls)
+    if public_map.door is not None and not door_open:
+        blocked.add(public_map.door)
+    if public_map.signpost is not None:
+        blocked.add(public_map.signpost)
+    return replace(public_map, walls=frozenset(blocked))
+
+
 @dataclass(frozen=True)
 class GridRule:
     """One public candidate rule, stated without any hidden likelihood table."""
@@ -324,6 +342,7 @@ __all__ = [
     "GridRule",
     "PublicGridMap",
     "cell_role",
+    "effective_map",
     "key_opens",
     "movement_outcomes",
     "rules_consistent_with_all_clauses",

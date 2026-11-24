@@ -1,9 +1,9 @@
 """Deterministic grid map generation with an all-hypothesis solvability gate.
 
 A candidate is kept only when the goal of every public rule hypothesis is
-reachable while that rule's hazard marker is treated as blocked. This lets the
-agent, in principle, win under any rule in the public menu -- an invariant the
-generator enforces rather than hoping for.
+reachable while that rule's hazard marker and the signpost are treated as
+blocked. This lets the agent, in principle, win under any rule in the public
+menu -- an invariant the generator enforces rather than hoping for.
 """
 
 from __future__ import annotations
@@ -58,8 +58,11 @@ def is_solvable(
 ) -> bool:
     """Whether ``rule``'s goal is winnable under the simulator's dynamics.
 
-    Walls, out-of-bounds cells and ``rule``'s hazard marker are blocked; the
-    other markers stay walkable (they may be hazards under a different rule).
+    Walls, out-of-bounds cells, ``rule``'s hazard marker and the signpost are
+    blocked; the other markers stay walkable (they may be hazards under a
+    different rule). The simulator blocks the signpost for every movement, so
+    the gate must block it too or it can accept a map whose only route runs
+    through the signpost.
 
     The simulator blocks a closed door for *every* movement and opens it only
     via ``INTERACT`` from an adjacent cell while carrying the matching key.
@@ -77,6 +80,8 @@ def is_solvable(
     """
 
     blocked: set[Coord] = set(public_map.walls)
+    if public_map.signpost is not None:
+        blocked.add(public_map.signpost)
     hazard = public_map.markers.get(rule.hazard_color)
     if hazard is not None:
         blocked.add(hazard)

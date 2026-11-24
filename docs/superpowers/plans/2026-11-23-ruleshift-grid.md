@@ -94,7 +94,7 @@ Before Task 1, create an isolated branch or worktree. Use `superpowers:using-git
   - `validate_grid_vlm_output(payload) -> list[str]`.
   - `validate_grid_public_observation(payload) -> list[str]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_schemas.py
@@ -139,12 +139,12 @@ def test_grid_vlm_output_rejects_privileged_field():
     assert any("privileged" in error for error in errors)
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_schemas.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.public_api.grid_schemas`.
 
-- [ ] **Step 3: Implement `grid_schemas.py`**
+- [x] **Step 3: Implement `grid_schemas.py`**
 
 Use the same style as `public_api/schemas.py`: frozen dataclasses, validators returning a list of error strings, no exceptions for bad payloads.
 
@@ -185,12 +185,12 @@ image_hash: str = ""
 - `confidence`, if present, must be a finite number in `[0, 1]`.
 - `find_forbidden_fields(payload)` must be empty.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_schemas.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all existing tests plus the new ones pass.
@@ -223,7 +223,7 @@ git commit -m "feat: add grid public contracts and validators"
   - `rules_consistent_with_clause(side, clause) -> tuple[str, ...]`.
   - `rules_consistent_with_all_clauses(clauses) -> tuple[str, ...]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_rules.py
@@ -292,12 +292,12 @@ def test_cell_roles_are_rule_dependent():
     assert cell_role(RULE_BY_ID["hazard_goal_swap"], "red") == "hazard"
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_rules.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.public_api.grid_rules`.
 
-- [ ] **Step 3: Implement `grid_rules.py`**
+- [x] **Step 3: Implement `grid_rules.py`**
 
 Use these six hypotheses and clauses exactly; the partiality tests depend on the sharing pattern.
 
@@ -335,12 +335,12 @@ All rules share side 2: `"The green key opens the green door."`
 
 `PublicGridMap.to_payload()` returns a JSON-serializable dict with sorted wall coordinates and list coordinates for start/markers/key/door/signpost.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_rules.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -372,7 +372,7 @@ git commit -m "feat: add public grid rule hypotheses and map geometry"
   - `is_solvable(public_map: PublicGridMap, rule: GridRule, door_required: bool = False) -> bool`.
   - `all_hypotheses_solvable(public_map, rules, door_required=False) -> bool`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_mapgen.py
@@ -415,12 +415,12 @@ def test_generator_is_deterministic():
     assert first.map.public.to_payload() == second.map.public.to_payload()
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_mapgen.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.envs.grid`.
 
-- [ ] **Step 3: Implement config, entities, and mapgen**
+- [x] **Step 3: Implement config, entities, and mapgen**
 
 `GridConfig` defaults: `width=7`, `height=7`, `wall_density=0.18`, `max_env_steps=60`, `tool_budget=3`, `inspect_cost=2`, `read_sign_cost=1`, `inspect_range=2`, `inspect_error=0.05`, `baseline_slip=0.10`, `slippery_slip=0.80`, `shift_probability=0.35`, `shift_window=(10, 40)`, `soft_hazard_damage=-2.0`, `soft_hazard_recovery_steps=1`, `goal_reward=10.0`, `step_cost=-0.05`, `max_health=3`, `lethal_trap=False`, `door_required=False`, `advisor_cost=2`, `max_decisions=200`. There is no `max_damage` field: health is an integer that floors at zero in Tier A. `baseline_slip` and `slippery_slip` are the simulator's source of truth; `GridEnv` applies them to the public rule objects at reset (see Task 4).
 
@@ -442,12 +442,12 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.envs.grid`.
 
 Write `configs/grid_dev.yaml` with the defaults above plus `render_size: 224` and `observation_mode: symbolic`.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_mapgen.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -477,7 +477,7 @@ git commit -m "feat: add grid config and all-hypothesis map generator"
   - `GridEnv(config=None, render_mode="rgb_array", observation_mode="symbolic")` with `reset`, `step`, `render`, `public_view`, `evaluator_state`.
   - `GridEnv.reset` accepts test/evaluator options `map: PublicGridMap`, `scenario: GridScenario`, and individual scenario overrides.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_env.py
@@ -628,12 +628,12 @@ def test_different_seeds_differ():
     ).draw("move", 0)
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_env.py tests/test_grid_noise.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.envs.grid.grid_env`.
 
-- [ ] **Step 3: Implement `noise.py`, `rules.py`, and `grid_env.py`**
+- [x] **Step 3: Implement `noise.py`, `rules.py`, and `grid_env.py`**
 
 `noise.py` is a thin wrapper around `SemanticRNG`:
 - `draw_move(rng, step, attempt=0) -> float` with event `"move"`.
@@ -682,12 +682,12 @@ agent's public planner still reasons about the documented 0.10 baseline.
 - `evaluator_state`: return `scenario_id`, `true_rule`, `initial_rule`, `shift_time`, `scenario_type`, `map_seed`, `position`, `health`, `inventory`, `steps`, `tool_budget`, `recovery`, `door_open`, `success`, `terminated`, `truncated`.
 - `render`: return `None` until Task 6.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_env.py tests/test_grid_noise.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -716,7 +716,7 @@ git commit -m "feat: add grid environment physical dynamics and rule shifts"
   - `sign_side(position: Coord, signpost: Coord) -> int`.
   - `validate_tool_action(kind, target, position, public_map, budget, config) -> list[str]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_tools.py
@@ -809,12 +809,12 @@ def test_sign_side_is_deterministic():
     assert sign_side((2, 3), (2, 2)) == 0   # south of the sign
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_tools.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.envs.grid.tools`.
 
-- [ ] **Step 3: Implement `tools.py` and wire it into `GridEnv`**
+- [x] **Step 3: Implement `tools.py` and wire it into `GridEnv`**
 
 `inspect_cell`:
 - Valid targets are marker cells, the key cell, and the door cell. Walls and floor are rejected.
@@ -841,12 +841,12 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.envs.grid.tools`.
 - Do not increment `state.steps`; do not call `_maybe_shift`.
 - Update `_action_mask` to add `INSPECT` when a valid target exists and `READ_SIGN` when adjacent and affordable.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_tools.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -875,7 +875,7 @@ git commit -m "feat: add INSPECT and READ_SIGN with a matched tool budget"
   - `image_digest(image: np.ndarray) -> str`.
   - `GRID_LINE_COLOR`, `HUD_COLOR` constants for tests.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_observations.py
@@ -960,12 +960,12 @@ def test_hud_changes_with_public_state():
     assert not np.array_equal(first, second)
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_observations.py tests/test_grid_render.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.envs.grid.render`.
 
-- [ ] **Step 3: Implement `observations.py` and `render.py`**
+- [x] **Step 3: Implement `observations.py` and `render.py`**
 
 `observations.py`:
 - `build_grid_observation` assembles the `GridPublicObservation`.
@@ -993,12 +993,12 @@ Modify `GridEnv`:
 - `_obs()` returns `public_view().to_payload()` and, in visual mode, adds `"image": view.image`.
 - `observation_space` for visual mode is `spaces.Dict({"image": spaces.Box(0, 255, (224, 224, 3), np.uint8), ...})`; for symbolic mode, a `spaces.Dict` without `image`.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_observations.py tests/test_grid_render.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -1026,7 +1026,7 @@ git commit -m "feat: add grid public observations and 224x224 renderer"
   - `astar(start: GridPlannerState, goal: Coord, model: DynamicsModel, max_expansions=10000) -> list[GridAction]`.
   - `plan_to_goal(rule, public_map, start: Coord, has_key=False, door_open=False) -> list[GridAction]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_planner.py
@@ -1101,12 +1101,12 @@ def test_planner_is_public_only():
     assert "ruleshift.evaluator" not in source
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_planner.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.public_api.grid_planner`.
 
-- [ ] **Step 3: Implement `grid_planner.py`**
+- [x] **Step 3: Implement `grid_planner.py`**
 
 `HypothesisDynamics.predict_proba`:
 - Build `blocked = public_map.walls | ({door} if not state.door_open else set()) | ({signpost} if signpost else set())`.
@@ -1128,12 +1128,12 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.public_api.grid_planner`.
 
 `plan_to_goal`: goal is `public_map.markers[rule.goal_color]`; start state from the arguments.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_planner.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -1166,7 +1166,7 @@ git commit -m "feat: add public grid DynamicsModel and A* reference planner"
   - `InfoGainSelector(config)` with `choose(belief, public_map, *, position, inventory=(), door_open=False, tool_budget, action_mask, step, safety_threshold=None) -> GridAction`.
   - `PublicAdvisor(config)` with `advise(belief, public_map, *, position, inventory=(), door_open=False) -> GridAction`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_belief.py
@@ -1308,12 +1308,12 @@ def test_public_advisor_returns_a_legal_action():
     assert action.kind in {"UP", "DOWN", "LEFT", "RIGHT", "INTERACT"}
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_belief.py tests/test_grid_selector.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.agents.grid_belief`.
 
-- [ ] **Step 3: Implement the belief and selector**
+- [x] **Step 3: Implement the belief and selector**
 
 `GridBelief` stores a dict `(rule_id, tau) -> probability`, where `tau` is `None` or the step at which the last shift occurred. `predict(step)` applies the hazard-rate transition when `shift_window[0] <= step <= shift_window[1]`; otherwise `p_shift=0`. The prior is uniform over the hypotheses. The initial state is `(rule, None)` for each rule.
 
@@ -1338,12 +1338,12 @@ Update methods call `predict(step)` first, then multiply by the likelihood and n
 - Return the first action, or `INTERACT` when the plan requires the key/door.
 - It never updates the belief and never reads the true rule.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_belief.py tests/test_grid_selector.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -1374,7 +1374,7 @@ git commit -m "feat: add change-point belief and information-gain selector"
   - `build_grid_scenarios(n_maps: int, seeds: int, config: GridConfig) -> tuple[GridScenario, ...]`.
   - `run_grid_benchmark(methods, scenarios, config) -> list[GridEpisode]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_runner.py
@@ -1457,12 +1457,12 @@ def test_oracle_is_an_upper_bound_on_a_deterministic_map():
     assert oracle.total_return >= no_adapt.total_return
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_runner.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.agents.grid_baselines`.
 
-- [ ] **Step 3: Implement the policies and runner**
+- [x] **Step 3: Implement the policies and runner**
 
 `agents/grid_baselines.py`:
 - `_BasePolicy` stores `previous_observation`, `previous_action`, and a `GridBelief` when the policy uses one. `reset` stores the first observation and clears counters.
@@ -1509,12 +1509,12 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.agents.grid_baselines`.
   - `methods` is a mapping `name -> factory(config, env) -> GridPolicy`.
   - For each method and scenario: create `GridEnv(config)`, reset with `seed=scenario.run_seed` and `options={"scenario": scenario}`, build the policy with the factory, run the episode, collect.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_runner.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -1547,7 +1547,7 @@ git commit -m "feat: add grid baselines, privileged trace, and closed-loop runne
   - `scripts/run_grid_smoke.py` with `--config`, `--maps`, `--seeds`, `--methods`, `--out`, `--quick`.
   - `scripts/run_grid_audit.py` with `--config`, `--maps`, `--out`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_metrics.py
@@ -1637,12 +1637,12 @@ def test_audit_script_passes_on_small_config(tmp_path):
     assert (out / "grid_audit.md").exists()
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_metrics.py tests/test_grid_scripts.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.evaluator.grid_metrics`.
 
-- [ ] **Step 3: Implement metrics and scripts**
+- [x] **Step 3: Implement metrics and scripts**
 
 `grid_reference.py`:
 - `q_star_microtask` enumerates actions and the most likely outcome of each
@@ -1681,12 +1681,12 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.evaluator.grid_metrics`.
 `run_grid_audit.py`:
 - Call `audit_grid`; write `grid_audit.md`; exit 1 if `passed` is false.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_metrics.py tests/test_grid_scripts.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -1716,7 +1716,7 @@ git commit -m "feat: add grid reference, metrics, paired CIs, smoke and audit sc
   - `GridVLMPolicy(backend, config, cache=None)` implementing the `GridPolicy` protocol.
   - `grid_candidate_hash(observation) -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_vlm.py
@@ -1849,12 +1849,12 @@ def test_prompt_version_is_pinned():
     assert GRID_PROMPT_VERSION == "grid_v1"
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_vlm.py -v`
 Expected: FAIL with `ModuleNotFoundError: ruleshift.agents.grid_vlm`.
 
-- [ ] **Step 3: Write the public-only prompt**
+- [x] **Step 3: Write the public-only prompt**
 
 `src/ruleshift/prompts/grid_v1.txt` follows `direct_v1.txt` in tone but never mentions hidden state. Placeholders: `{public_history}`, `{public_text}`, `{candidate_rules}`, `{available_actions}`, `{public_costs}`, `{action_mask}`, `{tool_budget}`, `{position}`, `{grid_size}`. State explicitly:
 - the sign text is illegible in the frame and `READ_SIGN` returns one clause from one adjacent side;
@@ -1865,7 +1865,7 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.agents.grid_vlm`.
 - `tool_target` is required only for `INSPECT`;
 - keep the object compact on one line and return no prose or code fence.
 
-- [ ] **Step 4: Implement `grid_vlm.py`**
+- [x] **Step 4: Implement `grid_vlm.py`**
 
 `render_grid_prompt` fills the template from `observation.to_payload()` fields only. Never pass `image` bytes into the prompt; pass `image_hash`.
 
@@ -1892,12 +1892,12 @@ Expected: FAIL with `ModuleNotFoundError: ruleshift.agents.grid_vlm`.
 - `record` stores the last decision row; `most_likely_rule` returns the argmax of the last probabilities or `"base"`; `shift_detected` returns whether that rule is not `"base"`; `last_public_row()` returns the stored row.
 - This module imports only `public_api`, `agents`, and `permissions`. It must not import `envs` or `evaluator`. `GridVLMConfig` is a frozen dataclass carrying `model_id`, `revision=None`, `decoding_seed=0`, and `max_new_tokens=1024`. `ModelRequest` already fingerprints `prompt_version`, so pass `f"{GRID_PROMPT_VERSION}|{revision or 'none'}"` as that field to pin the model revision in the cache key without corrupting the backend's `model_id`.
 
-- [ ] **Step 5: Run the tests and verify they pass**
+- [x] **Step 5: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_vlm.py -v`
 Expected: PASS.
 
-- [ ] **Step 6: Run the full suite and commit**
+- [x] **Step 6: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -1919,7 +1919,7 @@ git commit -m "feat: add grid VLM prompt, parser, cache, and stub policy scaffol
 - Consumes: `scan_package`, `find_forbidden_fields`, `GRID_PUBLIC_OBSERVATION_FIELDS`, `rules_consistent_with_all_clauses`, `sign_clause`, `sign_side`, `GridEnv`, `GridBelief`, `run_grid_episode`, `plan_to_goal`, `RULE_BY_ID`.
 - Produces: no new production code. If a test fails because a module leaks privileged names, fix that module in its owning task and re-run this task.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_grid_permissions.py
@@ -2069,12 +2069,12 @@ def test_unlimited_tool_budget_is_an_ablation_not_a_baseline():
     assert unlimited.tool_units > limited.tool_units
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `python -m pytest tests/test_grid_permissions.py tests/test_grid_signpost_shortcut.py -v`
 Expected: FAIL (the shortcut policy and `_BasePolicy.base_plan` do not exist yet).
 
-- [ ] **Step 3: Support the test policy and verify the failure is real**
+- [x] **Step 3: Support the test policy and verify the failure is real**
 
 In `agents/grid_baselines.py`, make `_BasePolicy` accept `use_belief: bool = True`, expose `previous_observation`, and add `base_plan(rule_id, observation)` returning `plan_to_goal(RULE_BY_ID[rule_id], public_map, position, has_key, door_open)`. These are public helpers for scripted policies; they read only the observation.
 
@@ -2085,12 +2085,12 @@ If `test_scripted_signpost_only_policy_underperforms` does not fail, check that:
 - the three `READ_SIGN` calls cost exactly 3 units;
 - the commit action is computed only from the sign clauses, never from transition evidence.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_permissions.py tests/test_grid_signpost_shortcut.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all tests pass.
@@ -2115,7 +2115,7 @@ git commit -m "test: enforce grid permission boundary and signpost shortcut fail
   - `python scripts/run_grid_real_pilot.py --maps N --seeds N --device cuda --out DIR --report FILE`.
   - A remote-only kernel `kaggle/kernel/run_grid.py`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # append to tests/test_grid_scripts.py
@@ -2135,12 +2135,12 @@ def test_grid_real_pilot_refuses_local_cuda_without_kaggle_env(tmp_path):
     assert "RULESHIFT_KAGGLE" in result.stdout + result.stderr
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `python -m pytest tests/test_grid_scripts.py -k real_pilot -v`
 Expected: FAIL with a missing script or exit 0.
 
-- [ ] **Step 3: Implement the pilot script**
+- [x] **Step 3: Implement the pilot script**
 
 `scripts/run_grid_real_pilot.py`:
 - Parse `--model-key` (default `qwen2.5-vl-3b`), `--device` (default `cuda`), `--maps` (default 3), `--seeds` (default 1), `--out`, `--report`, and `--config` (default `configs/grid_dev.yaml`).
@@ -2157,12 +2157,12 @@ Expected: FAIL with a missing script or exit 0.
 - After `pip install -e ".[dev]"`, `pip install -U transformers`, and `nvidia-smi`, set `RULESHIFT_KAGGLE=1` in the environment and run `scripts/run_grid_real_pilot.py` with `--device cuda`.
 - Print the report path and the two JSONL paths at the end.
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `python -m pytest tests/test_grid_scripts.py -v`
 Expected: PASS. No real model is loaded or downloaded locally.
 
-- [ ] **Step 5: Run the full suite and commit**
+- [x] **Step 5: Run the full suite and commit**
 
 Run: `python -m pytest -q`
 Expected: all existing 217 tests plus all new grid tests pass.
@@ -2176,13 +2176,26 @@ git commit -m "feat: add remote-only grid pilot scaffold and Kaggle kernel"
 
 ## Final Verification (run before presenting as complete)
 
-- [ ] `python -m pytest -q` — exit 0; record the test count.
-- [ ] `python scripts/run_grid_audit.py --maps 10 --out reports` — exit 0; `reports/grid_audit.md` exists and `passed: true`.
-- [ ] `python scripts/run_grid_smoke.py --quick --maps 5 --seeds 2 --out reports` — exit 0; `reports/grid_smoke.md` starts with `SYNTHETIC CPU SMOKE — NOT A SCIENTIFIC FINDING`.
-- [ ] `git diff --name-only origin/main...HEAD` contains only spec/plan/source/test/config files — no `reports/`, `results/`, `data/`, `outputs/`, `kaggle.json`, or `configs/preregistered_test.yaml` change.
-- [ ] `git status --short` is clean after the commits.
-- [ ] `python scripts/preflight.py` still prints NO-GO; this is expected and not a failure.
-- [ ] Confirm no local GPU job was run: no `nvidia-smi` or `transformers` import in local CI tests.
+- [x] `python -m pytest -q` — exit 0; record the test count.
+- [x] `python scripts/run_grid_audit.py --maps 10 --out reports` — exit 0; `reports/grid_audit.md` exists and `passed: true`.
+- [x] `python scripts/run_grid_smoke.py --quick --maps 5 --seeds 2 --out reports` — exit 0; `reports/grid_smoke.md` starts with `SYNTHETIC CPU SMOKE — NOT A SCIENTIFIC FINDING`.
+- [x] `git diff --name-only origin/main...HEAD` contains only spec/plan/source/test/config files — no `reports/`, `results/`, `data/`, `outputs/`, `kaggle.json`, or `configs/preregistered_test.yaml` change.
+- [x] `git status --short` is clean after the commits.
+- [x] `python scripts/preflight.py` still prints NO-GO; this is expected and not a failure.
+- [x] Confirm no local GPU job was run: no `nvidia-smi` or `transformers` import in local CI tests.
+
+**Verification record (2026-11-24, on branch `feat/ruleshift-grid`):**
+`python -m pytest` — 372 passed, exit 0. `run_grid_audit.py --maps 500` —
+PASS with 0 independent solvability failures. `run_grid_smoke.py --quick
+--maps 5 --seeds 2` — exit 0 with the synthetic-not-a-finding header. The diff
+against `origin/main` contains no generated report, result, data, output,
+credential or preregistered-test changes. `preflight.py` prints NO-GO as
+expected. No local GPU job was run.
+
+Three post-review fixes are included in this branch: the generator's solvability
+gate now blocks the signpost, the structural audit re-checks solvability
+independently, and information gain per tool call now uses tool-only
+information through a shared `effective_map` blocking helper.
 
 ## Out of Scope (do not implement in this change)
 

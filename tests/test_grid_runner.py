@@ -301,10 +301,14 @@ def test_info_gain_policy_records_a_measured_episode_total():
     assert episode.information_gain_bits is not None
     assert episode.information_gain_bits > 0.0
     assert episode.tool_calls_made > 0
+    tool_gain = getattr(episode, "tool_information_gain_bits", None)
+    move_gain = getattr(episode, "move_information_gain_bits", None)
+    assert tool_gain is not None
+    assert move_gain is not None
+    assert abs(episode.information_gain_bits - (tool_gain + move_gain)) < 1e-9
     summary = summarize_grid([episode])
     assert abs(
-        summary["information_gain_per_tool_call"]
-        - episode.information_gain_bits / episode.tool_calls_made
+        summary["information_gain_per_tool_call"] - tool_gain / episode.tool_calls_made
     ) < 1e-9
 
     # A policy that never measured gain produces no IG rows at all.

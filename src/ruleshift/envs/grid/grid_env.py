@@ -21,6 +21,7 @@ from ruleshift.public_api.grid_rules import (
     Coord,
     PublicGridMap,
     cell_role,
+    effective_map,
     key_opens,
     movement_outcomes,
 )
@@ -302,12 +303,7 @@ class GridEnv(Env):
         if action.kind == "INTERACT":
             self._interact(rule, public, state)
         else:
-            blocked = set(public.walls)
-            if public.door is not None and not state.door_open:
-                blocked.add(public.door)
-            if public.signpost is not None:
-                blocked.add(public.signpost)
-            blocked_map = replace(public, walls=frozenset(blocked))
+            blocked_map = effective_map(public, state.door_open)
             outcomes = movement_outcomes(
                 rule, state.position, action.kind, blocked_map
             )

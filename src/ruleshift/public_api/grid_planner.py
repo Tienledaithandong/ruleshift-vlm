@@ -17,10 +17,10 @@ import heapq
 import itertools
 import math
 import random
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Protocol
 
-from .grid_rules import Coord, GridRule, PublicGridMap, movement_outcomes
+from .grid_rules import Coord, GridRule, PublicGridMap, effective_map, movement_outcomes
 from .grid_schemas import GridAction
 
 __all__ = [
@@ -72,12 +72,7 @@ class HypothesisDynamics:
         if action.kind == "INTERACT":
             return self._interact(state)
 
-        blocked = set(self.public_map.walls)
-        if self.public_map.door is not None and not state.door_open:
-            blocked.add(self.public_map.door)
-        if self.public_map.signpost is not None:
-            blocked.add(self.public_map.signpost)
-        blocked_map = replace(self.public_map, walls=frozenset(blocked))
+        blocked_map = effective_map(self.public_map, state.door_open)
 
         outcomes = movement_outcomes(
             self.rule, state.position, action.kind, blocked_map

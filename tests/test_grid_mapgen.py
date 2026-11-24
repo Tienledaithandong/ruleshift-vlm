@@ -5,6 +5,7 @@ The rest pin the config defaults, YAML loading, determinism of ``attempts`` and
 the door-required path.
 """
 
+from collections import deque
 from pathlib import Path
 
 from ruleshift.envs.grid.config import GridConfig, load_grid_config
@@ -13,10 +14,66 @@ from ruleshift.envs.grid.mapgen import (
     generate_solvable_map,
     is_solvable,
 )
-from ruleshift.public_api.grid_rules import GRID_HYPOTHESES, PublicGridMap
+from ruleshift.public_api.grid_rules import (
+    GRID_HYPOTHESES,
+    PublicGridMap,
+    key_opens,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GRID_DEV_YAML = REPO_ROOT / "configs" / "grid_dev.yaml"
+
+_DELTAS = ((0, -1), (0, 1), (-1, 0), (1, 0))
+
+
+def _independent_reachable(public, start, blocked):
+    """Reference BFS used only by tests; deliberately independent of mapgen."""
+
+    if start in blocked:
+        return set()
+    seen = {start}
+    queue = deque([start])
+    while queue:
+        x, y = queue.popleft()
+        for dx, dy in _DELTAS:
+            nxt = (x + dx, y + dy)
+            if nxt in seen or nxt in blocked:
+                continue
+            if not (0 <= nxt[0] < public.width and 0 <= nxt[1] < public.height):
+                continue
+            seen.add(nxt)
+            queue.append(nxt)
+    return seen
+
+
+def _independent_solvable(public, rule):
+    """Recompute solvability without calling the generator's gate."""
+
+    blocked = set(public.walls)
+    hazard = public.markers.get(rule.hazard_color)
+    if hazard is not None:
+        blocked.add(hazard)
+    if public.signpost is not None:
+        blocked.add(public.signpost)
+    goal = public.markers[rule.goal_color]
+
+    if public.door is not None:
+        if not key_opens(rule, rule.key_color, rule.door_color):
+            return False
+        door_closed = blocked | {public.door}
+        reachable_closed = _independent_reachable(public, public.start, door_closed)
+        if public.key not in reachable_closed:
+            return False
+        dx, dy = public.door
+        if not any(
+            0 <= dx + ox < public.width
+            and 0 <= dy + oy < public.height
+            and (dx + ox, dy + oy) in reachable_closed
+            for ox, oy in _DELTAS
+        ):
+            return False
+        return goal in _independent_reachable(public, public.start, blocked)
+    return goal in _independent_reachable(public, public.start, blocked)
 
 
 def test_generated_map_has_expected_dimensions():
@@ -33,6 +90,37 @@ def test_generated_map_is_solvable_under_every_hypothesis():
         result = generate_solvable_map(seed, GridConfig(), GRID_HYPOTHESES)
         for rule in GRID_HYPOTHESES:
             assert is_solvable(result.map.public, rule)
+
+
+def test_solver_blocks_signpost_on_only_path():
+    """The signpost blocks movement, so it must block the reference BFS too."""
+
+    public = PublicGridMap(
+        width=5,
+        height=5,
+        walls=frozenset((x, y) for x in range(5) for y in range(1, 5)),
+        start=(0, 0),
+        markers={"red": (4, 0), "blue": (0, 4), "green": (3, 4)},
+        key=None,
+        door=None,
+        signpost=(2, 0),
+    )
+    rule = GRID_HYPOTHESES[0]
+    assert not _independent_solvable(public, rule)
+    assert not is_solvable(public, rule)
+
+
+def test_generated_maps_are_solvable_with_signpost_blocked():
+    """Regression: seed 9 and friends exposed a signpost-only solvability gap."""
+
+    seeds = (*range(20), 21, 22, 23, 24, 35, 48, 49, 50)
+    for seed in seeds:
+        public = generate_solvable_map(seed, GridConfig()).map.public
+        for rule in GRID_HYPOTHESES:
+            assert _independent_solvable(public, rule), (
+                f"seed {seed} is unsolvable under {rule.rule_id} "
+                "when the signpost blocks movement"
+            )
 
 
 def test_unsolvable_map_is_rejected():

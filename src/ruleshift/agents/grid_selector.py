@@ -24,6 +24,7 @@ from ruleshift.public_api.grid_rules import (
     PublicGridMap,
     RULE_BY_ID,
     cell_role,
+    effective_map,
     movement_outcomes,
 )
 from ruleshift.public_api.grid_schemas import GridAction
@@ -161,14 +162,18 @@ class InfoGainSelector:
         public_map: PublicGridMap,
         position: Coord,
         kind: str,
+        door_open: bool = False,
     ) -> float:
         color_at = {tuple(coord): color for color, coord in public_map.markers.items()}
+        movement_map = effective_map(public_map, door_open)
         probability = 0.0
         for rule_id, rule_mass in belief.marginal().items():
             if rule_mass <= 0.0:
                 continue
             rule = RULE_BY_ID[rule_id]
-            for landing, mass in movement_outcomes(rule, position, kind, public_map).items():
+            for landing, mass in movement_outcomes(
+                rule, position, kind, movement_map
+            ).items():
                 color = color_at.get(tuple(landing))
                 if color is not None and cell_role(rule, color) == "hazard":
                     probability += rule_mass * mass
@@ -212,11 +217,12 @@ class InfoGainSelector:
         outcomes: dict[Any, float] = {}
 
         if kind in _MOVE_KINDS:
+            movement_map = effective_map(public_map, door_open)
             for rule_id, rule_mass in marginal.items():
                 if rule_mass <= 0.0:
                     continue
                 for landing, mass in movement_outcomes(
-                    RULE_BY_ID[rule_id], position, kind, public_map
+                    RULE_BY_ID[rule_id], position, kind, movement_map
                 ).items():
                     outcomes[tuple(landing)] = (
                         outcomes.get(tuple(landing), 0.0) + rule_mass * mass
@@ -308,7 +314,7 @@ class InfoGainSelector:
         for candidate in candidates:
             kind = candidate.action.kind
             if kind in _MOVE_KINDS and self._move_hazard_probability(
-                belief, public_map, position, kind
+                belief, public_map, position, kind, door_open
             ) > threshold:
                 continue
             information_gain = self._expected_ig(

@@ -13,6 +13,7 @@ from ruleshift.public_api.grid_rules import (
     RULE_BY_ID,
     PublicGridMap,
     cell_role,
+    effective_map,
     key_opens,
     movement_outcomes,
     rules_consistent_with_all_clauses,
@@ -59,6 +60,35 @@ def test_blocked_move_collapses_to_current_cell():
     blocked = replace(MAP, walls=frozenset({(1, 0)}))
     rule = replace(BASE_RULE, slip_prob=0.0)
     assert movement_outcomes(rule, (1, 1), "UP", blocked) == {(1, 1): 1.0}
+
+
+def test_effective_map_blocks_signpost_and_closed_door():
+    closed = effective_map(MAP, door_open=False)
+    assert (2, 2) in closed.walls  # signpost
+    assert (4, 4) in closed.walls  # closed door
+    assert closed.markers == MAP.markers
+    assert closed.key == MAP.key
+    assert closed.door == MAP.door
+    assert closed.signpost == MAP.signpost
+
+    opened = effective_map(MAP, door_open=True)
+    assert (2, 2) in opened.walls
+    assert (4, 4) not in opened.walls
+
+
+def test_effective_map_matches_simulator_movement_around_blocked_cells():
+    """The helper must resolve movement exactly as the simulator does."""
+
+    closed = effective_map(MAP, door_open=False)
+    rule = RULE_BY_ID["slippery"]
+    for position in ((2, 1), (2, 3), (1, 2), (3, 2), (4, 3), (3, 4)):
+        for action in ("UP", "DOWN", "LEFT", "RIGHT"):
+            expected = movement_outcomes(rule, position, action, closed)
+            inline = replace(
+                MAP,
+                walls=frozenset(set(MAP.walls) | {MAP.signpost, MAP.door}),
+            )
+            assert movement_outcomes(rule, position, action, inline) == expected
 
 
 def test_every_sign_side_leaves_at_least_two_hypotheses():

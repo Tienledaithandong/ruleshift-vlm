@@ -58,6 +58,11 @@ class GridEpisode:
     #: ``None`` means the policy never measured information gain; a float is
     #: the episode-wide total it reported (0.0 is a genuine measurement).
     information_gain_bits: float | None = None
+    #: Information gain attributable to INSPECT/READ_SIGN decisions only.
+    #: This is the numerator for ``information_gain_per_tool_call``.
+    tool_information_gain_bits: float | None = None
+    #: Information gain attributable to physical moves only.
+    move_information_gain_bits: float | None = None
     #: Number of tool actions actually issued, independent of their unit cost.
     tool_calls_made: int = 0
 
@@ -235,6 +240,20 @@ def run_grid_episode(
         and not isinstance(raw_information_gain, bool)
         else None
     )
+    raw_tool_gain = getattr(policy, "tool_information_gain_bits", None)
+    tool_information_gain_bits = (
+        float(raw_tool_gain)
+        if isinstance(raw_tool_gain, (int, float))
+        and not isinstance(raw_tool_gain, bool)
+        else None
+    )
+    raw_move_gain = getattr(policy, "move_information_gain_bits", None)
+    move_information_gain_bits = (
+        float(raw_move_gain)
+        if isinstance(raw_move_gain, (int, float))
+        and not isinstance(raw_move_gain, bool)
+        else None
+    )
     total_cost = env_steps + int(config.advisor_cost) * advisor_calls
     return GridEpisode(
         scenario_id=scenario.scenario_id,
@@ -260,6 +279,8 @@ def run_grid_episode(
         cache_hit=bool(getattr(policy, "last_cache_hit", False)),
         tool_calls=tuple(getattr(policy, "last_tool_calls", ())),
         information_gain_bits=information_gain_bits,
+        tool_information_gain_bits=tool_information_gain_bits,
+        move_information_gain_bits=move_information_gain_bits,
         tool_calls_made=tool_calls_made,
     )
 

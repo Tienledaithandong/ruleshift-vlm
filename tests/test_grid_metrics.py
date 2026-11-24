@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from ruleshift.evaluator.grid_metrics import audit_grid, paired_grid_ci, summarize_grid
 from ruleshift.evaluator.grid_reference import oracle_return
 from ruleshift.evaluator.grid_runner import GridEpisode
@@ -71,21 +73,53 @@ def test_oracle_return_reads_the_optional_field():
     assert oracle_return(replace(plain, oracle_return=9.5)) == 9.5
 
 
-def test_information_gain_uses_tool_calls_and_omits_unmeasured():
-    from dataclasses import replace
+def _with_fields(ep, **fields):
+    """Duck-typed copy so a missing production field fails as an assertion."""
 
+    data = dict(vars(ep))
+    data.update(fields)
+    return SimpleNamespace(**data)
+
+
+def test_information_gain_uses_tool_calls_and_omits_unmeasured():
     unmeasured = episode("a", 0, True, 10)
     summary = summarize_grid([unmeasured])
     assert "information_gain_per_tool_call" not in summary
     assert "information_gain_per_total_cost" not in summary
 
-    # 2 calls cost 4 tool units: the denominator must be calls, not units.
-    measured = replace(
-        unmeasured, information_gain_bits=4.0, tool_calls_made=2, tool_units=4
+    # 3 bits came from 2 tool calls; the other bit came from a move. The
+    # per-tool metric must use only the tool-generated information.
+    measured = _with_fields(
+        unmeasured,
+        information_gain_bits=4.0,
+        tool_information_gain_bits=3.0,
+        move_information_gain_bits=1.0,
+        tool_calls_made=2,
+        tool_units=4,
+        public_rows=({"chosen_action": "UP"}, {"chosen_action": "INSPECT"}),
     )
     summary = summarize_grid([measured])
-    assert abs(summary["information_gain_per_tool_call"] - 2.0) < 1e-9
+    assert abs(summary["information_gain_per_tool_call"] - 1.5) < 1e-9
     assert abs(summary["information_gain_per_total_cost"] - 4.0 / 10.0) < 1e-9
+    assert summary["tool_information_gain_bits"] == 3.0
+    assert summary["move_information_gain_bits"] == 1.0
+    assert abs(summary["information_gain_per_decision"] - 2.0) < 1e-9
+
+
+def test_move_only_information_gain_is_not_counted_as_tool_information():
+    move_only = _with_fields(
+        episode("a", 0, True, 10),
+        information_gain_bits=2.0,
+        tool_information_gain_bits=0.0,
+        move_information_gain_bits=2.0,
+        tool_calls_made=0,
+        public_rows=({"chosen_action": "UP"}, {"chosen_action": "RIGHT"}),
+    )
+    summary = summarize_grid([move_only])
+    assert "information_gain_per_tool_call" not in summary
+    assert summary["tool_information_gain_bits"] == 0.0
+    assert summary["move_information_gain_bits"] == 2.0
+    assert abs(summary["information_gain_per_decision"] - 1.0) < 1e-9
 
 
 def test_audit_grid_reports_every_structural_check():
@@ -103,3 +137,40 @@ def test_audit_grid_reports_every_structural_check():
         "permissions_scan",
     }
     assert all(result["checks"].values())
+
+
+def test_audit_generator_solvability_is_independent_of_the_generator_gate(monkeypatch):
+    """A map the old gate wrongly accepted must still fail the audit."""
+
+    from ruleshift.envs.grid.config import GridConfig
+    from ruleshift.envs.grid.entities import GridMap, MapGenResult
+    from ruleshift.public_api.grid_rules import PublicGridMap
+
+    bad_map = PublicGridMap(
+        width=5,
+        height=5,
+        walls=frozenset((x, y) for x in range(5) for y in range(1, 5)),
+        start=(0, 0),
+        markers={"red": (4, 0), "blue": (0, 4), "green": (3, 4)},
+        key=None,
+        door=None,
+        signpost=(2, 0),
+    )
+    generated = MapGenResult(
+        map=GridMap(public=bad_map, map_seed=0, door_required=False),
+        attempts=1,
+    )
+    monkeypatch.setattr(
+        "ruleshift.evaluator.grid_metrics.generate_solvable_map",
+        lambda seed, config: generated,
+    )
+    # Simulate the old, tautological gate saying "yes" to every map.
+    monkeypatch.setattr(
+        "ruleshift.evaluator.grid_metrics.all_hypotheses_solvable",
+        lambda *args, **kwargs: True,
+        raising=False,
+    )
+
+    result = audit_grid(GridConfig(), n_maps=1)
+
+    assert result["checks"]["generator_solvability"] is False

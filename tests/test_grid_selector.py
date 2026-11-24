@@ -3,10 +3,20 @@ from ruleshift.agents.grid_selector import (
     InfoGainSelector,
     PublicAdvisor,
     _adjacent_side,
+    _Candidate,
 )
 from ruleshift.envs.grid.config import GridConfig
 from ruleshift.envs.grid.tools import sign_side
-from ruleshift.public_api.grid_rules import PublicGridMap, RULE_BY_ID, sign_clause
+from ruleshift.public_api.grid_planner import GridPlannerState, HypothesisDynamics
+from ruleshift.public_api.grid_rules import (
+    PublicGridMap,
+    RULE_BY_ID,
+    cell_role,
+    effective_map,
+    movement_outcomes,
+    sign_clause,
+)
+from ruleshift.public_api.grid_schemas import GridAction
 
 # No signpost: the test isolates INSPECT from the cheaper READ_SIGN probe.
 MAP = PublicGridMap(5, 5, frozenset(), (1, 1),
@@ -90,3 +100,83 @@ def test_read_sign_uses_the_south_west_face_convention():
         step=0,
     )
     assert action.kind == "READ_SIGN"
+
+
+def _hazard_probability_from_dynamics(public_map, rule_id):
+    """Reference hazard probability from the public dynamics model."""
+
+    rule = RULE_BY_ID[rule_id]
+    model = HypothesisDynamics(rule, public_map)
+    distribution = model.predict_proba(
+        GridPlannerState((1, 1), False, False), GridAction("RIGHT")
+    )
+    color_at = {coord: color for color, coord in public_map.markers.items()}
+    return sum(
+        probability
+        for state, probability in distribution.items()
+        if (color := color_at.get(state.position)) is not None
+        and cell_role(rule, color) == "hazard"
+    )
+
+
+def test_move_hazard_probability_matches_dynamics_with_signpost_blocking():
+    public_map = PublicGridMap(
+        5, 5, frozenset(), (1, 1),
+        {"red": (4, 4), "blue": (2, 1), "green": (4, 0)},
+        None, None, (3, 1),
+    )
+    belief = GridBelief(hypotheses=("slippery",))
+    selector = InfoGainSelector(GridConfig())
+
+    actual = selector._move_hazard_probability(
+        belief, public_map, (1, 1), "RIGHT", door_open=False
+    )
+    expected = _hazard_probability_from_dynamics(public_map, "slippery")
+    assert abs(actual - expected) < 1e-9
+
+
+def test_move_hazard_probability_matches_dynamics_with_closed_door_blocking():
+    public_map = PublicGridMap(
+        5, 5, frozenset(), (1, 1),
+        {"red": (4, 4), "blue": (3, 1), "green": (4, 0)},
+        None, (2, 1), None,
+    )
+    belief = GridBelief(hypotheses=("slippery",))
+    selector = InfoGainSelector(GridConfig())
+
+    actual = selector._move_hazard_probability(
+        belief, public_map, (1, 1), "RIGHT", door_open=False
+    )
+    expected = _hazard_probability_from_dynamics(public_map, "slippery")
+    assert abs(actual - expected) < 1e-9
+
+
+def test_expected_ig_for_move_matches_dynamics_with_blocked_cells():
+    public_map = PublicGridMap(
+        5, 5, frozenset(), (1, 1),
+        {"red": (4, 4), "blue": (2, 1), "green": (4, 0)},
+        None, None, (3, 1),
+    )
+    belief = GridBelief(hypotheses=("slippery",))
+    selector = InfoGainSelector(GridConfig())
+    candidate = _Candidate(GridAction("RIGHT"), 1, 0)
+
+    actual = selector._expected_ig(
+        belief, public_map, (1, 1), candidate, 0, (), False
+    )
+
+    movement_map = effective_map(public_map, door_open=False)
+    before = belief.entropy()
+    outcomes: dict[tuple[int, int], float] = {}
+    for rule_id, rule_mass in belief.marginal().items():
+        for landing, mass in movement_outcomes(
+            RULE_BY_ID[rule_id], (1, 1), "RIGHT", movement_map
+        ).items():
+            outcomes[tuple(landing)] = outcomes.get(tuple(landing), 0.0) + rule_mass * mass
+    expected_after = 0.0
+    for outcome, probability in outcomes.items():
+        branch = belief.copy()
+        branch.update_move((1, 1), "RIGHT", outcome, public_map, 0)
+        expected_after += probability * branch.entropy()
+    expected = max(0.0, before - expected_after)
+    assert abs(actual - expected) < 1e-9

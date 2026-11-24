@@ -9,7 +9,7 @@ state.
 from __future__ import annotations
 
 import math
-from collections import defaultdict
+from collections import deque, defaultdict
 from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Mapping, Sequence
@@ -19,13 +19,16 @@ import numpy as np
 from ruleshift.envs.grid.config import GridConfig
 from ruleshift.envs.grid.entities import GridScenario
 from ruleshift.envs.grid.grid_env import GridEnv
-from ruleshift.envs.grid.mapgen import all_hypotheses_solvable, generate_solvable_map
+from ruleshift.envs.grid.mapgen import generate_solvable_map
 from ruleshift.evaluator.grid_reference import oracle_return
 from ruleshift.evaluator.metrics_ci import PairedSummary, summarize_paired
 from ruleshift.permissions import find_forbidden_fields, scan_package
 from ruleshift.public_api.grid_rules import (
     GRID_HYPOTHESES,
+    Coord,
+    GridRule,
     PublicGridMap,
+    key_opens,
     rules_consistent_with_all_clauses,
     rules_consistent_with_clause,
 )
@@ -216,15 +219,37 @@ def summarize_grid(episodes: Sequence["GridEpisode"]) -> dict[str, float]:
         )
         if value is not None
     ]
+    tool_gain = [
+        value
+        for value in (
+            _finite(getattr(row, "tool_information_gain_bits", None)) for row in rows
+        )
+        if value is not None
+    ]
+    move_gain = [
+        value
+        for value in (
+            _finite(getattr(row, "move_information_gain_bits", None)) for row in rows
+        )
+        if value is not None
+    ]
     if measured_gain:
         information_gain = sum(measured_gain)
-        # Calls, not tool units: INSPECT spends 2 units but is still one call.
-        tool_calls = sum(int(getattr(row, "tool_calls_made", 0) or 0) for row in rows)
+        decisions = sum(len(tuple(getattr(row, "public_rows", ()) or ())) for row in rows)
+        if decisions:
+            summary["information_gain_per_decision"] = information_gain / decisions
         total_cost = sum(float(row.total_cost) for row in rows)
-        if tool_calls > 0:
-            summary["information_gain_per_tool_call"] = information_gain / tool_calls
         if total_cost > 0.0:
             summary["information_gain_per_total_cost"] = information_gain / total_cost
+    if tool_gain:
+        tool_information = sum(tool_gain)
+        summary["tool_information_gain_bits"] = tool_information
+        # Calls, not tool units: INSPECT spends 2 units but is still one call.
+        tool_calls = sum(int(getattr(row, "tool_calls_made", 0) or 0) for row in rows)
+        if tool_calls > 0:
+            summary["information_gain_per_tool_call"] = tool_information / tool_calls
+    if move_gain:
+        summary["move_information_gain_bits"] = sum(move_gain)
 
     hazard_damage = []
     deaths = []
@@ -303,6 +328,68 @@ def paired_grid_ci(
     )
 
 
+_AUDIT_DELTAS = ((0, -1), (0, 1), (-1, 0), (1, 0))
+
+
+def _audit_reachable(
+    public_map: PublicGridMap, start: Coord, blocked: set[Coord]
+) -> set[Coord]:
+    """Reference reachability used by the audit, not by the generator."""
+
+    if start in blocked:
+        return set()
+    seen = {start}
+    queue = deque([start])
+    while queue:
+        x, y = queue.popleft()
+        for dx, dy in _AUDIT_DELTAS:
+            nxt = (x + dx, y + dy)
+            if nxt in seen or nxt in blocked:
+                continue
+            if not (0 <= nxt[0] < public_map.width and 0 <= nxt[1] < public_map.height):
+                continue
+            seen.add(nxt)
+            queue.append(nxt)
+    return seen
+
+
+def _audit_solvable(public_map: PublicGridMap, rule: GridRule) -> bool:
+    """Independently recompute the all-hypothesis solvability invariant.
+
+    This deliberately does not call ``mapgen.is_solvable`` or
+    ``all_hypotheses_solvable``: the audit must be able to detect a bug in the
+    generator's own gate. The signpost is always blocked, matching the
+    simulator's movement resolution.
+    """
+
+    blocked: set[Any] = set(public_map.walls)
+    if public_map.signpost is not None:
+        blocked.add(public_map.signpost)
+    hazard = public_map.markers.get(rule.hazard_color)
+    if hazard is not None:
+        blocked.add(hazard)
+    goal = public_map.markers[rule.goal_color]
+
+    if public_map.door is not None:
+        if not key_opens(rule, rule.key_color, rule.door_color):
+            return False
+        door_closed = blocked | {public_map.door}
+        reachable_closed = _audit_reachable(public_map, public_map.start, door_closed)
+        if public_map.key not in reachable_closed:
+            return False
+        door_x, door_y = public_map.door
+        if not any(
+            0 <= door_x + dx < public_map.width
+            and 0 <= door_y + dy < public_map.height
+            and (door_x + dx, door_y + dy) in reachable_closed
+            for dx, dy in _AUDIT_DELTAS
+        ):
+            return False
+        return goal in _audit_reachable(public_map, public_map.start, blocked)
+
+    return goal in _audit_reachable(public_map, public_map.start, blocked)
+
+
 def audit_grid(config: GridConfig, n_maps: int = 20) -> dict[str, Any]:
     """Run the structural RuleShift-Grid invariants as one deterministic audit.
 
@@ -343,11 +430,15 @@ def audit_grid(config: GridConfig, n_maps: int = 20) -> dict[str, Any]:
     def generator_solvability() -> bool:
         for seed in range(int(n_maps)):
             grid_map = generate_solvable_map(seed, config).map
-            if not all_hypotheses_solvable(
-                grid_map.public, GRID_HYPOTHESES, config.door_required
-            ):
+            failed = [
+                rule.rule_id
+                for rule in GRID_HYPOTHESES
+                if not _audit_solvable(grid_map.public, rule)
+            ]
+            if failed:
                 failures.append(
-                    f"generator_solvability: seed {seed} is not solvable under every hypothesis"
+                    f"generator_solvability: seed {seed} is not solvable under "
+                    f"the independent check for {failed}"
                 )
         return True
 
