@@ -33,8 +33,8 @@ from ruleshift.public_api.grid_schemas import (
 from .cache import ResponseCache
 from .vlm_backend import ModelRequest, ModelResponse
 
-GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v1.txt"
-GRID_PROMPT_VERSION = "grid_v1"
+GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v2.txt"
+GRID_PROMPT_VERSION = "grid_v2"
 
 __all__ = [
     "GRID_PROMPT_PATH",
@@ -131,8 +131,8 @@ def _grid_size(observation: Any) -> tuple[int, int]:
 def render_grid_prompt(observation: Any) -> str:
     """Fill the public-only grid template from an agent-visible observation.
 
-    Only public fields are interpolated. The raw ``image`` is never passed into
-    the prompt; at most its digest (``image_hash``) is readable on the request.
+    Only public fields are interpolated. The raw ``image`` travels beside this
+    text in the model request, never inside the prompt string or its digest.
     """
 
     template = GRID_PROMPT_PATH.read_text(encoding="utf-8")
@@ -307,7 +307,7 @@ class GridVLMConfig:
     model_id: str
     revision: str | None = None
     decoding_seed: int = 0
-    max_new_tokens: int = 1024
+    max_new_tokens: int = 2048
 
 
 class GridVLMPolicy:
@@ -372,6 +372,7 @@ class GridVLMPolicy:
             decoding_seed=self.config.decoding_seed,
             max_new_tokens=self.config.max_new_tokens,
             prompt_version=self._prompt_version(),
+            image=_field(observation, "image", None),
         )
 
         cached = self.cache.get(request)

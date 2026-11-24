@@ -105,7 +105,7 @@ def _markdown(payload: dict) -> str:
         f"| Cache hit rate | {metrics['cache_hit_rate']:.4f} |",
         f"| Model calls (new responses) | {metrics['model_calls']} |",
         "",
-        "The v10 lesson is honoured here: `max_new_tokens=1024` is never "
+        "The v10 lesson is honoured here: `max_new_tokens=2048` is never "
         "shrunk, because a truncated JSON response is counted as invalid.",
         "",
         "## Paired 95% CI (scenario-level bootstrap) — PLACEHOLDER",
@@ -196,7 +196,7 @@ def main(argv: list[str] | None = None) -> None:
         model_id=str(model["hf_id"]),
         revision=revision,
         decoding_seed=int(runtime.get("seed", 0)),
-        max_new_tokens=1024,  # never shrink: truncation is counted as invalid JSON
+        max_new_tokens=2048,  # never shrink: truncation is counted as invalid JSON
     )
 
     out_dir = ROOT / args.out
@@ -216,7 +216,7 @@ def main(argv: list[str] | None = None) -> None:
 
     episodes = []
     for scenario in scenarios:
-        env = GridEnv(grid_config)
+        env = GridEnv(grid_config, observation_mode="visual")
         observation, info = env.reset(
             seed=scenario.run_seed, options={"scenario": scenario}
         )

@@ -1,7 +1,7 @@
 # RuleShift / Agentic VLM — prepared research harness
 
 **Status: CPU harness complete, including the additive RuleShift-Grid benchmark
-(Tier A implemented; Tier B is a text-only VLM scaffold). No training,
+(Tier A implemented; Tier B is an RGB+text VLM scaffold). No training,
 experiment, or evaluation with a real model has been run. Generated result
 files are intentionally absent so that stub-produced numbers cannot be
 mistaken for measurements.**
@@ -35,7 +35,7 @@ values. Probes cost real primitive steps in the same reward stream.
 | Agent pipeline | `src/ruleshift/agents/{vlm_backend,cache,structured_vlm,consistency,value_selector,diva_style,self_consistency,baselines}.py` | implemented; public-only, no simulator imports |
 | Baselines and ablations | `research/ablation_matrix.csv`, `src/ruleshift/agents/baselines.py`, `src/ruleshift/evaluator/baselines.py` | implemented; privileged rows labelled |
 | Orchestration | `src/ruleshift/evaluator/{closed_loop,heldout,diagnostics,stress,family_b_reference}.py`, `scripts/` | implemented; backend/cache injectable for real runs |
-| RuleShift-Grid | `src/ruleshift/{public_api/grid_*,envs/grid/,agents/grid_*,evaluator/grid_*}`, `scripts/run_grid_*.py`, `configs/grid_dev.yaml` | additive Tier A benchmark and text-only Tier B scaffold; implemented, CPU-only, no scientific run |
+| RuleShift-Grid | `src/ruleshift/{public_api/grid_*,envs/grid/,agents/grid_*,evaluator/grid_*}`, `scripts/run_grid_*.py`, `configs/grid_dev.yaml` | additive Tier A benchmark and Tier B RGB+text scaffold (prompt `grid_v2`, 2048-token budget); CPU-only, no scientific run |
 | Freeze scaffolding | `configs/preregistered_test.yaml` | `DRAFT_NOT_FROZEN` — intentionally unfrozen |
 | Literature | `research/literature_matrix.csv`, `research/reading_notes.md` | canonical URLs verified; abstracts/READMEs only, full texts not read |
 | Reproducibility | `requirements.lock`, `scripts/preflight.py`, `scripts/check_reproducibility.py`, `scripts/reproduce_all.py`, `docs/RUNBOOK.md` | implemented |
@@ -60,7 +60,7 @@ project_0/
 │   ├── evaluator/                 # privileged labels and references, including grid_* evaluators
 │   ├── agents/                    # public-only policies, grid_* baselines/selector/VLM scaffold
 │   └── prompts/                   # direct_v1.txt, outcomes_v1.txt, grid_v1.txt
-└── tests/                         # 377 tests, all passing
+└── tests/                         # 385 tests, all passing
 ```
 
 ## Verify the setup

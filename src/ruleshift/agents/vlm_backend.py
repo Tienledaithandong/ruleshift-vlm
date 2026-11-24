@@ -14,7 +14,7 @@ import json
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from ruleshift.public_api.schemas import validate_structured_vlm_output
 
@@ -35,6 +35,9 @@ class ModelRequest:
     decoding_seed: int
     max_new_tokens: int = 1024   # raised from 768 to fit the full object
     prompt_version: str = PROMPT_VERSION
+    #: Raw public pixels, when the caller has them. Never part of fingerprint():
+    #: image_hash above is the cache-visible identity of the image.
+    image: Any | None = None
 
     def fingerprint(self) -> str:
         """Hash every public factor that can change the correct response."""
@@ -52,6 +55,39 @@ class ModelRequest:
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _flatten_rendered(rendered: Mapping[str, Any]) -> dict[str, Any]:
+    """Unwrap processor values that some transformers versions nest once more.
+
+    A single multimodal example can come back with ``input_ids`` holding another
+    ``BatchFeature`` instead of a tensor. Flattening keeps the generate call
+    identical across processor versions.
+    """
+
+    flat: dict[str, Any] = {}
+    for key, value in rendered.items():
+        if hasattr(value, "items") and not hasattr(value, "shape"):
+            flat.update(value)
+        else:
+            flat[key] = value
+    return flat
+
+
+def build_chat_messages(request: ModelRequest) -> list[dict]:
+    """Build one user message, with the image beside the text when present."""
+
+    if request.image is None:
+        return [{"role": "user", "content": request.prompt}]
+    return [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": request.prompt},
+                {"type": "image", "image": request.image},
+            ],
+        }
+    ]
 
 
 @dataclass(frozen=True)
@@ -218,15 +254,35 @@ class TransformersVLMBackend:
         import time
 
         started = time.perf_counter()
-        messages = [{"role": "user", "content": request.prompt}]
-        rendered = self._processor.apply_chat_template(
-            messages,
-            tokenize=True,
-            add_generation_prompt=True,
-            return_tensors="pt",
-        )
+        messages = build_chat_messages(request)
+        if request.image is None:
+            rendered = self._processor.apply_chat_template(
+                messages,
+                tokenize=True,
+                add_generation_prompt=True,
+                return_tensors="pt",
+            )
+        else:
+            # Qwen2.5-VL's processor needs the pixels alongside the templated
+            # text; the raw image never enters the prompt string or cache key.
+            from PIL import Image
+
+            image = request.image
+            if not isinstance(image, Image.Image):
+                image = Image.fromarray(image)
+            text = self._processor.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            # Qwen2.5-VL expects batched lists here; a bare string/image makes
+            # the processor return a nested BatchFeature without `.shape`.
+            rendered = self._processor(
+                text=[text], images=[image], padding=True, return_tensors="pt"
+            )
         if not isinstance(rendered, dict):
             rendered = {"input_ids": rendered}
+        rendered = _flatten_rendered(rendered)
         inputs = {key: value.to(self.device) for key, value in rendered.items()}
         prompt_tokens = int(inputs["input_ids"].shape[-1])
         outputs = self._model.generate(**inputs, max_new_tokens=request.max_new_tokens)

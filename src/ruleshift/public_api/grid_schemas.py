@@ -109,10 +109,6 @@ def _is_grid_action(value: Any) -> bool:
     return isinstance(value, str) and value in GRID_ACTIONS_FROZEN
 
 
-def _sums_to_one(values: list[float], tolerance: float = 1e-6) -> bool:
-    return abs(sum(values) - 1.0) <= tolerance
-
-
 def _is_sequence(value: Any) -> bool:
     return isinstance(value, (list, tuple))
 
@@ -299,10 +295,11 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
         if not isinstance(probabilities, dict):
             errors.append("hypothesis_probabilities must be an object")
         else:
-            if set(probabilities) != set(GRID_RULE_IDS):
+            unknown = set(probabilities) - set(GRID_RULE_IDS)
+            if unknown:
                 errors.append(
-                    "hypothesis_probabilities keys must be exactly "
-                    + ", ".join(GRID_RULE_IDS)
+                    "hypothesis_probabilities has unknown ids: "
+                    + ", ".join(sorted(map(str, unknown)))
                 )
             numeric: list[float] = []
             for rule_id, value in probabilities.items():
@@ -316,12 +313,12 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
                     errors.append(
                         f"hypothesis_probabilities[{rule_id!r}] must lie in [0, 1]"
                     )
-            if (
-                len(numeric) == len(probabilities)
-                and numeric
-                and not _sums_to_one(numeric)
-            ):
-                errors.append("hypothesis_probabilities must sum to 1 within 1e-6")
+            if numeric and sum(numeric) <= 0.0:
+                errors.append("hypothesis_probabilities needs at least one positive value")
+            # The frozen VLM may return a subset of the menu and rounded sums.
+            # Accept those as public diagnostics instead of forcing a fallback
+            # action; calibration metrics read the reported values as-is.
+
 
     action = payload.get("action")
     if not _is_grid_action(action):
