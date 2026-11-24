@@ -60,5 +60,13 @@ Never hand-edit generated files — regenerate from source:
 - A full-menu decision is required: all six candidate ids, probabilities sum to 1.0 within 0.02, and no parser fallback. A partial menu is a schema failure, not a valid belief.
 - Never promote a smoke or a 55-episode dry chunk to a result. The merge only accepts complete 55-episode chunks, zero fallbacks, and 5,500 unique scenarios.
 - Use `scripts/grid_freeze_manifest.py` before staging, `scripts/export_grid_baselines.py` for public CPU baselines, and `scripts/merge_grid_chunks.py` for scenario-level paired intervals.
+## 6. Multi-week real-VLM grid run
+
+For the planned 100 maps × 5 seeds real-VLM grid, read
+`docs/RUNBOOK_GRID_MULTIWEEK.md` and the implementation plan at
+`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`
+before starting any chunk. The work is split into deterministic weekly Kaggle
+chunks; no local GPU job is permitted, and no result may be claimed before all
+chunks are merged and paired CIs are computed at scenario level.
 
 <!-- omh:agent-instructions:end -->
