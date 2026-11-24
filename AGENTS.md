@@ -54,4 +54,11 @@ Never hand-edit generated files — regenerate from source:
 - Real-VLM pipelines use the `vlm` extra, a local frozen checkpoint (`configs/models.yaml`: `revision`, `local_files_only`, `device`), and the `READY` test config. Held-out data is never used to tune prompts.
 - `data/`, `outputs/`, `results/`, `reports/` (except `experiment_manifest.json`), and `kaggle.json` are generated or secrets — never commit them (see `.gitignore`).
 
+## 6. Grid multi-week runs
+
+- The 100-map x 5-seed grid (5,500 episodes) is governed by `docs/superpowers/specs/2026-11-24-ruleshift-grid-multiweek-preregistration.md` and `docs/RUNBOOK_GRID_MULTIWEEK.md`. It is not authorized until that preregistration is marked `READY` by a human.
+- A full-menu decision is required: all six candidate ids, probabilities sum to 1.0 within 0.02, and no parser fallback. A partial menu is a schema failure, not a valid belief.
+- Never promote a smoke or a 55-episode dry chunk to a result. The merge only accepts complete 55-episode chunks, zero fallbacks, and 5,500 unique scenarios.
+- Use `scripts/grid_freeze_manifest.py` before staging, `scripts/export_grid_baselines.py` for public CPU baselines, and `scripts/merge_grid_chunks.py` for scenario-level paired intervals.
+
 <!-- omh:agent-instructions:end -->

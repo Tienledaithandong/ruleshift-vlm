@@ -33,8 +33,8 @@ from ruleshift.public_api.grid_schemas import (
 from .cache import ResponseCache
 from .vlm_backend import ModelRequest, ModelResponse
 
-GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v2.txt"
-GRID_PROMPT_VERSION = "grid_v2"
+GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v3.txt"
+GRID_PROMPT_VERSION = "grid_v3"
 
 __all__ = [
     "GRID_PROMPT_PATH",
@@ -220,6 +220,7 @@ def parse_grid_output(
     grid_size: Any,
     position: Any = None,
     inspect_range: Any = None,
+    candidate_rule_ids: Sequence[str] | None = None,
 ) -> tuple[dict | None, list[str]]:
     """Parse one grid VLM decision; return ``(payload, errors)``, never raise."""
 
@@ -237,7 +238,9 @@ def parse_grid_output(
         return None, [f"invalid JSON: {exc}"]
 
     try:
-        errors = validate_grid_vlm_output(payload)
+        errors = validate_grid_vlm_output(
+            payload, candidate_rule_ids=candidate_rule_ids
+        )
         if isinstance(payload, dict):
             action = payload.get("action")
             mask = tuple(action_mask) if action_mask is not None else ()
@@ -330,6 +333,13 @@ class GridVLMPolicy:
         self.config = config
         self.cache = cache if cache is not None else ResponseCache(None)
         self._last_row: dict[str, Any] = {}
+        # Lifetime counters survive ``reset`` so a multi-episode report can
+        # aggregate real model calls instead of reading the final episode only.
+        self.total_model_calls = 0
+        self.total_cache_hits = 0
+        self.total_output_tokens = 0
+        self.total_input_tokens = 0
+        self.total_latency_ms = 0.0
         self._reset_counters()
 
     def _reset_counters(self) -> None:
@@ -347,6 +357,8 @@ class GridVLMPolicy:
         self.last_valid_action = True
         self.last_probabilities: dict[str, float] = {}
         self.last_tool_calls: tuple[Any, ...] = ()
+        self.last_fallback = False
+        self.last_parse_errors: tuple[str, ...] = ()
         # The VLM policy does not compute expected information gain, so it is
         # genuinely unmeasured (reported as None rather than a false 0.0).
         self.information_gain_bits: float | None = None
@@ -381,13 +393,18 @@ class GridVLMPolicy:
             response = self.backend.generate(request)
             self.cache.put(request, response)
             self.model_calls += 1
+            self.total_model_calls += 1
         else:
             response = cached
             self.cache_hits += 1
+            self.total_cache_hits += 1
 
         self.output_tokens += int(response.output_tokens)
         self.input_tokens += int(response.input_tokens)
         self.latency_ms += float(response.latency_ms)
+        self.total_output_tokens += int(response.output_tokens)
+        self.total_input_tokens += int(response.input_tokens)
+        self.total_latency_ms += float(response.latency_ms)
         self.last_output_tokens = int(response.output_tokens)
         self.last_input_tokens = int(response.input_tokens)
         self.last_latency_ms = float(response.latency_ms)
@@ -398,18 +415,25 @@ class GridVLMPolicy:
         inspect_range = (
             costs.get("inspect_range") if isinstance(costs, Mapping) else None
         )
+        candidate_ids = tuple(
+            row["rule_id"]
+            for row in _candidate_pairs(_field(observation, "candidate_rules", ()))
+        )
         payload, errors = parse_grid_output(
             response.text,
             action_mask=action_mask,
             grid_size=(width, height),
             position=tuple(position) if position is not None else None,
             inspect_range=inspect_range,
+            candidate_rule_ids=candidate_ids or None,
         )
 
         if errors or payload is None:
             self.last_json_valid = False
             self.last_valid_action = False
             self.last_probabilities = {}
+            self.last_parse_errors = tuple(errors)
+            self.last_fallback = True
             fallback = next(
                 (action for action in GRID_PHYSICAL_ACTIONS if action in action_mask),
                 GRID_PHYSICAL_ACTIONS[0],
@@ -418,6 +442,8 @@ class GridVLMPolicy:
 
         self.last_json_valid = True
         self.last_valid_action = True
+        self.last_parse_errors = ()
+        self.last_fallback = False
         self.last_probabilities = dict(payload.get("hypothesis_probabilities") or {})
         target = payload.get("tool_target")
         return GridAction(
@@ -450,6 +476,8 @@ class GridVLMPolicy:
             "advisor_calls": int(self.advisor_calls),
             "json_valid": bool(self.last_json_valid),
             "valid_action": bool(self.last_valid_action),
+            "fallback": bool(self.last_fallback),
+            "parse_error_count": len(self.last_parse_errors),
             "input_tokens": int(self.last_input_tokens),
             "output_tokens": int(self.last_output_tokens),
             "latency_ms": float(self.last_latency_ms),

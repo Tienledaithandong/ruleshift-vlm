@@ -1,0 +1,114 @@
+# Runbook: RuleShift-Grid multi-week run
+
+This runbook is for the 100-map x 5-seed grid (5,500 episodes). It is not a
+license to start that run. The preregistration must first be marked READY by a
+human, and the gates below must pass in order.
+
+## 0. Preconditions
+
+- Clean tree at the frozen commit; staged SOURCE_COMMIT matches it.
+- Model revision pinned in configs/models.yaml.
+- preregistered_test.yaml status is DRAFT_NOT_FROZEN until the human freeze
+  commit; do not edit that field from an automated agent.
+- Kaggle GPU quota checked before a weekly slice. One 55-episode chunk is about
+  2.2 GPU-hours at 143 s/episode; allow overhead and failed retries.
+- Never commit results/, reports/, outputs/, or the Kaggle token.
+
+## 1. Freeze the provenance
+
+Generate the manifest twice and compare byte-for-byte:
+
+    python scripts/grid_freeze_manifest.py --out reports/grid_freeze_manifest.json
+    python scripts/grid_freeze_manifest.py --out reports/grid_freeze_manifest.recheck.json
+    fc reports/grid_freeze_manifest.json reports/grid_freeze_manifest.recheck.json
+
+The manifest must contain exactly commit, model_revision, config_sha256,
+scenario_count=5500, and scenario_list_sha256. Attach it to the run log.
+
+## 2. Gate A: two-episode smoke
+
+Build and push a source dataset only from a clean commit:
+
+    git status --short
+    python scripts/stage_kaggle_dataset.py
+    python -m kaggle datasets version -p kaggle/dataset -m "grid smoke <commit>"
+
+Run kaggle/kernel/run_grid.py with RULESHIFT_EXPECTED_COMMIT set to that commit.
+Download the chunk-stamped artifacts and check the report's behavioral gate:
+
+- full-menu JSON valid rate = 1.0
+- parser fallbacks = 0
+- at least two distinct actions
+- at least one moving step
+- model_calls and cache_hits are lifetime totals, not one episode's counters
+
+If the gate fails, stop. Do not reinterpret fallback actions as valid and do not
+scale to a larger run.
+
+## 3. Gate B: one 55-episode dry chunk
+
+Set MAP_INDEX=0 in kaggle/kernel/run_grid_chunk.py. The kernel asserts exactly
+55 evaluator rows and 55 unique scenarios. After download:
+
+    python -c "import json,pathlib; rows=[json.loads(x) for x in pathlib.Path('results/grid_chunks/grid_real_decisions.m000.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]; print(len(rows), sum(r.get('json_valid') is True for r in rows), sum(r.get('fallback') is True for r in rows))"
+
+Expected: nonzero rows, every row json_valid, zero fallbacks. Inspect action
+diversity and movement; a constant-action chunk is a failed gate.
+
+## 4. Weekly slices
+
+One weekly slice is ten maps = ten chunks:
+
+    MAP_INDEX=0
+    MAP_INDEX=1
+    ...
+    MAP_INDEX=9
+
+Use a fresh Kaggle session per chunk, with the same frozen dataset and
+RULESHIFT_EXPECTED_COMMIT. Download each chunk into the same results/grid_chunks
+directory. Never overwrite an existing mNNN file; move failed artifacts aside.
+
+Suggested weekly order: run all ten chunks first, verify each has 55 scenarios,
+then merge that slice for a sanity check. Do not inspect outcomes to decide
+whether to continue; coverage is fixed in advance.
+
+## 5. Baselines and merge
+
+Export the public CPU baselines once at the frozen commit:
+
+    python scripts/export_grid_baselines.py --config configs/grid_dev.yaml --out results/grid_baselines/baselines.jsonl
+
+After all 100 chunks are present:
+
+    python scripts/merge_grid_chunks.py --chunks results/grid_chunks --baselines results/grid_baselines/baselines.jsonl --out results/grid_merged/summary.json
+
+The merge refuses to write a summary unless:
+
+- every scenario appears exactly once;
+- there are 5,500 scenarios;
+- every public decision is full-menu JSON-valid;
+- there are zero parser fallbacks;
+- every baseline covers the same scenario set.
+
+The paired interval resamples scenarios, never seeds or frames.
+
+## 6. Failure handling
+
+- Incomplete chunk (<55 scenarios): keep the artifacts, rerun mNNN, and record
+  the retry.
+- Invalid JSON or fallback in any row: stop the slice. Repair the parser or
+  prompt, bump the prompt version, regenerate the freeze manifest, and treat all
+  earlier chunks as a different experiment.
+- Missing evaluator row: do not infer it from public rows; rerun the chunk.
+- Baseline mismatch: regenerate the baseline export from the same manifest; do
+  not drop scenarios to make coverage pass.
+- Quota exhaustion: stop at a chunk boundary. Do not shrink max_new_tokens and
+  do not run a partial merge as a final result.
+
+## 7. What not to do
+
+- Do not run the 5,500-episode grid before Gates A and B pass.
+- Do not use a 550-episode session if the measured rate puts it near the Kaggle
+  limit; use the 55-episode chunk kernel.
+- Do not call the smoke or a dry chunk a benchmark result.
+- Do not tune the prompt on the same scenarios used for the final merge.
