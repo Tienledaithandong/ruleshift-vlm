@@ -7,6 +7,7 @@ import json
 from ruleshift.agents.vlm_backend import (
     ModelRequest,
     StubVLMBackend,
+    _flatten_rendered,
     build_chat_messages,
     parse_structured_output,
     render_prompt,
@@ -98,6 +99,15 @@ def test_chat_messages_include_image_only_when_present() -> None:
         {"type": "text", "text": "public text"},
         {"type": "image", "image": (1, 2, 3)},
     ]
+
+
+def test_flatten_rendered_unwraps_nested_processor_values() -> None:
+    nested = {
+        "input_ids": {"input_ids": object(), "attention_mask": object()},
+        "pixel_values": object(),
+    }
+    flat = _flatten_rendered(nested)
+    assert set(flat) == {"input_ids", "attention_mask", "pixel_values"}
 
 
 def test_fingerprint_changes_with_public_history() -> None:

@@ -57,6 +57,23 @@ class ModelRequest:
         return "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
+def _flatten_rendered(rendered: Mapping[str, Any]) -> dict[str, Any]:
+    """Unwrap processor values that some transformers versions nest once more.
+
+    A single multimodal example can come back with ``input_ids`` holding another
+    ``BatchFeature`` instead of a tensor. Flattening keeps the generate call
+    identical across processor versions.
+    """
+
+    flat: dict[str, Any] = {}
+    for key, value in rendered.items():
+        if hasattr(value, "items") and not hasattr(value, "shape"):
+            flat.update(value)
+        else:
+            flat[key] = value
+    return flat
+
+
 def build_chat_messages(request: ModelRequest) -> list[dict]:
     """Build one user message, with the image beside the text when present."""
 
@@ -265,6 +282,7 @@ class TransformersVLMBackend:
             )
         if not isinstance(rendered, dict):
             rendered = {"input_ids": rendered}
+        rendered = _flatten_rendered(rendered)
         inputs = {key: value.to(self.device) for key, value in rendered.items()}
         prompt_tokens = int(inputs["input_ids"].shape[-1])
         outputs = self._model.generate(**inputs, max_new_tokens=request.max_new_tokens)

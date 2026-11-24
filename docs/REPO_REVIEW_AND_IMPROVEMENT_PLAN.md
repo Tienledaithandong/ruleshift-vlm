@@ -20,7 +20,7 @@ and PR #3.
 
 Current status on this branch:
 
-- 383 tests pass; `preflight.py` still prints NO-GO, as expected while
+- 384 tests pass; `preflight.py` still prints NO-GO, as expected while
   `configs/preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`.
 - RuleShift-Grid adds Tier A (stochastic grid environment, partial tools,
   change-point belief, public A* reference, matched-budget baselines) and a
@@ -41,7 +41,7 @@ Current status on this branch:
   finding. No local GPU job has been run.
 
 The "193 tests" and "204 tests" figures below are historical counts; README now
-reports 383.
+reports 384.
 
 ---
 
