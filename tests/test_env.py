@@ -147,11 +147,14 @@ def test_lockout_ticks_consume_one_step_each_then_allow_commit() -> None:
     assert env.evaluator_state()["steps_taken"] == 5
     assert first_reward == pytest.approx(-5 * 0.05)
     assert env.evaluator_state()["lockout_remaining"] == 2
+    # The remaining lockout is public state, not only an evaluator field.
+    assert "lockout=2" in env.public_view().public_text
 
     for expected_remaining in (1, 0):
         _, reward, _, _, _ = env.step("WAIT")
         assert reward == pytest.approx(-0.05)
         assert env.evaluator_state()["lockout_remaining"] == expected_remaining
+        assert f"lockout={expected_remaining}" in env.public_view().public_text
 
     # A rejected commit leaves the agent at the gate (no teleport), so the
     # follow-up commit costs a single step: 5 + 2 + 1 = 8 primitive steps.
@@ -165,5 +168,32 @@ def test_gymnasium_env_checker() -> None:
     env = gym.make("RuleShift-GateLock-v0")
     try:
         check_env(env.unwrapped, skip_render_check=False)
+    finally:
+        env.close()
+
+
+def test_public_travel_costs_and_history_follow_the_current_position() -> None:
+    env = make_env(probe_detour_steps=2, disable_shift=True)
+    env.reset(seed=9)
+    env.step("COMMIT_BLUE")
+    public = env.public_view()
+    assert public.public_costs["commit_travel"] == 0
+    assert public.public_costs["station_travel"] == 2
+    assert "COMMIT_BLUE outcome=reject" in public.public_history
+    env.step("GO_TO_STATION")
+    assert env.public_view().public_costs["station_travel"] == 0
+    steps = env.evaluator_state()["steps_taken"]
+    env.step("GO_TO_STATION")
+    assert env.evaluator_state()["steps_taken"] == steps + 1
+
+
+def test_registered_env_uses_primitive_step_limit_for_long_episodes() -> None:
+    env = gym.make("RuleShift-GateLock-v0", config=EnvConfig(max_env_steps=62))
+    try:
+        env.reset(seed=1)
+        for i in range(62):
+            _, _, _, truncated, info = env.step("WAIT")
+            assert info["physical_steps_elapsed"] == i + 1
+            assert truncated == (i == 61)
     finally:
         env.close()

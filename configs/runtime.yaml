@@ -1,4 +1,4 @@
-# Remote runtime configuration. PLACEHOLDERS ONLY — no run has been executed.
+# Kaggle submission settings. Remote execution is opt-in per source snapshot.
 schema_version: 1
 repo_url: https://github.com/Tienledaithandong/ruleshift-vlm.git
 branch: main
@@ -6,14 +6,14 @@ project_dir_colab: /content/ruleshift-vlm
 project_dir_kaggle: /kaggle/working/ruleshift-vlm
 
 checkpoint:
-  source: placeholder            # one of: hf | kaggle_dataset | local
+  source: hf
   model_key: qwen2.5-vl-3b       # refers to configs/models.yaml
-  dataset_slug: PLACEHOLDER       # only when source == kaggle_dataset
+  dataset_slug: null             # only for a dataset containing model weights
   local_path: null
 
 execution:
-  status: SETUP_ONLY
+  status: P1_PILOT_UNDER_REVIEW
   allow_remote_run: false
   note: >-
-    Set allow_remote_run to true only after preflight passes on the target
-    runtime and the test configuration is frozen.
+    The switch controls the remote pilot. A locked evaluation has its own
+    validation and freeze prerequisites.

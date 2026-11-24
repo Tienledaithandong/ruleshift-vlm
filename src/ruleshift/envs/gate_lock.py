@@ -20,6 +20,7 @@ from .macro import Coord, Geometry, MacroExecutor, PrimitiveOp
 from .observations import (
     RenderState,
     build_public_observation,
+    decision_event,
     render_rgb,
 )
 
@@ -72,7 +73,7 @@ class RuleShiftEnv(Env):
 
         self._state: GateState | None = None
         self._rng: SemanticRNG | None = None
-        self._history: list[tuple[str, str | None, str]] = []
+        self._history: list[str] = []
         self._last_outcome: str | None = None
         self._shift_time: int | None = None
 
@@ -130,6 +131,7 @@ class RuleShiftEnv(Env):
         plan = self.executor.plan(macro_id, self._state.position)
         total_reward = 0.0
         truncated = False
+        started = self._state.steps_taken
 
         for op in plan.ops:
             if self._state.steps_taken >= config.max_env_steps:
@@ -143,6 +145,10 @@ class RuleShiftEnv(Env):
 
         if self._state.steps_taken >= config.max_env_steps:
             truncated = True
+        if self._state.steps_taken > started:
+            self._history.append(decision_event(
+                macro_id, self._last_outcome, total_reward, self._state.steps_taken - started
+            ))
         return self._obs(), float(total_reward), False, truncated, self._info()
 
     def render(self) -> np.ndarray:
@@ -165,8 +171,10 @@ class RuleShiftEnv(Env):
             candidate_rules=config.candidate_rules,
             public_costs={
                 "primitive_step": abs(config.step_cost),
-                "probe_detour": float(config.probe_detour_steps),
-                "commit_travel": float(self._gate_travel()),
+                "probe_detour": float(self._distance(self.geometry.start, self.geometry.station)),
+                "station_travel": float(self._distance(self._state.position, self.geometry.station)),
+                "commit_travel": float(self._distance(self._state.position, self.geometry.gate)),
+                "start_to_gate": float(self._distance(self.geometry.start, self.geometry.gate)),
                 "lockout": float(config.lockout_steps),
                 "delivery_reward": float(config.delivery_reward),
             },
@@ -180,6 +188,8 @@ class RuleShiftEnv(Env):
             raise RuntimeError("call reset() before evaluator_state()")
         state = self._state
         return {
+            "scenario_id": self._episode_config.scenario_id,
+            "initial_mechanic": self._episode_config.initial_mechanic,
             "mechanic_id": state.mechanic,
             "active_mechanic": state.mechanic,
             "true_rule": state.mechanic,
@@ -210,11 +220,9 @@ class RuleShiftEnv(Env):
             return "WAIT"
         return FAMILY_A_ACTIONS[index] if 0 <= index < len(FAMILY_A_ACTIONS) else "WAIT"
 
-    def _gate_travel(self) -> int:
-        """Public Manhattan distance from the start tile to the gate tile."""
-
-        (sx, sy), (gx, gy) = self.geometry.start, self.geometry.gate
-        return abs(gx - sx) + abs(gy - sy)
+    @staticmethod
+    def _distance(first: Coord, second: Coord) -> int:
+        return abs(first[0] - second[0]) + abs(first[1] - second[1])
 
     def _render_state(self) -> RenderState:
         assert self._state is not None
@@ -223,6 +231,7 @@ class RuleShiftEnv(Env):
             gate_locked=self._state.lockout_remaining > 0,
             deliveries=self._state.deliveries,
             steps=self._state.steps_taken,
+            lockout_remaining=self._state.lockout_remaining,
         )
 
     def _obs(self) -> np.ndarray:
@@ -264,12 +273,10 @@ class RuleShiftEnv(Env):
         if op.kind == "move":
             self._state.position = op.target or self._state.position
             self._last_outcome = "none"
-            self._history.append(("move", None, "none"))
         elif op.kind == "move_back":
             # Return leg of a probe: move without erasing the test feedback, so
             # the decision-boundary public text still reports accept/reject.
             self._state.position = op.target or self._state.position
-            self._history.append(("move", None, self._last_outcome or "none"))
         elif op.kind == "commit":
             color = op.color or ""
             if color == self._state.mechanic:
@@ -280,7 +287,6 @@ class RuleShiftEnv(Env):
             else:
                 self._state.lockout_remaining = config.lockout_steps
                 self._last_outcome = "reject"
-            self._history.append(("commit", color, self._last_outcome))
         elif op.kind == "test":
             color = op.color or ""
             correct = color == self._state.mechanic
@@ -289,9 +295,7 @@ class RuleShiftEnv(Env):
             )
             accepted = (not correct) if flipped else correct
             self._last_outcome = "accept" if accepted else "reject"
-            self._history.append(("test", color, self._last_outcome))
         else:  # wait
             self._last_outcome = "none"
-            self._history.append(("wait", None, "none"))
 
         return reward

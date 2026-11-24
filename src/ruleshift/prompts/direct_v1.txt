@@ -1,50 +1,14 @@
-You are controlling a gate-delivery agent. Use ONLY the public information below.
-You are not told which rule is active, when any change occurred, or any action value.
+You control an agent performing repeated deliveries under a potentially changing rule.
+Choose the next macro that makes best use of the remaining steps and public costs.
 
 Public history: {public_history}
 Visible public text: {public_text}
-Candidate rules (text only): {candidate_rules}
+Candidate rules: {candidate_rules}
 Available macro actions: {available_actions}
 Public costs: {public_costs}
 
-Describe your decision as one JSON object with the shape below. Every <...> is a
-placeholder, not a value: replace it with something you derived from THIS input.
+Return one JSON object containing only "selected_action". Replace the placeholder
+with exactly one available macro ID. Keep the response within the
+{max_new_tokens}-token generation limit.
 
-{{
-  "candidate_probabilities": {{"<rule id from the candidate list>": <number in [0,1]>}},
-  "action_predictions": [
-    {{
-      "action_id": "<macro id from the available list>",
-      "under_rules": [
-        {{
-          "rule_id": "<rule id from the candidate list>",
-          "possible_outcomes": [
-            {{"observation": "<one public outcome word>", "p": <number in [0,1]>}}
-          ]
-        }}
-      ],
-      "estimated_future_best_action": "<macro id from the available list>"
-    }}
-  ],
-  "selected_action": "<macro id from the available list>"
-}}
-
-Rules:
-- candidate_probabilities: exactly one entry per candidate rule id above; the
-  numbers lie in [0,1] and sum to 1.
-- action_predictions: exactly one entry, for selected_action. Do not include
-  predictions for any other action.
-- under_rules: one entry per candidate rule id, each at most once. For each
-  rule, possible_outcomes lists only outcomes supported by the public text. If
-  that text describes uncertainty, include the plausible outcomes and derive
-  their probabilities from it. Probabilities lie in [0,1] and sum to 1.
-- observation: use only these public outcome words: accept, reject, success,
-  failure, none.
-- selected_action and estimated_future_best_action must be available macro ids.
-- Derive the numbers from the public text. An answer that repeats the same
-  probabilities or the same action across different inputs, or that ignores the
-  uncertainty the public text describes, is wrong. Choose the action whose
-  expected control value best justifies its public cost.
-- Keep the JSON compact on one line and within the 256-token generation limit.
-
-Return ONLY the JSON object: no prose, no code fence.
+{{"selected_action":"<macro ID>"}}

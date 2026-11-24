@@ -1,11 +1,7 @@
-# notebooks/
+# Notebooks
 
-Two **setup-only** notebooks:
+- `colab_setup.ipynb` and `kaggle_gpu.ipynb` check a source checkout, dependencies and tests on the hosted runtime.
+- `colab_pilot.ipynb` executes the real, public-text development pilot when remote execution is enabled. Its pilot cell requests model weights and inference.
 
-- `colab_setup.ipynb` — clone the GitHub repo in Google Colab, install the
-  package, check GPU, run tests and preflight.
-- `kaggle_gpu.ipynb` — the same for a Kaggle GPU kernel.
-
-Neither notebook downloads a model, runs an experiment, or evaluates anything.
-Both require you to set `RULESHIFT_REPO_URL` (your real GitHub HTTPS URL) first.
-See `docs/COLAB_KAGGLE_SETUP.md` for the full instructions and guardrails.
+The script-based Kaggle kernel uses a private dataset snapshot. See
+[hosted runtime preparation](../docs/COLAB_KAGGLE_SETUP.md).

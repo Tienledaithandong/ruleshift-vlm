@@ -2,9 +2,8 @@
 
 The shortcut crossing has a regime-dependent slip probability; the safe route
 is deterministic. A sensing-station probe costs real primitive steps and
-reports the active regime with symmetric noise. Held-out map ids change only
-public geometry and decorative distractors, never the hidden regime or the
-transition probabilities.
+tests a candidate regime with symmetric noise. Held-out map ids vary the
+decorative distractors on the fixed public layout.
 
 Evaluator only. No agent module may import this file.
 """
@@ -22,13 +21,12 @@ from ruleshift.public_api.interface import CandidateRule
 from ruleshift.public_api.schemas import FAMILY_B_ACTIONS, FAMILY_B_ACTIONS_FROZEN
 
 from .events import SemanticRNG
-from .observations import RenderState, build_public_observation
+from .observations import RenderState, build_public_observation, decision_event
 
 REGIME_DESCRIPTIONS = {
     "stable": "The bridge is currently stable; a crossing usually succeeds.",
     "slippery": "The bridge may be slippery; a crossing can fail and cost recovery time.",
 }
-FEEDBACK_OUTCOMES = ("safe", "slippery")
 PROBE_ONE_WAY = 2
 CELL = 16
 GRID_WIDTH = 9
@@ -53,6 +51,20 @@ class BridgeConfig:
     delivery_reward: float = 10.0
     step_cost: float = -0.05
     scenario_id: str = "dev-bridge"
+
+    def __post_init__(self) -> None:
+        if min(self.max_env_steps, self.safe_steps, self.bridge_steps) < 1:
+            raise ValueError("horizon and route durations must be positive")
+        if self.recovery_steps < 0:
+            raise ValueError("recovery steps must be non-negative")
+        if any(not 0 <= p <= 1 for p in (
+            self.slip_stable, self.slip_slippery, self.feedback_noise, self.shift_hazard
+        )):
+            raise ValueError("slip, feedback noise and hazard must be probabilities")
+        if self.initial_regime not in REGIME_DESCRIPTIONS or not self.shift_targets:
+            raise ValueError("bridge configuration needs a valid initial regime and shift targets")
+        if any(rule not in REGIME_DESCRIPTIONS for rule in self.shift_targets):
+            raise ValueError("unknown bridge shift target")
 
 
 @dataclass
@@ -87,6 +99,7 @@ class BridgeHazardEnv(Env):
         self._state: BridgeState | None = None
         self._rng: SemanticRNG | None = None
         self._shift_time: int | None = None
+        self._history: list[str] = []
 
     def reset(
         self,
@@ -113,6 +126,7 @@ class BridgeHazardEnv(Env):
             last_outcome="none",
         )
         self._shift_time = None
+        self._history = []
         return self._obs(), self._info()
 
     def step(
@@ -125,6 +139,7 @@ class BridgeHazardEnv(Env):
         total = 0.0
         truncated = False
         op_index = 0
+        started = self._state.steps
 
         while op_index < len(ops):
             if self._state.steps >= self._episode_config.max_env_steps:
@@ -142,6 +157,10 @@ class BridgeHazardEnv(Env):
 
         if self._state.steps >= self._episode_config.max_env_steps:
             truncated = True
+        if self._state.steps > started:
+            self._history.append(decision_event(
+                macro, self._state.last_outcome, total, self._state.steps - started
+            ))
         return self._obs(), float(total), False, truncated, self._info()
 
     def render(self) -> np.ndarray:
@@ -159,7 +178,12 @@ class BridgeHazardEnv(Env):
                 deliveries=0,
                 steps=self._state.steps,
             ),
-            history=[("bridge", None, self._state.last_outcome)],
+            frame=self._obs(),
+            public_text=(
+                f"step={self._state.steps} side={self._state.side} "
+                f"routes=bridge,safe station=(1,4) last={self._state.last_outcome}"
+            ),
+            history=self._history,
             last_outcome=self._state.last_outcome,
             candidate_rules=tuple(
                 CandidateRule(rule_id=rule, description=description)
@@ -181,6 +205,8 @@ class BridgeHazardEnv(Env):
             raise RuntimeError("call reset() before evaluator_state()")
         config = self._episode_config
         return {
+            "scenario_id": config.scenario_id,
+            "initial_mechanic": config.initial_regime,
             "mechanic_id": self._state.regime,
             "active_mechanic": self._state.regime,
             "true_rule": self._state.regime,
@@ -272,7 +298,8 @@ class BridgeHazardEnv(Env):
                     self._rng.draw("HAZARD_OUTCOME", step_index, 0) < slip_probability
                 )
                 if slipped:
-                    self._state.last_outcome = "slip"
+                    self._state.last_outcome = "failure"
+                    self._state.side = "start"
                     extra_ops = [("recover", None)] * config.recovery_steps
                 else:
                     self._state.side = "goal"
@@ -284,12 +311,14 @@ class BridgeHazardEnv(Env):
             flipped = (
                 self._rng.draw("PROBE_FEEDBACK", step_index, 0) < config.feedback_noise
             )
-            sensed_stable = correct if not flipped else not correct
-            self._state.last_outcome = "safe" if sensed_stable else "slippery"
+            confirmed = correct if not flipped else not correct
+            self._state.last_outcome = "accept" if confirmed else "reject"
         elif kind == "travel":
-            pass  # preserve the probe feedback through the return trip
-        else:  # wait or recovery step
+            if op_index < PROBE_ONE_WAY:
+                self._state.last_outcome = "none"
+        elif kind == "wait":
             self._state.last_outcome = "none"
+        # Recovery ticks preserve the public crossing failure.
 
         return reward_delta, extra_ops
 

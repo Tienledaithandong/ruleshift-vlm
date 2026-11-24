@@ -21,21 +21,21 @@ def test_template_has_no_copyable_example_answer(name: str) -> None:
         assert literal not in text, f"{name} still supplies the literal {literal!r}"
 
 
-@pytest.mark.parametrize("name", TEMPLATES)
-def test_template_asks_for_values_derived_from_the_public_text(name: str) -> None:
-    text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
+def test_outcomes_template_asks_for_values_derived_from_the_public_text() -> None:
+    text = (PROMPTS_DIR / "outcomes_v1.txt").read_text(encoding="utf-8").lower()
     assert "placeholder" in text
-    assert "derive the numbers from the public text" in text
-    assert "different inputs" in text
+    assert "derive the probabilities from the public evidence" in text
+    assert "repeats the same" not in text
 
 
-def test_direct_prompt_limits_predictions_to_fit_the_output_budget() -> None:
+def test_direct_prompt_requests_only_an_action() -> None:
     text = (PROMPTS_DIR / "direct_v1.txt").read_text(encoding="utf-8").lower()
-    assert "exactly one entry, for selected_action" in text
-    assert "within the 256-token generation limit" in text
+    assert 'containing only "selected_action"' in text
+    assert "action_predictions" not in text
+    assert "candidate_probabilities" not in text
 
 
 def test_outcomes_prompt_limits_predictions_to_fit_the_output_budget() -> None:
     text = (PROMPTS_DIR / "outcomes_v1.txt").read_text(encoding="utf-8").lower()
     assert "at most two candidate actions" in text
-    assert "within the 256-token generation limit" in text
+    assert "within the {max_new_tokens}-token generation limit" in text

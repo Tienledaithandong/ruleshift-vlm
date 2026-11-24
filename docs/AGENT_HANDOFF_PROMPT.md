@@ -1,5 +1,7 @@
 # Handoff prompt for the next agent
 
+> **Archived handoff.** These instructions describe an earlier attempt. The current task order and pilot evidence are in [research progress](RESEARCH_STATUS.md) and the [runbook](RUNBOOK.md). Remote execution is disabled in the current configuration.
+
 Copy the prompt below verbatim into a fresh agent session. It is self-contained.
 
 ---

@@ -41,12 +41,14 @@ def paired_bootstrap_ci(
         raise ValueError("n_boot must be at least 1")
     if not 0.0 < alpha < 1.0:
         raise ValueError("alpha must lie strictly between 0 and 1")
+    if min(values) == max(values):
+        return values[0], values[0]
     rng = random.Random(seed)
     n = len(values)
     boot_means: list[float] = []
     for _ in range(n_boot):
         sample = [values[rng.randrange(n)] for _ in range(n)]
-        boot_means.append(sum(sample) / n)
+        boot_means.append(math.fsum(sample) / n)
     boot_means.sort()
     low_index = int((alpha / 2.0) * n_boot)
     high_index = min(n_boot - 1, int((1.0 - alpha / 2.0) * n_boot) - 1)

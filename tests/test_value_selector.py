@@ -56,9 +56,9 @@ def costly_lockout() -> PublicCostModel:
 def test_q_values_match_hand_calculation() -> None:
     q = q_hat_from_prediction(prediction(), BELIEF, costly_lockout())
     # probe: -0.05 + 9.95 continuation in both branches = 9.90
-    # commit: .5*(9.95+9.95) + .5*(-0.45 + 0 no continuation) = 9.725
+    # A rejection can spend only three steps before truncation.
     assert q["PROBE_RED"] == pytest.approx(9.90)
-    assert q["COMMIT_RED"] == pytest.approx(9.725)
+    assert q["COMMIT_RED"] == pytest.approx(.5 * (9.95 + 9.95) + .5 * -.15)
 
 
 def test_value_aware_selector_prefers_probe_when_lockout_expensive() -> None:
@@ -70,7 +70,7 @@ def test_immediate_only_selector_undervalues_probe() -> None:
         prediction(), BELIEF, costly_lockout(), account_continuation=False
     )
     assert q["PROBE_RED"] == pytest.approx(-0.05)
-    assert q["COMMIT_RED"] == pytest.approx(4.75)
+    assert q["COMMIT_RED"] == pytest.approx(.5 * 9.95 + .5 * -.15)
     assert ImmediateOnlySelector().choose(prediction(), BELIEF, costly_lockout()) == "COMMIT_RED"
 
 
@@ -117,7 +117,7 @@ PUBLIC_COSTS = {
 
 def test_cost_model_from_public_costs_negates_the_published_magnitude() -> None:
     model = PublicCostModel.from_public_costs(
-        PUBLIC_COSTS, probe_duration=5, commit_duration=5, remaining_horizon=10
+        PUBLIC_COSTS, probe_duration=5, commit_duration=5, remaining_horizon=20
     )
     assert model.step_cost == pytest.approx(-0.05)
     # A 5-step probe costs 0.25 and a rejected 5-step commit plus 8 lockout
@@ -135,6 +135,7 @@ def test_positive_step_cost_is_rejected() -> None:
 def test_public_macro_durations_match_the_executor_formula() -> None:
     assert public_macro_durations({"probe_detour": 3, "commit_travel": 4}) == (7, 5)
     assert public_macro_durations({"probe_detour": 0, "commit_travel": 0}) == (1, 1)
+    assert public_macro_durations({"probe_detour": 2, "station_travel": 0, "commit_travel": 4}) == (3, 5)
 
 
 def test_longer_macro_lowers_the_estimate() -> None:
@@ -178,3 +179,19 @@ def test_one_step_continuation_cancels_outside_a_truncated_horizon() -> None:
         commit_immediate - (-0.05)
     )
     assert ValueAwareSelector().choose(prediction(), BELIEF, generous) == "COMMIT_RED"
+
+
+def test_uninformative_probe_cannot_improve_future_commit_accuracy() -> None:
+    payload = prediction()
+    for row in payload["action_predictions"][0]["under_rules"]:
+        row["possible_outcomes"] = [{"observation": "accept", "p": 1.0}]
+    cost = PublicCostModel(remaining_horizon=2, learning_rate=1.0)
+    q = q_hat_from_prediction(payload, BELIEF, cost)
+    assert q["PROBE_RED"] == pytest.approx(0.5 * 10 - 2 * .05)
+
+
+def test_unreachable_delivery_has_no_immediate_or_continuation_reward() -> None:
+    cost = PublicCostModel(remaining_horizon=2, commit_duration=3)
+    q = q_hat_from_prediction(prediction(), BELIEF, cost)
+    assert q["PROBE_RED"] == pytest.approx(-.10)
+    assert q["COMMIT_RED"] == pytest.approx(-.10)

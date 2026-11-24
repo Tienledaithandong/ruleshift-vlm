@@ -9,28 +9,33 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from ruleshift.envs.config import EnvConfig
+import yaml
+
+from ruleshift.agents.model_check import readiness_errors
+from ruleshift.agents.vlm_backend import StubVLMBackend
+from ruleshift.envs.config import EnvConfig, default_config_path
 from ruleshift.evaluator.closed_loop import (
     ClosedLoopOutput,
-    build_family_a_scenarios,
     run_closed_loop,
 )
 from ruleshift.evaluator.metrics_ci import PairedSummary
+from ruleshift.evaluator.provenance import implementation_digest
 
 #: Method ids for the proposed method, in preference order. The ``_stub``
 #: suffix only reflects which backend was injected, so a real-backend run uses
 #: ``m1`` and the same code path still finds the proposed method.
 PROPOSED_LABELS = ("m1", "m1_stub")
-HELD_OUT_DETOUR = (1, 3)
+DEFAULT_PREREGISTRATION = default_config_path("preregistered_test.yaml")
+HELD_OUT_DETOUR = (4, 6)
 HELD_OUT_NOISE = (0.05, 0.15)
-HELD_OUT_LOCKOUT = (2, 5)
-HELD_OUT_HAZARD = (0.02, 0.07)
+HELD_OUT_LOCKOUT = (4, 6)
+HELD_OUT_HAZARD = (0.04, 0.07)
 
 
-def build_heldout_family_a() -> tuple[tuple[str, EnvConfig], ...]:
+def build_heldout_family_a(max_env_steps: int = 60) -> tuple[tuple[str, EnvConfig], ...]:
     """Build held-out scenarios with parameter values unseen in development."""
 
     scenarios: list[tuple[str, EnvConfig]] = []
@@ -51,6 +56,7 @@ def build_heldout_family_a() -> tuple[tuple[str, EnvConfig], ...]:
                                 shift_hazard=hazard,
                                 disable_shift=False,
                                 initial_mechanic="red",
+                                max_env_steps=max_env_steps,
                                 scenario_id=scenario_id,
                             ),
                         )
@@ -86,9 +92,30 @@ def run_heldout_evaluation(
     backend: object | None = None,
     cache: object | None = None,
     max_vlm_calls_per_episode: int = 6,
+    preregistration: Path = DEFAULT_PREREGISTRATION,
 ) -> HeldOutResult:
     """Run paired held-out episodes and accounting for every method."""
 
+    if backend is not None and not isinstance(backend, StubVLMBackend):
+        frozen = yaml.safe_load(Path(preregistration).read_text(encoding="utf-8"))
+        errors = readiness_errors({"revision": getattr(backend, "revision", None)}, "locked", frozen)
+        if errors:
+            raise ValueError("; ".join(errors))
+        # Compare the submitted plan before issuing any generation request.
+        # JSON normalizes tuple-valued EnvConfig fields to YAML-compatible lists.
+        requested = {
+            "scenarios": [{"id": key, "config": asdict(config)} for key, config in scenarios],
+            "methods": list(methods),
+            "seeds": list(seeds),
+            "model_id": getattr(backend, "model_id", None),
+            "revision": backend.revision,
+            "implementation_sha256": implementation_digest(),
+        }
+        budget = frozen.get("call_and_step_budget", {})
+        if (frozen.get("locked_run") != json.loads(json.dumps(requested))
+                or budget.get("max_vlm_calls_per_episode") != max_vlm_calls_per_episode
+                or any(config.max_env_steps != budget.get("max_env_steps") for _, config in scenarios)):
+            raise ValueError("scenarios, seeds, methods, model, source, prompts and budgets must match the frozen run")
     proposed = proposed_label(tuple(methods))
     comparisons: tuple[tuple[str, str], ...] = (
         tuple((proposed, method) for method in methods if method != proposed)
@@ -125,7 +152,8 @@ def run_heldout_evaluation(
             "steps": sum(episode.steps for episode in episodes),
             "probes": sum(episode.probes for episode in episodes),
             "vlm_calls": calls,
-            "json_valid": sum(row["vlm_calls_used"] > 0 for row in decisions),
+            "json_valid": sum(row["json_valid"] is True for row in decisions),
+            "invalid_json": sum(row["json_valid"] is False for row in decisions),
             "invalid_actions": sum(episode.invalid_actions for episode in episodes),
             "tokens": tokens,
             "latency_ms": sum(episode.latency_ms for episode in episodes),
@@ -192,20 +220,15 @@ def write_result_files(
     json_path.write_text(json.dumps(summary_rows, indent=2), encoding="utf-8")
 
     lines = [
-        "# Week 9 — Main held-out evaluation (SYNTHETIC)",
+        "# Week 9 - Main held-out evaluation" + (" (SYNTHETIC)" if result.closed_loop.synthetic else ""),
         "",
-        "**SYNTHETIC: every model-side method uses the deterministic stub. "
-        "No VLM was run.** These numbers exercise the held-out evaluation "
-        "pipeline and cost accounting. They are not evidence about any model "
-        "and must not be reported as results.",
+        ("**SYNTHETIC.** This dry run used the deterministic stub and a development "
+         "fixture. It provides no empirical VLM result."
+         if result.closed_loop.synthetic else
+         "This run used an injected model backend and matched the preregistered run specification."),
         "",
-        "Held-out scenario values are disjoint from the development grid; "
-        "seeds are averaged within each scenario and the resampling unit is the "
-        "scenario, never the frame or the seed. Every method is held to the same "
-        "per-episode VLM call cap "
-        f"({result.max_vlm_calls_per_episode}). "
-        "`configs/preregistered_test.yaml` remains DRAFT_NOT_FROZEN because no "
-        "real validation has been completed.",
+        "Seeds are averaged within each scenario. Intervals resample scenarios. "
+        f"All model methods had a cap of {result.max_vlm_calls_per_episode} calls per episode.",
         "",
         "## Paired differences (proposed minus baseline)",
         "",
@@ -234,7 +257,7 @@ def write_result_files(
         )
 
     negative = [
-        key for key, summary in result.summaries.items() if summary.high <= 0.0
+        key for key, summary in result.summaries.items() if summary.low <= 0.0
     ]
     lines += [
         "",
@@ -246,18 +269,13 @@ def write_result_files(
     ]
     if negative:
         for method, baseline in negative:
-            lines.append(f"- {method} − {baseline}: interval entirely at or below zero.")
+            summary = result.summaries[method, baseline]
+            verdict = "entirely at or below zero" if summary.high <= 0 else "includes zero"
+            lines.append(f"- {method} minus {baseline}: interval {verdict}.")
     else:
         lines.append(
-            "- None of the synthetic comparisons is entirely at or below zero; "
-            "this is a property of the stub, not evidence of a real effect."
+            "- All reported intervals lie above zero."
         )
-    lines += [
-        "",
-        "A real held-out conclusion requires a frozen test configuration and a "
-        "frozen-VLM checkpoint; both are still missing.",
-        "",
-    ]
     report_path = report_dir / "w9_main_results.md"
     report_path.write_text("\n".join(lines), encoding="utf-8")
     return {

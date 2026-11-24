@@ -84,7 +84,7 @@ class MacroExecutor:
                 *_route(geometry.station, geometry.start, kind="move_back"),
             ]
         elif macro_id == "GO_TO_STATION":
-            ops = _route(position, geometry.station)
+            ops = _route(position, geometry.station) or [PrimitiveOp("wait")]
         else:  # WAIT
             ops = [PrimitiveOp("wait")]
 

@@ -146,6 +146,19 @@ def test_default_call_cap_matches_the_preregistered_budget() -> None:
     assert episode.vlm_calls <= DEFAULT_VLM_CALL_CAP
 
 
+def test_malformed_calls_spend_budget_and_episode_runs_to_physical_horizon():
+    from ruleshift.agents.vlm_backend import StubVLMBackend
+
+    config = _config(max_env_steps=17)
+    episode = run_episode(config, "direct", 3, "invalid", StubVLMBackend(malformed_every=1),
+                          max_vlm_calls_per_episode=2)
+    assert episode.steps == 17 and episode.vlm_calls == 2
+    assert episode.call_cap_hits == 15
+    assert all(row["chosen_action"] == "WAIT" for row in episode.public_rows)
+    assert [row["json_valid"] for row in episode.public_rows[:2]] == [False, False]
+    assert episode.invalid_actions == 0
+
+
 def test_public_rows_are_unique_per_scenario_seed_decision() -> None:
     scenarios = build_family_a_scenarios()[:2]
     result = run_closed_loop(

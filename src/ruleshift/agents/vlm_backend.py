@@ -12,14 +12,14 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
 
-from ruleshift.public_api.schemas import validate_structured_vlm_output
+from ruleshift.public_api.schemas import HAZARD_REGIME_IDS, RULE_IDS, TASK_ACTIONS, validate_structured_vlm_output
 
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "direct_v1.txt"
-PROMPT_VERSION = "direct_v3"
+PROMPT_VERSION = "direct_v4"
 
 
 @dataclass(frozen=True)
@@ -35,6 +35,15 @@ class ModelRequest:
     decoding_seed: int
     max_new_tokens: int = 256
     prompt_version: str = PROMPT_VERSION
+    candidate_rules: tuple[str, ...] = RULE_IDS
+    revision: str | None = None
+    dtype: str | None = None
+    backend_id: str = ""
+    do_sample: bool = False
+    device: str | None = None
+    #: "text" means the backend never receives the RGB frame; only the prompt
+    #: and decoding metadata identify the request. "rgb" includes the pixels.
+    input_mode: str = "text"
 
     def fingerprint(self) -> str:
         """Hash every public factor that can change the correct response."""
@@ -42,13 +51,22 @@ class ModelRequest:
         payload = {
             "model_id": self.model_id,
             "prompt": self.prompt,
-            "image_hash": self.image_hash,
-            "history_hash": self.history_hash,
+            "input_mode": self.input_mode,
+            # A text-only backend never sees the frame, so unused hashes must
+            # not split the cache or inflate the distinct-request count.
+            "image_hash": self.image_hash if self.input_mode == "rgb" else None,
+            "history_hash": self.history_hash if self.input_mode == "rgb" else None,
             "available_actions": list(self.available_actions),
             "candidate_hash": self.candidate_hash,
             "decoding_seed": self.decoding_seed,
             "max_new_tokens": self.max_new_tokens,
             "prompt_version": self.prompt_version,
+            "candidate_rules": self.candidate_rules,
+            "revision": self.revision,
+            "dtype": self.dtype,
+            "device": self.device,
+            "backend_id": self.backend_id,
+            "do_sample": self.do_sample,
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return "sha256:" + hashlib.sha256(raw).hexdigest()
@@ -73,6 +91,7 @@ def render_prompt(
     candidate_rules: Sequence[str],
     available_actions: Sequence[str],
     public_costs: Mapping[str, float],
+    max_new_tokens: int = 256,
 ) -> str:
     """Fill the public-only direct prompt template."""
 
@@ -83,6 +102,7 @@ def render_prompt(
         candidate_rules=", ".join(candidate_rules),
         available_actions=", ".join(available_actions),
         public_costs=", ".join(f"{k}={v}" for k, v in sorted(public_costs.items())),
+        max_new_tokens=max_new_tokens,
     )
 
 
@@ -109,47 +129,12 @@ class StubVLMBackend:
         if self.malformed_every and self._calls % self.malformed_every == 0:
             text = "{ this is not valid JSON"
         else:
-            selected = rng.choice(available)
+            if request.prompt_version.startswith("direct_"):
+                payload = {"selected_action": rng.choice(available)}
+            else:
+                payload = self._structured_payload(request, rng)
             if self.invalid_action_every and self._calls % self.invalid_action_every == 0:
-                selected = "NOT_A_MACRO"
-            future = next(
-                (action for action in available if action.startswith("COMMIT_")),
-                available[0],
-            )
-            # Emit a small candidate menu so selectors have alternatives to
-            # compare. This is still synthetic; it only exercises the harness.
-            commits = [a for a in available if a.startswith("COMMIT_")]
-            probes = [a for a in available if a.startswith("PROBE_")]
-            menu = (commits[:2] + probes[:1]) or [selected]
-
-            def outcome(rule: str, color: str) -> list[dict]:
-                acceptance = 0.9 if rule == color else 0.1
-                return [
-                    {"observation": "accept", "p": acceptance},
-                    {"observation": "reject", "p": round(1.0 - acceptance, 10)},
-                ]
-
-            predictions = []
-            for action in menu:
-                color = action.split("_", 1)[1].lower()
-                predictions.append(
-                    {
-                        "action_id": action,
-                        "under_rules": [
-                            {
-                                "rule_id": rule,
-                                "possible_outcomes": outcome(rule, color),
-                            }
-                            for rule in ("red", "blue", "green")
-                        ],
-                        "estimated_future_best_action": future,
-                    }
-                )
-            payload = {
-                "candidate_probabilities": {"red": 0.5, "blue": 0.3, "green": 0.2},
-                "action_predictions": predictions,
-                "selected_action": selected,
-            }
+                payload["selected_action"] = "NOT_A_MACRO"
             text = json.dumps(payload, sort_keys=True)
 
         return ModelResponse(
@@ -162,6 +147,46 @@ class StubVLMBackend:
         )
 
 
+    @staticmethod
+    def _structured_payload(request: ModelRequest, rng: random.Random) -> dict:
+        tasks = [a for a in request.available_actions if a in TASK_ACTIONS]
+        probes = [a for a in request.available_actions if a.startswith("PROBE_")]
+        menu = [rng.choice(group) for group in (tasks, probes) if group]
+        if not menu:
+            menu = [request.available_actions[0]]
+        predictions = []
+        for action in menu:
+            under_rules = []
+            for rule in request.candidate_rules:
+                if action.startswith(("COMMIT_", "PROBE_")):
+                    color = action.split("_", 1)[1].lower()
+                    positive, negative = "accept", "reject"
+                    probability = 0.9 if rule == color else 0.1
+                elif action in ("GO_SAFE", "CROSS_BRIDGE"):
+                    positive, negative = "success", "failure"
+                    probability = 0.9 if rule == "stable" or action == "GO_SAFE" else 0.1
+                else:
+                    under_rules.append({"rule_id": rule, "possible_outcomes": [{"observation": "none", "p": 1.0}]})
+                    continue
+                under_rules.append({
+                    "rule_id": rule,
+                    "possible_outcomes": [
+                        {"observation": positive, "p": probability},
+                        {"observation": negative, "p": round(1.0 - probability, 10)},
+                    ],
+                })
+            predictions.append({
+                "action_id": action,
+                "under_rules": under_rules,
+                "estimated_future_best_action": tasks[0] if tasks else menu[0],
+            })
+        return {
+            "candidate_probabilities": dict.fromkeys(request.candidate_rules, 1.0 / len(request.candidate_rules)),
+            "action_predictions": predictions,
+            "selected_action": rng.choice(menu),
+        }
+
+
 class TransformersVLMBackend:
     """Optional real frozen VLM; nothing is loaded or downloaded at import."""
 
@@ -171,11 +196,21 @@ class TransformersVLMBackend:
         device: str = "cpu",
         revision: str | None = None,
         dtype: str = "bfloat16",
+        local_files_only: bool = True,
+        cache_dir: str | Path | None = None,
+        max_new_tokens: int = 256,
     ) -> None:
         self.model_id = model_id
         self.device = device
         self.revision = revision
         self.dtype = dtype
+        self.local_files_only = local_files_only
+        self.cache_dir = cache_dir
+        if max_new_tokens < 1:
+            raise ValueError("max_new_tokens must be positive")
+        self.max_new_tokens = max_new_tokens
+        if dtype not in ("float16", "bfloat16", "float32"):
+            raise ValueError(f"unsupported dtype: {dtype}")
         self._model = None
         self._processor = None
 
@@ -199,7 +234,7 @@ class TransformersVLMBackend:
         if model_class is None:  # pragma: no cover
             raise RuntimeError("no compatible transformers auto model class found")
 
-        kwargs = {"revision": self.revision} if self.revision else {}
+        kwargs = {"revision": self.revision, "local_files_only": self.local_files_only, "cache_dir": self.cache_dir}
         self._processor = AutoProcessor.from_pretrained(self.model_id, **kwargs)
         import torch
 
@@ -207,7 +242,7 @@ class TransformersVLMBackend:
             "bfloat16": torch.bfloat16,
             "float16": torch.float16,
             "float32": torch.float32,
-        }.get(self.dtype, torch.bfloat16)
+        }[self.dtype]
         self._model = model_class.from_pretrained(
             self.model_id, torch_dtype=torch_dtype, **kwargs
         ).to(self.device)
@@ -218,17 +253,30 @@ class TransformersVLMBackend:
         import time
 
         started = time.perf_counter()
-        messages = [{"role": "user", "content": request.prompt}]
+        messages = [{"role": "user", "content": [{"type": "text", "text": request.prompt}]}]
         rendered = self._processor.apply_chat_template(
             messages,
             tokenize=True,
             add_generation_prompt=True,
             return_tensors="pt",
+            return_dict=True,
         )
-        if not isinstance(rendered, dict):
+        if not isinstance(rendered, Mapping):
             rendered = {"input_ids": rendered}
         inputs = {key: value.to(self.device) for key, value in rendered.items()}
-        outputs = self._model.generate(**inputs, max_new_tokens=request.max_new_tokens)
+        import torch
+
+        kwargs = {"max_new_tokens": request.max_new_tokens, "do_sample": request.do_sample}
+        if request.do_sample:
+            device = torch.device(self.device)
+            devices = [device.index if device.index is not None else torch.cuda.current_device()] if device.type == "cuda" else []
+            with torch.random.fork_rng(devices=devices):
+                torch.default_generator.manual_seed(request.decoding_seed)
+                for index in devices:
+                    torch.cuda.default_generators[index].manual_seed(request.decoding_seed)
+                outputs = self._model.generate(**inputs, **kwargs)
+        else:
+            outputs = self._model.generate(**inputs, **kwargs)
         generated = outputs[:, inputs["input_ids"].shape[-1] :]
         text = self._processor.batch_decode(generated, skip_special_tokens=True)[0]
         return ModelResponse(
@@ -242,7 +290,8 @@ class TransformersVLMBackend:
 
 
 def parse_structured_output(
-    text: str, available_actions: Sequence[str]
+    text: str, available_actions: Sequence[str], candidate_rules: Sequence[str] | None = None,
+    *, direct: bool | None = None,
 ) -> tuple[dict | None, list[str]]:
     """Parse and validate raw output; return errors and a safe fallback."""
 
@@ -259,9 +308,24 @@ def parse_structured_output(
     except (ValueError, TypeError) as exc:
         return None, [f"invalid JSON: {exc}"]
 
-    errors = validate_structured_vlm_output(payload)
-    if isinstance(payload, dict) and payload.get("selected_action") not in set(available_actions):
-        errors.append("selected_action is not in the available action menu")
+    if direct:
+        if not isinstance(payload, dict) or set(payload) != {"selected_action"}:
+            return None, ["direct response must contain only selected_action"]
+        if payload["selected_action"] not in available_actions:
+            return None, ["selected_action is not in the available action menu"]
+        return payload, []
+
+    if candidate_rules is None:
+        candidate_rules = HAZARD_REGIME_IDS if "CROSS_BRIDGE" in available_actions else RULE_IDS
+    errors = validate_structured_vlm_output(payload, tuple(available_actions), tuple(candidate_rules))
+    if not errors and direct is not None:
+        predictions = [row["action_id"] for row in payload["action_predictions"]]
+        if payload["selected_action"] not in predictions:
+            errors.append("selected_action must have a prediction")
+        tasks = TASK_ACTIONS.intersection(available_actions)
+        probes = {a for a in available_actions if a.startswith("PROBE_")}
+        if len(predictions) > 2 or any(group and not group.intersection(predictions) for group in (tasks, probes)):
+            errors.append("structured response must cover the offered task and probe alternatives")
     if errors:
         return None, errors
     return payload, []

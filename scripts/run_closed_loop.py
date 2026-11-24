@@ -13,11 +13,10 @@ import argparse
 import sys
 from pathlib import Path
 
-try:  # allow running straight from a source checkout
-    import ruleshift  # noqa: F401
-except ModuleNotFoundError:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Always run the code in this checkout, including when another copy is installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from ruleshift.envs.config import load_dev_grid
 from ruleshift.evaluator.closed_loop import (
     build_family_a_scenarios,
     run_closed_loop,
@@ -49,18 +48,19 @@ def main() -> None:
     parser.add_argument(
         "--call-cap",
         type=int,
-        default=6,
+        default=None,
         help="per-episode VLM call cap applied to every method",
     )
     args = parser.parse_args()
 
-    scenarios = build_family_a_scenarios()
+    scenarios = build_family_a_scenarios(Path(args.config))
+    budget = load_dev_grid(Path(args.config))["model_call_cap"]["per_episode"]
     result = run_closed_loop(
         scenarios,
         DEFAULT_METHODS,
         tuple(args.seeds),
         DEFAULT_COMPARISONS,
-        max_vlm_calls_per_episode=args.call_cap,
+        max_vlm_calls_per_episode=budget if args.call_cap is None else args.call_cap,
     )
     data_dir = Path(args.data)
     report_dir = Path(args.out)
@@ -78,7 +78,8 @@ def main() -> None:
         for method in methods
     ]
     fig, axis = plt.subplots(figsize=(8, 4))
-    axis.boxplot(returns, tick_labels=methods, showmeans=True)
+    axis.boxplot(returns, showmeans=True)
+    axis.set_xticks(range(1, len(methods) + 1), methods)
     axis.set_ylabel("episodic return (synthetic)")
     axis.set_title("Week 7 Family A closed loop — STUB METHODS, no VLM")
     axis.tick_params(axis="x", rotation=20)

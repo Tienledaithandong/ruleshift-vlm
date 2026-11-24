@@ -5,7 +5,8 @@ Usage:
         --method M1 --baseline B0 --out reports/paired_summary.json
 
 The input CSV must have scenario_id, method and return columns, with exactly
-one return per (scenario_id, method). The resampling unit is the scenario.
+one paired return per (scenario_id, seed, method). The seed column is optional
+for pre-aggregated input. The resampling unit is the scenario.
 """
 
 from __future__ import annotations
@@ -16,10 +17,8 @@ import json
 import sys
 from pathlib import Path
 
-try:  # allow running straight from a source checkout
-    import ruleshift  # noqa: F401
-except ModuleNotFoundError:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Always run the code in this checkout, including when another copy is installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from ruleshift.evaluator.metrics_ci import summarize_paired
 
@@ -33,21 +32,39 @@ def main() -> None:
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
-    by_scenario: dict[str, dict[str, float]] = {}
+    by_scenario: dict[str, dict[str, dict[str, float]]] = {}
     with Path(args.input).open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
-            by_scenario.setdefault(row["scenario_id"], {})[row["method"]] = float(row["return"])
+            method = row["method"]
+            if method not in (args.method, args.baseline):
+                continue
+            scenario = row["scenario_id"]
+            seed = row.get("seed", "")
+            pairs = by_scenario.setdefault(scenario, {}).setdefault(seed, {})
+            if method in pairs:
+                raise SystemExit(f"duplicate return for {scenario}, seed {seed}, {method}")
+            pairs[method] = float(row["return"])
 
-    method_returns = [values[args.method] for values in by_scenario.values() if args.method in values]
-    baseline_returns = [values[args.baseline] for values in by_scenario.values() if args.baseline in values]
-    if len(method_returns) != len(baseline_returns):
-        raise SystemExit("scenarios must contain returns for both methods")
+    if not by_scenario or args.method == args.baseline:
+        raise SystemExit("two distinct methods with paired returns are required")
+    method_returns = []
+    baseline_returns = []
+    for scenario, pairs in sorted(by_scenario.items()):
+        for seed, values in pairs.items():
+            if {args.method, args.baseline} != values.keys():
+                raise SystemExit(f"missing paired return for {scenario}, seed {seed}")
+        method_returns.append(sum(v[args.method] for v in pairs.values()) / len(pairs))
+        baseline_returns.append(sum(v[args.baseline] for v in pairs.values()) / len(pairs))
 
-    summary = summarize_paired(method_returns, baseline_returns, seed=args.seed)
+    summary = summarize_paired(
+        method_returns, baseline_returns, seed=args.seed,
+        n_episodes=sum(len(pairs) for pairs in by_scenario.values()),
+    )
     output = {
         "method": args.method,
         "baseline": args.baseline,
         "n_scenarios": summary.n_scenarios,
+        "n_episode_pairs": summary.n_episodes,
         "mean_difference": summary.mean_difference,
         "ci95_low": summary.low,
         "ci95_high": summary.high,

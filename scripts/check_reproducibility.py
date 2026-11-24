@@ -6,40 +6,20 @@ Usage: python scripts/check_reproducibility.py [--root .]
 from __future__ import annotations
 
 import argparse
-import hashlib
 import importlib.metadata
 import json
 import platform
 import sys
 from pathlib import Path
 
-try:
-    import ruleshift  # noqa: F401
-except ModuleNotFoundError:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+import yaml
+# Always run the code in this checkout, including when another copy is installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from ruleshift.envs.config import EnvConfig
 from ruleshift.evaluator.closed_loop import run_episode
+from ruleshift.evaluator.provenance import collect_hashes
 from ruleshift.permissions import PRIVILEGED_FIELDS
-
-HASH_SUFFIXES = {".py", ".txt", ".yaml", ".csv", ".md", ".toml", ".lock"}
-EXCLUDED_DIRS = {".git", "__pycache__", ".pytest_cache", "reports", "results", "data"}
-
-
-def file_hash(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def collect_hashes(root: Path) -> dict[str, str]:
-    hashes: dict[str, str] = {}
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or path.suffix not in HASH_SUFFIXES:
-            continue
-        if any(part in EXCLUDED_DIRS for part in path.parts):
-            continue
-        hashes[path.relative_to(root).as_posix()] = file_hash(path)
-    return hashes
-
 
 def determinism_check() -> tuple[bool, str]:
     config = EnvConfig(
@@ -94,7 +74,9 @@ def main() -> None:
         "privileged_field_inventory_size": len(PRIVILEGED_FIELDS),
         "determinism": {"passed": ok, "detail": detail},
         "file_hashes": hashes,
-        "test_configuration": "DRAFT_NOT_FROZEN (no real VLM validation)",
+        "test_configuration": yaml.safe_load(
+            (root / "configs/preregistered_test.yaml").read_text(encoding="utf-8")
+        )["status"],
     }
     manifest_path = out_dir / "experiment_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")

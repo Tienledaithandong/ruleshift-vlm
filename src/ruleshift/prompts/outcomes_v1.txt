@@ -1,4 +1,4 @@
-You are controlling a gate-delivery agent. Use ONLY the public information below.
+You control an agent performing repeated deliveries. Use ONLY the public information below.
 You are not given the active rule, any shift time, hidden noise, action values or a simulator.
 
 Public history: {public_history}
@@ -8,9 +8,8 @@ Available macro actions: {available_actions}
 Candidate actions to evaluate: {candidate_actions}
 Public costs: {public_costs}
 
-For each candidate action, imagine each candidate rule and list the possible
-public outcomes with probabilities in [0,1] that sum to 1 per rule. Then give
-the best task action you would take after each potential outcome.
+Compare a task and a probe when both are offered. For each evaluated action,
+imagine each candidate rule and give the distribution of public outcomes.
 
 Describe the result as one JSON object with the shape below. Every <...> is a
 placeholder, not a value: replace it with something you derived from THIS input.
@@ -47,10 +46,8 @@ Rules:
 - observation: use only these public outcome words: accept, reject, success,
   failure, none.
 - selected_action and estimated_future_best_action must be available macro ids.
-- Derive the numbers from the public text. An answer that repeats the same
-  probabilities or the same action across different inputs, or that ignores the
-  uncertainty the public text describes, is wrong. Choose the action whose
-  expected control value best justifies its public cost.
-- Keep the JSON compact on one line and within the 256-token generation limit.
+- Derive the probabilities from the public evidence. Choose the action whose
+  expected reward best justifies its public cost within the remaining budget.
+- Keep the JSON compact on one line and within the {max_new_tokens}-token generation limit.
 
 Return ONLY the JSON object: no prose, no code fence.

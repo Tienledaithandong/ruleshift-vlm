@@ -13,6 +13,8 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
+import json
 import shutil
 from pathlib import Path
 
@@ -24,6 +26,7 @@ INCLUDE = (
     "pyproject.toml",
     "README.md",
     "LICENSE",
+    "requirements.lock",
     "src",
     "scripts",
     "configs",
@@ -68,18 +71,19 @@ def build_stage() -> Path:
         "licenses": [{"name": "MIT"}],
     }
     (STAGE / "dataset-metadata.json").write_text(
-        __import__("json").dumps(dataset_meta, indent=2) + "\n", encoding="utf-8"
+        json.dumps(dataset_meta, indent=2) + "\n", encoding="utf-8"
     )
     return STAGE
 
 
 def main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()
     stage = build_stage()
     count = sum(1 for path in stage.rglob("*") if path.is_file())
     print(f"staged {count} files in {stage}")
     print(
         "next: python -m kaggle datasets version -p "
-        f"{stage.relative_to(ROOT)} -r zip -m \"fix prompt example\""
+        f"{stage.relative_to(ROOT)} -r zip -m \"Update pilot source snapshot\""
     )
 
 

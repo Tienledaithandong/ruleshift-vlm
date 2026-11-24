@@ -1,11 +1,12 @@
 # DRAFT — DO NOT USE AS A FROZEN TEST SET.
 # A frozen test configuration requires a completed validation run with a real
-# frozen VLM. Neither exists in this environment (no CUDA device, no checkpoint).
+# frozen VLM. The historical text-input pilot is an offline diagnostic.
 # This file records the intended schema and preregistration commitments only.
 schema_version: 1
 status: DRAFT_NOT_FROZEN
 frozen_commit: null
 frozen_on: null
+locked_run: null    # populated after validation with scenarios, methods, seeds, model and implementation digest
 reason: >-
   Week 6 validation could not be run with a real VLM. Freezing test scenarios
   from stub-generated diagnostics would be scientifically invalid. Remove this

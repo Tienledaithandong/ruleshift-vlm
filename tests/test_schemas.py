@@ -36,6 +36,7 @@ def valid_vlm_output() -> dict:
                             {"observation": "reject", "p": 0.10},
                         ],
                     },
+                    {"rule_id": "green", "possible_outcomes": [{"observation": "reject", "p": 1.0}]},
                 ],
                 "estimated_future_best_action": "COMMIT_BLUE",
             }

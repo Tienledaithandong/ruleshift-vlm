@@ -59,9 +59,9 @@ def test_audit_is_deterministic_and_metrics_are_bounded(tmp_path) -> None:
         metrics.cache_hit_rate,
     ):
         assert 0.0 <= rate <= 1.0
-    # Hidden noise is not part of the public prompt, so contexts that differ
-    # only in feedback noise must share a cache entry. The call count equals
-    # the number of distinct public inputs.
+    # Text-only requests are keyed by prompt and decoding metadata, not by
+    # unused image/history hashes. The call count equals the number of
+    # distinct public inputs.
     distinct_inputs = len({record["prompt_hash"] for record in first["records"]})
     assert metrics.call_count == distinct_inputs
     assert metrics.cache_hit_rate == pytest.approx(1.0 - distinct_inputs / len(contexts))
@@ -153,3 +153,36 @@ def test_audit_reports_label_coverage(tmp_path) -> None:
         cache=ResponseCache(tmp_path / "cache.jsonl"),
     )
     assert metrics.label_coverage_rate == pytest.approx(1.0)
+
+
+def test_controlled_text_has_exactly_the_two_candidate_rules() -> None:
+    for context in build_offline_contexts(18):
+        rule_ids = {rule.rule_id for rule in context.public_observation.candidate_rules}
+        assert len(rule_ids) == 2
+        assert set(context.belief) == {(rule, False) for rule in rule_ids}
+        assert all(rule.rule_id in rule_ids for rule in context.public_observation.candidate_rules)
+
+
+def test_m1_uses_structured_output_and_covers_every_decision(tmp_path) -> None:
+    contexts = build_offline_contexts(18)
+    records, metrics = run_offline_audit(
+        contexts,
+        backend=StubVLMBackend(),
+        cache=ResponseCache(tmp_path / "cache.jsonl"),
+        method="m1",
+    )
+    assert all(record["method"] == "m1" for record in records)
+    assert all(record["chosen_action"] in record["available_actions"] for record in records)
+    assert all(record["schema_valid"] and record["json_valid"] for record in records)
+    assert metrics.label_coverage_rate == pytest.approx(1.0)
+    assert metrics.fallback_count == 0
+
+
+def test_controlled_census_is_pinned() -> None:
+    contexts = build_offline_contexts(81)
+    counts = (
+        sum(context.delta_probe < -1e-9 for context in contexts),
+        sum(context.delta_probe > 1e-9 for context in contexts),
+        sum(abs(context.delta_probe) <= 1e-9 for context in contexts),
+    )
+    assert counts == (51, 12, 18)

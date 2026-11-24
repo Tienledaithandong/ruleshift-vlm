@@ -51,6 +51,8 @@ def test_slip_costs_recovery_steps_and_no_reward() -> None:
     assert info["physical_steps_elapsed"] == 7
     assert reward == pytest.approx(-7 * 0.05)
     assert failed.evaluator_state()["side"] == "start"
+    assert failed.public_view().public_text.endswith("last=failure")
+    assert "CROSS_BRIDGE outcome=failure" in failed.public_view().public_history
 
     clean = env_with(
         initial_regime="stable",
@@ -76,7 +78,7 @@ def test_safe_route_is_deterministic_success() -> None:
 
 @pytest.mark.parametrize(
     "macro, expected",
-    [("PROBE_STABLE", "safe"), ("PROBE_SLIPPERY", "slippery")],
+    [("PROBE_STABLE", "accept"), ("PROBE_SLIPPERY", "reject")],
 )
 def test_probe_feedback_follows_active_regime(macro: str, expected: str) -> None:
     env = env_with(
@@ -114,8 +116,19 @@ def test_held_out_maps_change_pixels_but_not_semantics() -> None:
     first.reset(seed=5)
     held_out.reset(seed=5)
     assert not (first.render() == held_out.render()).all()
+    assert first.public_view().public_obs_hash != held_out.public_view().public_obs_hash
     assert first.public_view().public_text == held_out.public_view().public_text
     assert first.public_view().public_costs == held_out.public_view().public_costs
+
+
+def test_bridge_history_keeps_earlier_actions_after_same_last_observation() -> None:
+    first, second = env_with(disable_shift=True), env_with(disable_shift=True)
+    for env, probe in ((first, "PROBE_STABLE"), (second, "PROBE_SLIPPERY")):
+        env.reset(seed=9)
+        env.step(probe)
+        env.step("WAIT")
+    assert first.public_view().public_obs_hash == second.public_view().public_obs_hash
+    assert first.public_view().public_history_hash != second.public_view().public_history_hash
 
 
 def test_gymnasium_env_checker() -> None:

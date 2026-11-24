@@ -1,18 +1,18 @@
 id,name,source,input_mode,uses_belief,uses_outcomes,uses_public_cost,uses_consistency,uses_value_selector,call_cap,privileged,status,notes
-B0,Direct VLM,agents/vlm_backend.py,P0 RGB-public,false,false,false,false,false,1,false,SPECIFIED,One call returns action id; free-form rationale not used as a label
-B1,Structured belief,prompts/outcomes_v1.txt,P0 RGB-public,true,false,false,false,false,1,false,SPECIFIED,Candidate probabilities plus action
-B2,Predict outcomes,prompts/outcomes_v1.txt,P0 RGB-public,true,true,false,false,false,1,false,SPECIFIED,Outcome estimates plus action
-B3,DIVA-style VoI (adapted),agents/diva_style.py,P0 RGB-public,true,true,true,false,false,1,false,IMPLEMENTED,Adapted decision-value check with physical cost; NOT an exact DIVA reproduction
-B4,Self-consistency,agents/self_consistency.py,P0 RGB-public,true,true,true,true,true,N,false,IMPLEMENTED,Every extra sample counts toward the same call cap as other methods
+B0,Direct VLM,agents/structured_vlm.py,P1 public text (P0 planned),false,false,false,false,false,1,false,IMPLEMENTED,Action-only public direct prompt
+B1,Structured belief,prompts/outcomes_v1.txt,P1 public text (P0 planned),true,false,false,false,false,1,false,SPECIFIED,Candidate probabilities plus action
+B2,Predict outcomes,prompts/outcomes_v1.txt,P1 public text (P0 planned),true,true,false,false,false,1,false,SPECIFIED,Outcome estimates plus action
+B3,DIVA-style VoI (adapted),agents/diva_style.py,P1 public text (P0 planned),true,true,true,false,false,1,false,IMPLEMENTED,Adapted decision-value check with physical cost; NOT an exact DIVA reproduction
+B4,Self-consistency,agents/self_consistency.py,P1 public text (P0 planned),true,true,true,true,true,N,false,IMPLEMENTED,Standalone sampling component; closed-loop budget integration pending
 B5,Oracle belief,evaluator/baselines.py,P2 oracle-belief,true,false,false,false,false,1,true,SPECIFIED,Diagnostic upper bound only; never a primary result
 B6a,Never probe,agents/baselines.py,public only,false,false,false,false,false,0,false,IMPLEMENTED,Passive task policy using public outcomes
 B6b,Random probe,agents/baselines.py,public only,false,false,false,false,false,0,false,IMPLEMENTED,Seeded from public history digest
 B6c,Max information gain,evaluator/baselines.py,P1/evaluator reference,true,false,false,false,false,0,true,IMPLEMENTED,Evaluator reference where labelled
 B6d,Return-aware reference,evaluator/exact_solver.py,evaluator only,true,true,true,true,true,0,true,IMPLEMENTED,Exact reference on microtasks; labelled approximate elsewhere
 B6e,True-rule oracle,evaluator/baselines.py,privileged,true,false,false,false,false,0,true,IMPLEMENTED,Distinct privileged upper bound
-M1,Proposed value-aware selector,agents/value_selector.py,P0 RGB-public,true,true,true,true,true,1,false,IMPLEMENTED,One-step continuation from VLM predictions and public costs only
-M1_minus_belief,No belief,agents/value_selector.py,P0 RGB-public,false,true,true,true,true,1,false,IMPLEMENTED,Uniform belief over candidate rules
-M1_minus_outcome,No outcome prediction,agents/value_selector.py,P0 RGB-public,true,false,true,true,true,1,false,IMPLEMENTED,Deterministic public rule semantics replace VLM outcomes
-M1_minus_cost,No cost,agents/value_selector.py,P0 RGB-public,true,true,false,true,true,1,false,IMPLEMENTED,Zero public costs; diagnoses cost sensitivity
-M1_minus_consistency,No consistency,agents/value_selector.py,P0 RGB-public,true,true,true,false,true,1,false,IMPLEMENTED,No history-only posterior update
-M1_minus_selector,No selector,agents/value_selector.py,P0 RGB-public,true,true,true,true,false,1,false,IMPLEMENTED,Raw VLM selected_action
+M1,Proposed value-aware selector,agents/value_selector.py,P1 public text (P0 planned),true,true,true,true,true,1,false,IMPLEMENTED,One-step continuation from VLM predictions and public costs only
+M1_minus_belief,No belief,agents/value_selector.py,P1 public text (P0 planned),false,true,true,true,true,1,false,IMPLEMENTED,Uniform belief over candidate rules
+M1_minus_outcome,No outcome prediction,agents/value_selector.py,P1 public text (P0 planned),true,false,true,true,true,1,false,IMPLEMENTED,Deterministic public rule semantics replace VLM outcomes
+M1_minus_cost,No cost,agents/value_selector.py,P1 public text (P0 planned),true,true,false,true,true,1,false,IMPLEMENTED,Zero public costs; diagnoses cost sensitivity
+M1_minus_consistency,No consistency,agents/value_selector.py,P1 public text (P0 planned),true,true,true,false,true,1,false,IMPLEMENTED,No history-only posterior update
+M1_minus_selector,No selector,agents/value_selector.py,P1 public text (P0 planned),true,true,true,true,false,1,false,IMPLEMENTED,Raw VLM selected_action

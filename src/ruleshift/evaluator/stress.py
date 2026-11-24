@@ -13,7 +13,7 @@ from typing import Sequence
 
 from ruleshift.envs.config import EnvConfig
 from ruleshift.evaluator.closed_loop import run_closed_loop
-from ruleshift.evaluator.heldout import build_heldout_family_a
+from ruleshift.evaluator.closed_loop import build_family_a_scenarios
 from ruleshift.evaluator.metrics_ci import summarize_paired
 
 Scenario = tuple[str, EnvConfig]
@@ -34,8 +34,8 @@ def _with_parameter(
 ) -> tuple[Scenario, ...]:
     return tuple(
         (
-            f"{scenario_id}-{field}-{value}",
-            replace(config, **{field: value, "scenario_id": f"{scenario_id}-{field}-{value}"}),
+            scenario_id,
+            replace(config, **{field: value}),
         )
         for scenario_id, config in scenarios
     )
@@ -47,7 +47,7 @@ def _sweep(
     methods: tuple[str, ...],
     seeds: tuple[int, ...],
 ) -> tuple[SensitivityRow, ...]:
-    base = build_heldout_family_a()[:4]
+    base = tuple(item for item in build_family_a_scenarios() if not item[1].disable_shift)[:4]
     rows: list[SensitivityRow] = []
     for value in values:
         scenarios = _with_parameter(base, parameter, value)

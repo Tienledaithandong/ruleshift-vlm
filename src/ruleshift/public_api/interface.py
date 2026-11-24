@@ -32,8 +32,8 @@ class PublicObservation:
     """The complete agent-visible observation at one decision point.
 
     Hash fields refer to immutable snapshots so that cache keys can include
-    the public history without embedding hidden state. The real RGB array is
-    introduced in Week 2; for Week 1 only its digest is represented.
+    the public history without embedding hidden state. The text-input pilot
+    receives a readable recent history and the public observation digest.
     """
 
     observation_id: str
@@ -43,6 +43,7 @@ class PublicObservation:
     available_actions: tuple[str, ...]
     candidate_rules: tuple[CandidateRule, ...]
     public_costs: Mapping[str, float] = field(default_factory=dict)
+    public_history: str = ""
 
     def to_payload(self) -> dict[str, Any]:
         """Serialize to the canonical agent-visible payload shape."""
@@ -51,6 +52,7 @@ class PublicObservation:
             "observation_id": self.observation_id,
             "public_obs_hash": self.public_obs_hash,
             "public_history_hash": self.public_history_hash,
+            "public_history": self.public_history,
             "public_text": self.public_text,
             "available_actions": list(self.available_actions),
             "candidate_rules": [

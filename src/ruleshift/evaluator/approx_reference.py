@@ -8,10 +8,13 @@ horizon and a small sample count. It must never be described as Bayes-optimal.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+import math
+import random
 
 from ruleshift.envs.config import EnvConfig
 from ruleshift.envs.gate_lock import RuleShiftEnv
-from ruleshift.public_api.schemas import MACRO_ACTIONS
+from ruleshift.evaluator.bayes_filter import Belief, RuleShiftFilter
+from ruleshift.public_api.schemas import FAMILY_A_ACTIONS
 
 
 @dataclass(frozen=True)
@@ -36,8 +39,10 @@ class TruncatedRolloutReference:
         samples: int = 4,
         seed: int = 0,
     ) -> None:
-        self.config = replace(config, max_env_steps=horizon)
-        self.horizon = horizon
+        if horizon < 1 or samples < 1:
+            raise ValueError("horizon and samples must be positive")
+        self.horizon = min(horizon, config.max_env_steps)
+        self.config = replace(config, max_env_steps=self.horizon)
         self.samples = samples
         self.seed = seed
 
@@ -52,16 +57,37 @@ class TruncatedRolloutReference:
         return f"COMMIT_{rule.upper()}"
 
     def _rollout(
-        self, action: str, sample: int, belief: dict[tuple[str, bool], float] | None
+        self, action: str, sample: int, belief: Belief, hidden_state: tuple[str, bool]
     ) -> float:
         env = RuleShiftEnv(config=self.config)
-        env.reset(seed=self.seed + sample)
-        _, total, _, truncated, info = env.step(action)
-        while not truncated:
-            _, reward, _, truncated, info = env.step(self._default_action(belief))
+        rule, shifted = hidden_state
+        env.reset(seed=self.seed + sample, options={
+            "initial_mechanic": rule,
+            "disable_shift": self.config.disable_shift or shifted,
+        })
+        bayes = RuleShiftFilter(
+            rules=self.config.candidate_rules,
+            shift_targets=self.config.shift_targets,
+            shift_hazard=0.0 if self.config.disable_shift else self.config.shift_hazard,
+            feedback_noise=self.config.feedback_noise,
+        )
+        total = 0.0
+        while True:
+            before = env.evaluator_state()
+            ops = env.executor.plan(action, before["position"]).ops
+            _, reward, _, truncated, info = env.step(action)
             total += reward
-            if info["physical_steps_elapsed"] >= self.horizon:
+            if truncated:
                 break
+            elapsed = info["physical_steps_elapsed"] - before["steps_taken"]
+            outcome = env.public_view().public_text.rsplit("last=", 1)[1]
+            if outcome in {"accept", "reject"}:
+                event = next(i for i, op in enumerate(ops) if op.kind in {"test", "commit"})
+                belief = bayes.step(belief, action, outcome, event + 1)
+                belief = bayes.advance(belief, elapsed - event - 1)
+            else:
+                belief = bayes.advance(belief, elapsed)
+            action = self._default_action(belief)
         return total
 
     def q_values(
@@ -69,13 +95,24 @@ class TruncatedRolloutReference:
     ) -> ApproximateQ:
         """Return approximate Q estimates for every public macro id."""
 
+        if belief is None:
+            belief = {(self.config.initial_mechanic, False): 1.0}
+        if (not belief or any(rule not in self.config.candidate_rules for rule, _ in belief)
+                or any(p < 0 or not math.isfinite(p) for p in belief.values())
+                or not math.isclose(sum(belief.values()), 1.0, abs_tol=1e-8)):
+            raise ValueError("belief must be a probability distribution on candidate mechanics")
+        # Reuse the same sampled initial states and event streams across actions.
+        states = sorted(belief)
+        samples = random.Random(self.seed).choices(
+            states, weights=[belief[state] for state in states], k=self.samples
+        )
         values = {
             action: sum(
-                self._rollout(action, sample, belief)
-                for sample in range(self.samples)
+                self._rollout(action, sample, belief, hidden_state)
+                for sample, hidden_state in enumerate(samples)
             )
             / self.samples
-            for action in MACRO_ACTIONS
+            for action in FAMILY_A_ACTIONS
         }
         return ApproximateQ(
             values=values,

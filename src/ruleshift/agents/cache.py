@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from ruleshift.permissions import find_forbidden_fields
+
 from .vlm_backend import ModelRequest, ModelResponse
 
 
@@ -25,6 +27,8 @@ class ResponseCache:
         return self._entries.get(request.fingerprint())
 
     def put(self, request: ModelRequest, response: ModelResponse) -> None:
+        if find_forbidden_fields(response.text):
+            return
         fingerprint = request.fingerprint()
         record = {
             "fingerprint": fingerprint,

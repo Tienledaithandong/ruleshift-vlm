@@ -93,6 +93,10 @@ def run_diagnostic(
 
     if intervention not in INTERVENTIONS:
         raise ValueError(f"unknown intervention: {intervention}")
+    if intervention in {"oracle_outcomes", "oracle_both"} and any(
+        c.config.feedback_noise != 0 or c.config.shift_hazard != 0 for c in contexts
+    ):
+        raise ValueError("the ideal outcome intervention requires fixed rules and noise-free feedback")
     selector = ValueAwareSelector()
     decisions: list[dict] = []
 
@@ -106,9 +110,9 @@ def run_diagnostic(
             if intervention in ("oracle_outcomes", "oracle_both"):
                 payload = _true_outcomes(payload)
             belief = (
-                {"red": 1.0, "blue": 0.0, "green": 0.0}
+                _rule_marginal(context.belief)
                 if intervention in ("oracle_belief", "oracle_both")
-                else _rule_marginal(context.belief)
+                else payload["candidate_probabilities"]
             )
             action = selector.choose(payload, belief, _cost(context))
 
@@ -154,7 +158,7 @@ def write_diagnostic_report(
     if reductions and max(reductions.values()) > 1e-9:
         largest = max(reductions, key=reductions.get)
     else:
-        largest = "none — all interventions are identical under this stub"
+        largest = "none (no intervention reduced mean regret)"
 
     lines = [
         "# Week 10 — Error decomposition by surgical intervention (SYNTHETIC)",
@@ -163,8 +167,8 @@ def write_diagnostic_report(
         "that single-component attribution is *measurable*, not where a real "
         "model's errors come from. **No generality claim** is made.",
         "",
-        "The dev contexts use a fixed rule prior; the oracle-belief intervention "
-        "replaces it with the known scenario start rule (red). The oracle-outcome "
+        "The baseline uses model-estimated rule probabilities. The belief intervention "
+        "substitutes the exact prior for the public card lottery. The oracle-outcome "
         "intervention replaces VLM outcome predictions with noise-free public "
         "rule semantics. The public-text row is a **control**: the stub backend "
         "has no image path, so the intervention changes nothing by construction. "

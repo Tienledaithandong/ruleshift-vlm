@@ -10,7 +10,7 @@ from __future__ import annotations
 import random
 
 from ruleshift.public_api.interface import PublicObservation
-from ruleshift.public_api.schemas import COMMIT_ACTIONS, MACRO_ACTIONS
+from ruleshift.public_api.schemas import TASK_ACTIONS
 
 
 class NeverProbePolicy:
@@ -20,11 +20,12 @@ class NeverProbePolicy:
         self._index = 0
 
     def choose(self, observation: PublicObservation) -> str:
-        return COMMIT_ACTIONS[self._index % len(COMMIT_ACTIONS)]
+        tasks = [a for a in observation.available_actions if a in TASK_ACTIONS]
+        return tasks[self._index % len(tasks)] if tasks else "WAIT"
 
     def record(self, action: str, outcome: str) -> None:
         if action.startswith("COMMIT_") and outcome == "reject":
-            self._index = (self._index + 1) % len(COMMIT_ACTIONS)
+            self._index += 1
 
 
 class RandomProbePolicy:
@@ -34,4 +35,4 @@ class RandomProbePolicy:
         self._rng = random.Random(public_seed)
 
     def choose(self, observation: PublicObservation) -> str:
-        return self._rng.choice(MACRO_ACTIONS)
+        return self._rng.choice(observation.available_actions)

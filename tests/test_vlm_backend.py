@@ -46,7 +46,7 @@ def test_stub_output_parses_to_schema_valid_payload() -> None:
     request = make_request()
     response = StubVLMBackend().generate(request)
     payload, errors = parse_structured_output(
-        response.text, request.available_actions
+        response.text, request.available_actions, direct=True
     )
     assert errors == []
     assert payload is not None
@@ -64,7 +64,7 @@ def test_stub_is_deterministic_for_same_request() -> None:
 def test_malformed_json_gets_deterministic_fallback() -> None:
     backend = StubVLMBackend(malformed_every=1)
     response = backend.generate(make_request())
-    payload, errors = parse_structured_output(response.text, ("COMMIT_RED", "WAIT"))
+    payload, errors = parse_structured_output(response.text, ("COMMIT_RED", "WAIT"), direct=True)
     assert payload is None
     assert errors
     assert any("json" in error.lower() for error in errors)
@@ -73,16 +73,28 @@ def test_malformed_json_gets_deterministic_fallback() -> None:
 def test_invalid_selected_action_is_rejected() -> None:
     backend = StubVLMBackend(invalid_action_every=1)
     response = backend.generate(make_request())
-    payload, errors = parse_structured_output(response.text, ("COMMIT_RED", "WAIT"))
+    payload, errors = parse_structured_output(response.text, ("COMMIT_RED", "WAIT"), direct=True)
     assert payload is None
     assert any("action" in error.lower() for error in errors)
 
 
-def test_fingerprint_changes_with_public_history() -> None:
-    first = make_request()
-    second = make_request(history_hash="sha256:different-history")
+def test_text_fingerprint_ignores_pixels_and_history() -> None:
+    first = make_request(input_mode="text")
+    second = make_request(
+        input_mode="text",
+        image_hash="sha256:different-image",
+        history_hash="sha256:different-history",
+    )
+    assert first.fingerprint() == second.fingerprint()
+
+
+def test_rgb_fingerprint_changes_with_public_history_and_pixels() -> None:
+    first = make_request(input_mode="rgb")
+    second = make_request(input_mode="rgb", history_hash="sha256:different-history")
+    third = make_request(input_mode="rgb", image_hash="sha256:different-image")
     assert first.fingerprint() != second.fingerprint()
-    assert first.fingerprint() == make_request().fingerprint()
+    assert first.fingerprint() != third.fingerprint()
+    assert first.fingerprint() == make_request(input_mode="rgb").fingerprint()
 
 
 def test_cache_hits_and_never_stores_privileged_fields(tmp_path) -> None:

@@ -26,6 +26,7 @@ def observation() -> PublicObservation:
 def test_majority_vote_is_deterministic_on_ties() -> None:
     assert majority_vote(["PROBE_RED", "COMMIT_RED", "PROBE_RED"]) == "PROBE_RED"
     assert majority_vote(["COMMIT_RED", "PROBE_RED"]) == "COMMIT_RED"
+    assert majority_vote(["COMMIT_RED", "PROBE_RED", "PROBE_RED", "COMMIT_RED"]) == "COMMIT_RED"
     assert majority_vote([]) == "WAIT"
 
 

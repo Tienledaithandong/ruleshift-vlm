@@ -1,9 +1,10 @@
 # RuleShift — Problem Specification and Environment Contract (v0.1)
 
-**Status:** specified, **not implemented**. Week 1 delivers this contract; the
-Gymnasium environment, renderer, macro executor and Bayes reference are Week 2+
-work (see `week2_issues.md`). All numeric values below are *development
-hypotheses to tune on dev*, not results and not frozen test settings.
+**Implementation status.** The CPU harness includes both Gymnasium environments,
+public renderers, primitive-step macro execution, a shift-aware filter, an exact
+Family A microtask solver and a Family B single-decision reference. The numeric
+settings below are development settings. See `README.md` for the empirical
+pilot status and `configs/preregistered_test.yaml` for the test-freeze status.
 
 **Governing documents:** `AGENT_TASK_WEEK1_RuleShift.md` (task brief) and
 `RuleShift_VLM_Research_12_Week_Master_Plan.md` (master plan). Where this
@@ -102,7 +103,7 @@ counting the same lockout penalty.
 
 ---
 
-## 4. Family B — Hazard/Bridge (specified, implemented later)
+## 4. Family B — Hazard/Bridge
 
 - Route choice: a shortcut bridge with hidden slip/failure risk versus a safe
   detour. Regimes `stable`, `slippery` (and optionally `icy`) define real
@@ -111,6 +112,9 @@ counting the same lockout penalty.
 - A sensing-station probe estimates the active regime with the same error model
   as Family A. Attempting the crossing may itself reveal hazard information,
   so passive learning from ordinary task outcomes remains enabled.
+- The station reports `accept` or `reject` for the queried regime. Crossing
+  reports `success` or `failure`. Recovery ticks preserve the failure report.
+  Current map IDs vary decorative pixels on the same route geometry.
 - Failure costs recovery time via real primitive steps, not a hidden penalty.
 - Public text is qualitative ("the bridge may be stable or slippery; a bad
   crossing may cost recovery time"), never a probability table.
@@ -127,7 +131,9 @@ only relabels rewards does not satisfy this contract.
 1. A local **RGB** rendering (Week 2) whose digest `public_obs_hash` is cached.
 2. A **public text view** (`public_text`) describing exactly what is visible —
    used for the P1 diagnostic input mode; it contains no invisible state.
-3. The **public history** and its digest `public_history_hash`.
+3. The **public history** contains up to the last 12 macro decisions, with
+   action, observed outcome, total reward and primitive duration. The digest
+   `public_history_hash` covers the complete sequence of public decision events.
 4. The **available macro-action ids** and the **public cost description**.
 5. The natural-language candidate-rule descriptions.
 
@@ -135,26 +141,27 @@ The canonical agent-visible payload has exactly these keys (enforced by
 `ruleshift.public_api.schemas.validate_public_observation`):
 
 ```
-observation_id, public_obs_hash, public_history_hash, public_text,
+observation_id, public_obs_hash, public_history_hash, public_history, public_text,
 available_actions, candidate_rules, public_costs
 ```
 
-`last_outcome` inside `public_text` is the outcome of the most recent
-*informative* primitive op. A probe's return leg therefore does not erase the
-station's accept/reject report: the decision-boundary observation still carries
-it, so a probing agent can update its belief afterwards.
+`last` in `public_text` reports the outcome of the current macro. On a completed
+probe the return trip preserves the station's accept/reject report. A wait
+reports `none` while the earlier outcome remains available in `public_history`.
 
 `public_costs` publishes non-negative **magnitudes** only — `primitive_step`,
-`probe_detour` (one-way station distance), `commit_travel` (public Manhattan
-distance to the gate), `lockout` and `delivery_reward`. Consumers must convert
+`probe_detour` (station-to-start distance), `station_travel` (current distance
+to the station), `commit_travel` (current distance to the gate), `lockout` and
+`delivery_reward` for Family A. Family B publishes route and recovery durations.
+Consumers must convert
 them to a signed cost model exactly once; a positive per-step "cost" would
 reward taking more steps.
 
 No other key is permitted. In particular, a `shift_time`, `mechanic_id`,
 `oracle_belief`, `Q*`, `delta_probe` or hidden-RNG field must never be present.
-`reset`/`step` `info` dictionaries returned to generic agent code must satisfy
-the same allowlist; privileged data is delivered through a **separate
-evaluation-only adapter** and stored in `evaluator_only.jsonl`.
+The public Gymnasium `info` dictionary carries the observation/history hashes,
+elapsed and maximum primitive steps, and available actions. Privileged trace
+data is accessed through a separate evaluation-only adapter.
 
 ---
 
@@ -185,7 +192,7 @@ schedule or the transition kernel.
 | `COMMIT_*` | travel to gate (public distance) + 1 commit step |
 | `PROBE_*` | travel to station + 1 test step + travel back to start |
 | `WAIT` | 1 step |
-| `GO_TO_STATION` | travel to station (public distance) |
+| `GO_TO_STATION` | travel to station (public distance), or one wait step if already there |
 
 `MAX_ENV_STEPS` counts **primitive steps**, not macro decisions. `d` denotes
 the public one-way station detour; a probe from the start therefore costs
@@ -200,9 +207,10 @@ macro**. Therefore:
 - The evaluator model and the real environment must produce the same result
   under the same conditions (master plan test 13).
 
-Week 2 uses the smallest deterministic macro implementation first, then adds
-noise/shift and cross-checks against simulation. If interruptible macros are
-ever introduced, the same behavior is exposed to every agent.
+After rejection the agent remains at the gate. Lockout ticks elapse during
+subsequent actions. The agent may move and probe, and a commit attempted
+while still locked consumes a wait step. The Family A grid reference carries
+position and remaining lockout across macro boundaries.
 
 ---
 
@@ -331,9 +339,26 @@ Qhat(a|h) = E_{m~b_hat, o'~Phat}[ rhat(h,a,m,o') + Vhat(h + (a,o')) ]
 
 with all `Phat`, `rhat`, `Vhat` from public constants or VLM predictions.
 
+### P1 development contexts
+
+The controlled card-lottery design in `evaluator/offline_audit.py` isolates
+the value of a clean test under a public prior. The noisy-history design
+in `evaluator/history_contexts.py` begins with the public old rule and executes
+one to three scripted actions in Gate/Lock. The prefix, station location
+and lockout setting are selected before any outcomes are drawn. Scenarios
+share a common noisy sensor and per-step shift hazard. With the default dev
+grid, both rates are 0.10. Only the evaluator uses the numerical rates.
+
+The evaluator conditions on the public macro outcome at its informative
+primitive step and propagates through any return travel. It computes exact
+action values from the resulting belief, public position and outstanding
+lockout. Each prompt specifies a local budget of six to eight primitive
+steps, capped by the remaining episode time. These decisions measure offline
+P1 regret. Closed-loop returns and P0 RGB decisions require separate runs.
+
 ---
 
-## 13. Acceptance tests (to implement in Week 2+)
+## 13. Acceptance criteria
 
 Mapped from master plan §7; each will be an automated test.
 
@@ -353,15 +378,15 @@ Mapped from master plan §7; each will be an automated test.
 14. No use of true shift time at agent runtime.
 15. VLM JSON parser handles invalid/missing/conflicting fields deterministically.
 
-CI also runs `gymnasium.utils.env_checker.check_env(env)` once the env exists.
+Both environment test suites run `gymnasium.utils.env_checker.check_env(env)`.
 
 ---
 
-## 14. Explicit non-goals for Week 1
+## 14. Original Week 1 scope
 
-No neural model, VLM runner, Bayes oracle, environment, renderer, replay cache,
-or result plot is implemented here. All numbers are dev hypotheses. No claim
-of novelty or publishability is made.
+Week 1 specified the contracts. Later commits implemented the CPU harness and
+the real-model pilot entry point. Development settings and harness checks do
+not establish an empirical improvement in closed-loop return.
 
 ---
 

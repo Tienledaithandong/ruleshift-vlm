@@ -75,6 +75,19 @@ model_call_cap:
   per_episode: 6
   note: Cap applies identically to all methods; extra samples count toward it.
 
+# Optional future slow-reasoner gate. These are configuration targets, not
+# calibrated values; do not enable until a predictor and threshold are fit on
+# development-only no-shift episodes and detector performance is reported.
+uncertainty_trigger:
+  enabled: false
+  score: standardized_residual
+  calibration_split: dev_no_shift
+  target_episode_false_alarm_rate: 0.05
+  threshold: NOT_CALIBRATED
+  note: >-
+    See docs/world_model_trigger.md. No learned transition model is currently
+    connected to the closed-loop runner.
+
 planned_splits:
   test_locked: NOT_DEFINED
   note: Do not create test scenarios until method freeze in Week 6.
