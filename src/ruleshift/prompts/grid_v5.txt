@@ -1,0 +1,36 @@
+You are controlling a grid-delivery agent. You receive ONE public observation made of a 224x224 RGB image and the public text/history below. Use the image and the text together as two views of the same public state. This is an RGB+text pilot: the image is part of the observation, not a decorative frame.
+
+Use ONLY the public information below. You are not told which rule is active, when any change occurred, hidden noise, or any action value.
+
+The image shows public geometry only: walls, colored marker tiles, the green key, the door, and the signpost. It never shows hidden rule identities, hidden noise, or evaluator values. Read the candidate rules below and use the image only to locate public cells.
+
+Your objective is to reach the red goal marker. If a green key and a closed door are present, collect the key before trying to open the door. Read the coordinates in the public text: LEFT/RIGHT change x, UP/DOWN change y. Move toward the red goal, detouring to the green key when the door is closed. The public history records every previous action and its outcome. If the LAST entry ends with "blocked", that action did not change your position; you MUST choose a different legal action now. If it ends with "move", the action succeeded; continue only if it still moves toward the goal. Never default to LEFT just because it is first in the action list.
+
+Starting prior: unless the public history below justifies a shift, treat every candidate rule as equally likely a priori. At step 0 ONLY, when the history says "no prior steps", use these decimal probabilities: base 0.17, remap_swap 0.17, remap_rotate 0.17, slippery 0.17, hazard_goal_swap 0.16, sign_composition 0.16 (their sum is 1.00). Once ANY history exists, those six numbers are obsolete: update the probabilities from the public history, and do not return the same uniform vector unchanged. Use integer weights that sum to 100 and divide by 100 if that helps keep the total exact. Do not invent hidden rules, hidden noise, or evaluator Q-values.
+
+Public history (public action/outcome history): {public_history}
+Visible public text: {public_text}
+Candidate rules: {candidate_rules}
+Available actions (full vocabulary): {available_actions}
+Action mask (legal actions right now): {action_mask}
+Public costs: {public_costs}
+Tool budget remaining: {tool_budget}
+Agent position (x, y): {position}
+Grid size (width, height): {grid_size}
+
+The sign text is illegible in the image. READ_SIGN returns one clause from one adjacent side of the signpost only; it does not reveal the whole sign.
+INSPECT(x, y) is range-limited to Manhattan distance 2 from your position and costs 2 tool units; READ_SIGN costs 1 tool unit; the total tool budget is 3. A tool call is one decision and never also moves the agent.
+
+Describe your decision as ONE compact JSON object on ONE line. Use exactly these keys and no others:
+{{"hypothesis_probabilities": {{"<candidate rule id>": <number in [0,1]>}}, "action": "<one action from the action mask>", "tool_target": <null or [x, y]>, "predicted_outcomes": <null or a short public object>, "confidence": <number in [0,1]>}}
+
+Rules:
+- One decision = one JSON object = one action only. A tool call never also moves the agent.
+- hypothesis_probabilities: copy EVERY candidate rule id listed above exactly once. Do not omit a candidate, even when its probability is near zero. Numbers lie in [0,1] and must sum to exactly 1.00 (an absolute error of at most 0.02 is accepted). A partial distribution is invalid.
+- Probability arithmetic: before returning, add the six decimals. If they total 1.05 or 1.15, the answer is INVALID. A common mistake is 0.60 + 0.20 + 0.10 + 0.05 + 0.05 + 0.05 = 1.05; do NOT emit that vector. To keep that shape, use 0.60 + 0.20 + 0.10 + 0.05 + 0.03 + 0.02 = 1.00 instead. Adjust the largest value down or a small value up until the total is 1.00, then re-add once.
+- action: choose exactly one member of the action mask. Prefer an action that reduces the Manhattan distance to the current target (the key if the door is closed, otherwise the goal). If the last history entry is "blocked", the same action is forbidden this step; choose another legal action. Do not always choose LEFT.
+- tool_target: required only for INSPECT, as a two-integer [x, y] inside the grid and within Manhattan distance 2 of your position; null for every other action.
+- predicted_outcomes: optional; omit it or set it to null if you have no public prediction.
+- confidence: a finite number in [0,1].
+- Derive every number from the public text, public history and image only. Do not use the active rule, hidden noise, or any evaluator Q-value.
+- Before returning, check that every listed candidate id appears once, the probabilities sum to about 1, and the action is in the mask. Return no prose and no code fence.

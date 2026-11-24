@@ -304,6 +304,7 @@ class GridEnv(Env):
             self._interact(rule, public, state)
         else:
             blocked_map = effective_map(public, state.door_open)
+            previous_position = state.position
             outcomes = movement_outcomes(
                 rule, state.position, action.kind, blocked_map
             )
@@ -311,6 +312,11 @@ class GridEnv(Env):
                 outcomes, draw_move(self._rng, state.steps)
             )
             reward += self._apply_cell_effect(rule, public, state)
+            # A wall, closed door, or slip outcome can leave the agent in the
+            # same cell. The public history must say ``blocked`` rather than
+            # ``move`` so a policy can avoid repeating a futile action.
+            if state.position == previous_position and state.last_outcome == "move":
+                state.last_outcome = "blocked"
 
         state.steps += 1
         self._maybe_shift()

@@ -44,8 +44,10 @@ def test_wall_blocks_movement():
                            {"red": (1, 3), "blue": (3, 3), "green": (3, 1)},
                            None, None, None)
     env = make_env(public)
-    env.step(GridAction("UP"))
+    _, _, _, _, info = env.step(GridAction("UP"))
     assert env.evaluator_state()["position"] == (1, 1)
+    assert info["last_outcome"] == "blocked"
+    assert "UP -> blocked" in env.public_view().public_history
 
 
 def test_soft_hazard_damages_and_recovers_without_termination():
