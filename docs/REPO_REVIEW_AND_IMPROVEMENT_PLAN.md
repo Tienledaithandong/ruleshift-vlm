@@ -6,6 +6,43 @@
 
 **Review type:** implementation, experiment-integrity, and reproducibility review. No runtime code was changed as part of this review; this file records findings and proposed work.
 
+---
+
+## Update 2026-11-24 (current branch `feat/ruleshift-grid`)
+
+This document is retained as the historical 2026-11-22 review of the original
+harness. Its findings were **not re-audited line-by-line** in the 2026-11-24
+pass, so the Family A/B items below remain open until explicitly verified. For
+the additive RuleShift-Grid work, the binding sources are the approved spec
+`docs/superpowers/specs/2026-11-23-ruleshift-grid-design.md`, the implementation
+plan `docs/superpowers/plans/2026-11-23-ruleshift-grid.md` (all boxes ticked),
+and PR #3.
+
+Current status on this branch:
+
+- 377 tests pass; `preflight.py` still prints NO-GO, as expected while
+  `configs/preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`.
+- RuleShift-Grid adds Tier A (stochastic grid environment, partial tools,
+  change-point belief, public A* reference, matched-budget baselines) and a
+  text-only Tier B VLM scaffold without modifying Family A/B code.
+- Post-review fixes on this branch: the generator's solvability gate now blocks
+  the signpost, the structural audit re-checks solvability independently of the
+  generator gate, and `information_gain_per_tool_call` now uses tool-only
+  information via the shared `effective_map` blocking helper, and the
+  change-point belief/expected-IG likelihoods use the same geometry. A 2026-11-24
+  reviewer pass found no Critical issues; its one Important finding (raw-map
+  belief likelihoods near blockers) is fixed in this branch, along with three
+  minor schema/ID issues. The remaining minor (`hazard_safety_threshold` is not
+  threaded from config) is deferred.
+- The required 100-map x 5-seed scientific run has **not** been executed with
+  the frozen VLM. All smoke/audit output remains a pipeline check, never a
+  finding. No local GPU job has been run.
+
+The "193 tests" and "204 tests" figures below are historical counts; README now
+reports 377.
+
+---
+
 ## Executive summary
 
 The repository has a useful CPU research harness, explicit public/privileged data separation, and broad tests. The local validation is green. It is **not yet ready for claims about a visual agent or the proposed value-aware probing method**: the model currently receives text rather than RGB or the full public history, and the selector documents a one-step limitation that prevents it from valuing information across repeated decisions in ordinary horizons. There are also evaluation-budget, action-validation, and route-cost mismatches that should be resolved before a real closed-loop comparison.
