@@ -154,6 +154,18 @@ def test_merge_rejects_duplicate_scenario_across_chunks(tmp_path):
         merge.merge_grid_chunks(tmp_path, baselines, n_boot=10)
 
 
+def test_merge_rejects_wrong_scenario_identity(tmp_path):
+    merge = _load("merge_grid_chunks")
+    ids = _scenario_ids()
+    _write_chunk(tmp_path, "c00", ids)
+    baselines = tmp_path / "baselines.jsonl"
+    _write_jsonl(baselines, _baseline_rows(ids))
+    with pytest.raises(merge.MergeError, match="do not match"):
+        merge.merge_grid_chunks(
+            tmp_path, baselines, expected_ids={"not-a-grid-scenario"}, n_boot=10
+        )
+
+
 def test_merge_rejects_baseline_with_missing_scenario(tmp_path):
     merge = _load("merge_grid_chunks")
     ids = _scenario_ids()
