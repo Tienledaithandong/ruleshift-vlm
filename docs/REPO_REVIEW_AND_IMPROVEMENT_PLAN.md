@@ -35,7 +35,9 @@ Current status on this branch:
   minor schema/ID issues. The remaining minor (`hazard_safety_threshold` is not
   threaded from config) is deferred. Tier B was subsequently wired to send the
   public image with a single merged RGB+text prompt (`grid_v2`) at a 2048-token
-  budget; a real Kaggle smoke remains a remote gate.
+  budget; a real Kaggle smoke is complete as a pipeline check: 1 map x 1 seed,
+  2 episodes, JSON-valid = 1.0000 and valid-action = 1.0000 over 69 decision
+  rows. It is not a scientific finding.
 - The required 100-map x 5-seed scientific run has **not** been executed with
   the frozen VLM. All smoke/audit output remains a pipeline check, never a
   finding. No local GPU job has been run.

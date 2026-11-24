@@ -2203,7 +2203,10 @@ real Kaggle smoke is a separate remote gate. First genuine-VLM smoke runs
 completed on Kaggle but reported 0% JSON-valid because the validator required
 all six rule ids and an exact probability sum; the cached model outputs were
 valid JSON with rounded/partial distributions, so the parser now accepts known
-rule-id subsets with non-zero mass.
+rule-id subsets with non-zero mass. A final reduced Kaggle smoke (1 map x 1 seed,
+2 episodes, commit e614eb5) reported JSON-valid = 1.0000 and valid-action =
+1.0000 over 69 public decision rows; it is still a pipeline check, not a
+scientific finding.
 
 ## Out of Scope (do not implement in this change)
 
