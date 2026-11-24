@@ -46,15 +46,51 @@ def test_public_decision_rows_never_leak_privileged_fields() -> None:
         assert row["chosen_action"] in row["available_actions"]
 
 
-def test_all_public_methods_emit_valid_actions() -> None:
+def test_all_public_methods_emit_actions_in_their_public_menu() -> None:
     scenarios = build_family_a_scenarios()
     scenario_id, config = scenarios[0]
     for method in METHODS:
         episode = run_episode(config, method, seed=5, scenario_id=scenario_id)
-        assert episode.invalid_actions == 0
         assert episode.total_return == pytest.approx(
             sum(row["reward"] for row in episode.public_rows)
         )
+        # The runner must execute only actions in the environment's menu: no
+        # cross-menu action may leak into a public decision row.
+        assert all(
+            row["chosen_action"] in row["available_actions"]
+            for row in episode.public_rows
+        )
+
+
+def test_cross_family_action_is_clamped_to_wait_and_counted_invalid() -> None:
+    config = build_family_a_scenarios()[0][1]
+    episode = run_episode(config, "random_probe", seed=5, scenario_id="clamp")
+    # random_probe proposes across families; those must not execute as written.
+    assert episode.invalid_actions > 0
+    assert all(row["chosen_action"] in row["available_actions"] for row in episode.public_rows)
+
+
+def test_episode_runs_to_the_step_budget() -> None:
+    config = build_family_a_scenarios()[0][1]
+    # never_probe always emits WAIT (one primitive step each). The old
+    # 12-decision cap stopped the episode at 12 steps, short of the 60-step
+    # budget. It must now run to the full step budget.
+    episode = run_episode(config, "never_probe", seed=1, scenario_id="steps")
+    assert episode.steps == config.max_env_steps
+
+
+def test_commit_travel_is_position_aware() -> None:
+    # Station is two steps off the start so a GO_TO_STATION move leaves the
+    # agent's cell; the committed travel cost must track that cell.
+    config = EnvConfig(probe_detour_steps=2, scenario_id="pos-aware")
+    env = RuleShiftEnv(config=config)
+    env.reset(seed=1)
+    start_travel = env.public_view().public_costs["commit_travel"]
+    # A non-terminating move puts the agent at a different cell. The commit
+    # cost must track that cell, not the start tile.
+    env.step("GO_TO_STATION")
+    moved_travel = env.public_view().public_costs["commit_travel"]
+    assert moved_travel != start_travel
 
 
 def test_no_shift_and_shift_scenarios_are_both_present() -> None:

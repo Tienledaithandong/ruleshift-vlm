@@ -37,10 +37,16 @@ def cost() -> PublicCostModel:
 
 def test_all_named_ablations_return_valid_macros() -> None:
     assert "M1" in ABLATION_NAMES
-    assert len(ABLATION_NAMES) == 6
+    assert "M1_multi_step" in ABLATION_NAMES
+    assert len(ABLATION_NAMES) == 7
     for name in ABLATION_NAMES:
         action = ablation_choose(name, prediction(), BELIEF, cost())
         assert action in MACRO_ACTIONS_FROZEN
+
+
+def test_multi_step_ablation_returns_valid_macro() -> None:
+    action = ablation_choose("M1_multi_step", prediction(), BELIEF, cost())
+    assert action in MACRO_ACTIONS_FROZEN
 
 
 def test_no_selector_ablation_uses_raw_vlm_choice() -> None:

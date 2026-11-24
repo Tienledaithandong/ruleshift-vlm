@@ -8,7 +8,9 @@ so the files appear with their original paths (src/, scripts/, configs/, ...).
 Runtime settings: GPU T4x2/P100, internet enabled.
 """
 
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys

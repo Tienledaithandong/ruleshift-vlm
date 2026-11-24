@@ -34,7 +34,7 @@ class ModelRequest:
     available_actions: tuple[str, ...]
     candidate_hash: str
     decoding_seed: int
-    max_new_tokens: int = 256
+    max_new_tokens: int = 1024   # raised from 768 to fit the full object
     prompt_version: str = PROMPT_VERSION
     candidate_rules: tuple[str, ...] = RULE_IDS
     revision: str | None = None
@@ -79,6 +79,39 @@ class ModelRequest:
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _flatten_rendered(rendered: Mapping[str, Any]) -> dict[str, Any]:
+    """Unwrap processor values that some transformers versions nest once more.
+
+    A single multimodal example can come back with ``input_ids`` holding another
+    ``BatchFeature`` instead of a tensor. Flattening keeps the generate call
+    identical across processor versions.
+    """
+
+    flat: dict[str, Any] = {}
+    for key, value in rendered.items():
+        if hasattr(value, "items") and not hasattr(value, "shape"):
+            flat.update(value)
+        else:
+            flat[key] = value
+    return flat
+
+
+def build_chat_messages(request: ModelRequest) -> list[dict]:
+    """Build one user message, with the image beside the text when present."""
+
+    if request.image is None:
+        return [{"role": "user", "content": request.prompt}]
+    return [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": request.prompt},
+                {"type": "image", "image": request.image},
+            ],
+        }
+    ]
 
 
 @dataclass(frozen=True)
@@ -288,6 +321,7 @@ class TransformersVLMBackend:
         )
         if not isinstance(rendered, Mapping):
             rendered = {"input_ids": rendered}
+        rendered = _flatten_rendered(rendered)
         inputs = {key: value.to(self.device) for key, value in rendered.items()}
         import torch
 
@@ -306,7 +340,10 @@ class TransformersVLMBackend:
         text = self._processor.batch_decode(generated, skip_special_tokens=True)[0]
         return ModelResponse(
             text=text,
-            input_tokens=int(inputs["input_ids"].shape[-1]),
+            # Prompt and completion are counted separately: reporting the total
+            # sequence length for both made every run look like it had used the
+            # same number of prompt and output tokens.
+            input_tokens=prompt_tokens,
             output_tokens=int(generated.shape[-1]),
             latency_ms=(time.perf_counter() - started) * 1000,
             model_id=self.model_id,

@@ -9,7 +9,7 @@ models:
     revision: 66285546d2b821cf421d4f5eb2576359d3770cd3
     device: cuda            # set to cpu only if no GPU is available in the runtime
     dtype: bfloat16
-    max_new_tokens: 512     # shared ceiling for direct and structured requests
+    max_new_tokens: 2048   # raised from 1024 for the merged RGB+text prompt
     call_cap_per_episode: 6
     role: small_anchor
   qwen3-vl-4b:
@@ -17,7 +17,7 @@ models:
     revision: null
     device: cpu
     dtype: bfloat16
-    max_new_tokens: 256
+    max_new_tokens: 1024
     call_cap_per_episode: 6
     role: newer_alternative
 

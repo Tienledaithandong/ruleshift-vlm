@@ -13,7 +13,11 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from ruleshift.evaluator.offline_audit import AuditMetrics, OfflineContext
+from ruleshift.evaluator.offline_audit import (
+    AuditMetrics,
+    OfflineContext,
+    _stratum_rows,
+)
 
 
 def write_real_artifacts(

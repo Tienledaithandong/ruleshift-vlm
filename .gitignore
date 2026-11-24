@@ -39,4 +39,6 @@ results/real/
 reports/real_pilot.md
 RuleShift_Agent_Integrated_Execution_Plan.md
 kaggle_outputs/
+kaggle_outputs_v2/
 kaggle_stage/
+.codegraph/

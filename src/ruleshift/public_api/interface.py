@@ -39,6 +39,7 @@ class PublicObservation:
     observation_id: str
     public_obs_hash: str
     public_history_hash: str
+    public_history: str
     public_text: str
     available_actions: tuple[str, ...]
     candidate_rules: tuple[CandidateRule, ...]

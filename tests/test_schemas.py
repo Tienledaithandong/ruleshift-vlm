@@ -50,6 +50,7 @@ def valid_public_observation() -> dict:
         "observation_id": "obs_0001",
         "public_obs_hash": "sha256:aaa",
         "public_history_hash": "sha256:bbb",
+        "public_history": "Step 1: PROBE_RED -> accept; Step 2: COMMIT_RED -> reject.",
         "public_text": "Gate ahead; one red card in inventory.",
         "available_actions": ["COMMIT_RED", "PROBE_RED", "WAIT"],
         "candidate_rules": [
@@ -88,6 +89,7 @@ def test_public_observation_dataclass_serializes_to_valid_payload() -> None:
         observation_id="obs_0002",
         public_obs_hash="sha256:ccc",
         public_history_hash="sha256:ddd",
+        public_history="Step 1: PROBE_RED -> accept.",
         public_text="Gate ahead.",
         available_actions=("COMMIT_RED", "PROBE_RED"),
         candidate_rules=(

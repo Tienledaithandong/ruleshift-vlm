@@ -67,6 +67,32 @@ class OfflineContext:
 
 
 @dataclass(frozen=True)
+class DecisionStratum:
+    """Probe, argmax and regret diagnostics restricted to one slice.
+
+    The aggregated pilot number hid which cells drove it: a single
+    over-probe rate mixes cells that should probe with cells that should not.
+    Strata keep the denominator (and therefore the count) visible.
+    """
+
+    key: str
+    n_contexts: int
+    n_probes: int
+    n_correct_argmax: int
+    #: Decisions whose chosen macro has an exact-solver label.
+    n_labelled: int
+    mean_decision_regret: float | None
+
+    @property
+    def probe_rate(self) -> float:
+        return self.n_probes / self.n_contexts if self.n_contexts else 0.0
+
+    @property
+    def correct_argmax_rate(self) -> float:
+        return self.n_correct_argmax / self.n_contexts if self.n_contexts else 0.0
+
+
+@dataclass(frozen=True)
 class AuditMetrics:
     n_contexts: int
     json_valid_rate: float
@@ -211,7 +237,7 @@ def run_offline_audit(
         raise ValueError("offline audit requires at least one decision context")
     records: list[dict] = []
     labels: list[dict] = []
-    flags: list[dict] = []
+    scored: list[dict] = []
     call_count = 0
 
     for context in contexts:
@@ -272,6 +298,9 @@ def run_offline_audit(
         over_probe = context.delta_probe < -1e-9 and chosen.startswith("PROBE_")
         under_probe = context.delta_probe > 1e-9 and not chosen.startswith("PROBE_")
         best_q = max(context.q_values.values())
+        argmax_actions = {
+            action for action, value in context.q_values.items() if value == best_q
+        }
         # An action with no exact label must be reported as uncovered, never
         # scored as if it were worth zero: that silently fabricated regret.
         chosen_q = context.q_values.get(chosen)
@@ -323,7 +352,15 @@ def run_offline_audit(
                 "belief": {f"{k[0]}:{k[1]}": v for k, v in context.belief.items()},
             }
         )
-        flags.append({"over_probe": over_probe, "under_probe": under_probe})
+        scored.append(
+            {
+                "probe": chosen.startswith("PROBE_"),
+                "delta_negative": context.delta_probe < 0,
+                "detour": int(observation.public_costs["probe_detour"]),
+                "correct_argmax": chosen in argmax_actions,
+                "regret": regret,
+            }
+        )
 
     n = len(records)
     covered_regrets = [
@@ -334,6 +371,17 @@ def run_offline_audit(
     covered = sum(label["label_covered"] for label in labels)
     model_calls = [record for record in records if not record["cache_hit"]]
     call_denominator = max(len(model_calls), 1)
+    strata = [_stratum("all", scored)]
+    strata.append(
+        _stratum("delta_probe>=0", [row for row in scored if not row["delta_negative"]])
+    )
+    strata.append(
+        _stratum("delta_probe<0", [row for row in scored if row["delta_negative"]])
+    )
+    for detour in sorted({row["detour"] for row in scored}):
+        strata.append(
+            _stratum(f"detour={detour}", [row for row in scored if row["detour"] == detour])
+        )
     metrics = AuditMetrics(
         n_contexts=len(records),
         json_valid_rate=sum(r["json_valid"] for r in records) / n,
@@ -361,6 +409,19 @@ def run_offline_audit(
         fallback_count=sum(r["fallback"] for r in records),
     )
     return records, metrics
+
+
+def _format_regret(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.3f}"
+
+
+def _stratum_rows(strata: tuple[DecisionStratum, ...]) -> str:
+    return "\n".join(
+        f"| {s.key} | {s.n_contexts} | {s.n_probes}/{s.n_contexts} | "
+        f"{s.probe_rate:.3f} | {s.correct_argmax_rate:.3f} | "
+        f"{_format_regret(s.mean_decision_regret)} |"
+        for s in strata
+    )
 
 
 def write_taxonomy_report(
@@ -432,6 +493,16 @@ Privileged labels: `{Path(evaluator_path).name}` (never joined into model input)
 | Decisions with an exact label (full macro menu) | {metrics.label_coverage_rate:.3f} |
 | Mean output tokens | {metrics.mean_output_tokens:.1f} |
 | Cache hit rate | {metrics.cache_hit_rate:.3f} |
+
+## Probe decisions by stratum
+
+Probe rate is `PROBE_*` choices over that stratum's contexts. In the
+`delta_probe<0` row it is the over-probe rate; in the `delta_probe>=0` row it
+is the complement of under-probing. Regret is averaged over covered decisions.
+
+| Stratum | n | Probes | Probe rate | Correct argmax | Mean regret |
+|---|---:|---:|---:|---:|---:|
+{_stratum_rows(metrics.strata)}
 
 ## Failure taxonomy measured by this harness
 

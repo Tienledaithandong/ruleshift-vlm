@@ -65,8 +65,12 @@ def main() -> None:
     print(f"SYNTHETIC DRY RUN ({args.design}/{args.method}): stub backend")
     print(f"contexts={metrics.n_contexts} calls={metrics.call_count} "
           f"json_valid={metrics.json_valid_rate:.3f} "
-          f"over_probe={metrics.over_probe_rate:.3f} "
-          f"under_probe={metrics.under_probe_rate:.3f}")
+          f"correct_argmax={metrics.correct_argmax_rate:.3f} "
+          f"mean_regret={metrics.mean_decision_regret:.3f}")
+    for stratum in metrics.strata:
+        print(f"  {stratum.key}: probe {stratum.n_probes}/{stratum.n_contexts} "
+              f"({stratum.probe_rate:.3f}) "
+              f"argmax={stratum.correct_argmax_rate:.3f}")
 
 
 if __name__ == "__main__":

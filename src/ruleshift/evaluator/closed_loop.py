@@ -12,7 +12,7 @@ import json
 import re
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, Sequence
 
 from ruleshift.agents.baselines import NeverProbePolicy, RandomProbePolicy
 from ruleshift.agents.cache import ResponseCache
@@ -251,6 +251,20 @@ def build_family_a_scenarios(config_path: Path | None = None) -> tuple[tuple[str
                         scenario_id=scenario_id,
                     )))
     return tuple(configs)
+
+
+def _clamp_action(action: str, available_actions: Sequence[str]) -> tuple[str, bool]:
+    """Clamp a predicted action to the environment's current public menu.
+
+    Returns ``(action, invalid)``. An action that is not in ``available_actions``
+    is replaced with ``WAIT`` and flagged invalid so the runner can count it as a
+    neutral, budget-neutral decision instead of letting a cross-menu action leak
+    into the environment's step loop.
+    """
+
+    if action in available_actions:
+        return action, False
+    return "WAIT", True
 
 
 def run_episode(

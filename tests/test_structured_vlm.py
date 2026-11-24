@@ -22,6 +22,7 @@ def observation() -> PublicObservation:
         observation_id="obs-1",
         public_obs_hash="sha256:image",
         public_history_hash="sha256:history",
+        public_history="Step 1: PROBE_RED -> reject.",
         public_text="step=5 gate=open last=reject",
         available_actions=("COMMIT_RED", "PROBE_RED", "WAIT"),
         candidate_rules=tuple(
@@ -29,6 +30,14 @@ def observation() -> PublicObservation:
         ),
         public_costs={"primitive_step": 0.05, "lockout": 8.0},
     )
+
+
+def test_templates_do_not_supply_copyable_example_values() -> None:
+    prompts_dir = Path(__file__).resolve().parents[1] / "src" / "ruleshift" / "prompts"
+    for name in ("direct_v1.txt", "outcomes_v1.txt"):
+        text = (prompts_dir / name).read_text(encoding="utf-8")
+        for literal in ("0.34", "0.33", "PROBE_RED", "COMMIT_RED"):
+            assert literal not in text, f"{name} leaks copyable example value {literal!r}"
 
 
 def test_outcomes_prompt_contains_only_public_fields() -> None:
