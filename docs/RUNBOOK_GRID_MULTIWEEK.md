@@ -60,6 +60,12 @@ Stage a literal map index (Kaggle cannot set MAP_INDEX in kernel metadata):
     cd kaggle_stage/grid_chunks/m000
     python -m kaggle kernels push -p . --accelerator NvidiaTeslaT4
 
+Push exactly one version and leave it alone. A repush while the first version is
+queued creates a second batch session; two queued versions fill the account
+limit and produce "Maximum batch GPU session count of 2 reached" or an
+apparently endless QUEUED state. If that happens, delete the kernel, wait for
+the slot to clear, and push one fresh version. Do not repush to "fix" a queue.
+
 The kernel asserts exactly 55 evaluator rows and 55 unique scenarios. After download:
 
     python -c "import json,pathlib; rows=[json.loads(x) for x in pathlib.Path('results/grid_chunks/grid_real_decisions.m000.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]; print(len(rows), sum(r.get('json_valid') is True for r in rows), sum(r.get('fallback') is True for r in rows))"

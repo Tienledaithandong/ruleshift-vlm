@@ -39,6 +39,24 @@ is a debugging log, not a scientific result.
 - The staging helper writes each chunk map index into the kernel script because
   Kaggle metadata cannot set `MAP_INDEX`.
 
+## Run 3: `grid_v5` (smoke-12, source commit `893b36f`)
+
+- 2 episodes, 69 public rows, 68 model calls, one cache hit.
+- All 69 rows were full-menu JSON-valid; zero parser fallbacks; mean output
+  tokens 100.
+- Chosen actions were `DOWN` 55 and `LEFT` 14; 69 moving steps. The first
+  episode still ran to the 60-step cap, but the policy no longer collapsed to a
+  single action after a wall hit. The behavioural gate passed.
+- Report: `kaggle_outputs/smoke12/reports/grid_real_pilot.smoke.md`. This is a
+  scaffold run, not a scientific result.
+
+## Chunk 0
+
+After the gate passed, the 55-episode dry chunk for map 0 was launched as
+`tiennamlee/ruleshift-grid-chunk-m000` (the title-derived slug, not the
+`...-000` id written by the first helper revision). It remains a dry chunk and
+cannot be promoted to a result.
+
 ## Measured cost
 
 The 119 cached responses from run 1 averaged 8.85 s per decision on a T4
