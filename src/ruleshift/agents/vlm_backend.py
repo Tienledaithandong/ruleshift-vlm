@@ -258,7 +258,11 @@ class TransformersVLMBackend:
                 tokenize=False,
                 add_generation_prompt=True,
             )
-            rendered = self._processor(text=text, images=image, return_tensors="pt")
+            # Qwen2.5-VL expects batched lists here; a bare string/image makes
+            # the processor return a nested BatchFeature without `.shape`.
+            rendered = self._processor(
+                text=[text], images=[image], padding=True, return_tensors="pt"
+            )
         if not isinstance(rendered, dict):
             rendered = {"input_ids": rendered}
         inputs = {key: value.to(self.device) for key, value in rendered.items()}
