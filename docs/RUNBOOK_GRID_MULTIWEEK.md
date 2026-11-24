@@ -12,8 +12,10 @@ human, and the gates below must pass in order.
   commit; do not edit that field from an automated agent.
 - Kaggle GPU quota checked before a weekly slice. The real smoke measured
   ~8.85 s per model decision on a T4; 55 episodes x up to 60 decisions is an
-  upper bound near 8.1 GPU-hours per chunk, not 2.2. The full 5,500-episode grid
-  is therefore ~800 GPU-hours (about 17 weeks at 27 h/week) before overhead.
+  upper bound near 8.1 GPU-hours per chunk, not 2.2. A ten-chunk weekly slice
+  is therefore ~81 GPU-hours, already about three times the ~27 h/week quota;
+  the full 5,500-episode grid is ~800 GPU-hours (about 17 weeks at 27 h/week)
+  before overhead.
   Treat throughput as a blocking feasibility issue; do not schedule the full
   grid until inference is materially faster or the design is resized.
 - Never commit results/, reports/, outputs/, or the Kaggle token.
