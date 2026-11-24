@@ -178,6 +178,16 @@ def test_grid_vlm_output_requires_target_only_for_inspect():
     assert validate_grid_vlm_output(payload) == []
 
 
+def test_grid_vlm_output_rejects_target_on_non_inspect_actions():
+    payload = {
+        "hypothesis_probabilities": _uniform_probabilities(),
+        "action": "UP",
+        "tool_target": [3, 4],
+    }
+    errors = validate_grid_vlm_output(payload)
+    assert any("only valid for INSPECT" in error for error in errors)
+
+
 def test_grid_vlm_output_rejects_unknown_top_level_key_and_bad_confidence():
     payload = {
         "hypothesis_probabilities": _uniform_probabilities(),

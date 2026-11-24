@@ -257,6 +257,7 @@ class _BasePolicy:
                     tuple(observation.agent_position),
                     public_map,
                     step,
+                    door_open=bool(getattr(previous, "door_open", False)),
                 )
         elif kind == "INTERACT":
             outcome = info.get("last_outcome")

@@ -31,6 +31,7 @@ from ruleshift.public_api.grid_rules import (
     PublicGridMap,
     RULE_BY_ID,
     cell_role,
+    effective_map,
     key_opens,
     movement_outcomes,
 )
@@ -170,17 +171,24 @@ class GridBelief:
         observed_position: Coord,
         public_map: PublicGridMap,
         step: int,
+        door_open: bool = False,
     ) -> None:
-        """Condition on a physical move's observed landing cell."""
+        """Condition on a physical move's observed landing cell.
+
+        Movement likelihoods must use the same geometry as the simulator: the
+        signpost and a closed door block movement, so a bump into either is a
+        high-likelihood outcome rather than an impossible one.
+        """
 
         if isinstance(action, GridAction):
             action = action.kind
+        movement_map = effective_map(public_map, door_open)
         cache: dict[str, dict[Coord, float]] = {}
 
         def likelihood(rule_id: str) -> float:
             if rule_id not in cache:
                 cache[rule_id] = movement_outcomes(
-                    RULE_BY_ID[rule_id], previous_position, action, public_map
+                    RULE_BY_ID[rule_id], previous_position, action, movement_map
                 )
             return cache[rule_id].get(tuple(observed_position), MOVE_EPS)
 

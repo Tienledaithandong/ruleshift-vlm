@@ -1,7 +1,13 @@
 import random
 
-from ruleshift.agents.grid_belief import GridBelief
-from ruleshift.public_api.grid_rules import BASE_RULE, PublicGridMap, movement_outcomes
+from ruleshift.agents.grid_belief import MOVE_EPS, GridBelief
+from ruleshift.public_api.grid_rules import (
+    BASE_RULE,
+    RULE_BY_ID,
+    PublicGridMap,
+    effective_map,
+    movement_outcomes,
+)
 
 MAP = PublicGridMap(7, 7, frozenset(), (3, 3),
                     {"red": (1, 1), "blue": (1, 5), "green": (5, 1)},
@@ -105,3 +111,57 @@ def test_multiple_updates_at_one_step_do_not_compound_hazard():
     for _ in range(4):
         belief.update_interact("nothing", step=0)  # uninformative observation
     assert abs(belief.shift_probability() - 0.3) < 1e-9
+
+
+def test_bump_into_signpost_or_closed_door_favours_the_blocking_rule():
+    """A blocked move must be likely under the rule that intended it."""
+
+    for field in ("signpost", "door"):
+        public = PublicGridMap(
+            5, 5, frozenset(), (1, 1),
+            {"red": (4, 4), "blue": (4, 0), "green": (0, 4)},
+            None,
+            (2, 1) if field == "door" else None,
+            (2, 1) if field == "signpost" else None,
+        )
+        belief = GridBelief(hypotheses=("base", "remap_swap"))
+        belief.update_move((1, 1), "RIGHT", (1, 1), public, step=0, door_open=False)
+        marginal = belief.marginal()
+        assert marginal["base"] > marginal["remap_swap"], field
+
+
+def test_update_move_honours_door_open_for_blocking_geometry():
+    public = PublicGridMap(
+        5, 5, frozenset({(0, 1)}), (1, 1),
+        {"red": (4, 4), "blue": (4, 0), "green": (0, 4)},
+        None, (2, 1), None,
+    )
+    belief = GridBelief(hypotheses=("base", "remap_swap"))
+    # With the door open, RIGHT reaches (2,1) under base but remapped RIGHT
+    # bumps into the wall at (0,1), so staying put favours remap_swap.
+    belief.update_move((1, 1), "RIGHT", (1, 1), public, step=0, door_open=True)
+    assert belief.marginal()["remap_swap"] > belief.marginal()["base"]
+
+
+def test_bump_likelihood_matches_effective_map_reference():
+    public = PublicGridMap(
+        5, 5, frozenset(), (1, 1),
+        {"red": (4, 4), "blue": (4, 0), "green": (0, 4)},
+        None, None, (2, 1),
+    )
+    movement_map = effective_map(public, door_open=False)
+    likelihoods = {
+        rule_id: max(
+            movement_outcomes(
+                RULE_BY_ID[rule_id], (1, 1), "RIGHT", movement_map
+            ).get((1, 1), 0.0),
+            MOVE_EPS,
+        )
+        for rule_id in ("base", "remap_swap")
+    }
+    belief = GridBelief(hypotheses=("base", "remap_swap"))
+    belief.update_move((1, 1), "RIGHT", (1, 1), public, step=0)
+
+    base_mass = belief.marginal()["base"]
+    expected = likelihoods["base"] / sum(likelihoods.values())
+    assert abs(base_mass - expected) < 1e-9

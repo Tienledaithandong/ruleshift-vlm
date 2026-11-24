@@ -39,6 +39,13 @@ def test_signpost_clause_is_not_in_public_text():
     assert all(clause not in view.public_text for clause in BASE_RULE.sign_clauses)
 
 
+def test_two_tools_at_one_step_have_distinct_observation_ids():
+    env = make_env()
+    first, _, _, _, _ = env.step(GridAction("READ_SIGN"))
+    second, _, _, _, _ = env.step(GridAction("READ_SIGN"))
+    assert first["observation_id"] != second["observation_id"]
+
+
 @pytest.mark.parametrize("mode", ["symbolic", "visual"])
 def test_observation_space_contains_obs_at_reset_and_after_step(mode):
     # make_env() resets the env, so the first _obs() is the reset payload.

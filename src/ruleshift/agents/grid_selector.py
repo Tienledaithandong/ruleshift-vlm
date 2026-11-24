@@ -229,7 +229,9 @@ class InfoGainSelector:
                     )
 
             def apply(branch: GridBelief, outcome: Any) -> None:
-                branch.update_move(position, kind, outcome, public_map, step)
+                branch.update_move(
+                    position, kind, outcome, public_map, step, door_open=door_open
+                )
 
         elif kind == "INSPECT":
             color = candidate.color

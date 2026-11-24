@@ -68,9 +68,9 @@ class PublicGridMap:
     walls: frozenset[Coord]
     start: Coord
     markers: Mapping[str, Coord]
-    key: Coord
-    door: Coord
-    signpost: Coord
+    key: Coord | None
+    door: Coord | None
+    signpost: Coord | None
 
     def to_payload(self) -> dict[str, Any]:
         """Serialize to a JSON-serializable, deterministic public dict.

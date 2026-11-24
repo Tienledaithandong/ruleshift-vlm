@@ -328,7 +328,9 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
         errors.append("action is not a valid grid action")
 
     tool_target = payload.get("tool_target")
-    if tool_target is not None and not _is_coord(tool_target):
+    if tool_target is not None and action != "INSPECT":
+        errors.append("tool_target is only valid for INSPECT")
+    elif tool_target is not None and not _is_coord(tool_target):
         errors.append("tool_target must be a two-integer pair")
     elif action == "INSPECT" and tool_target is None:
         errors.append("tool_target is required for INSPECT")

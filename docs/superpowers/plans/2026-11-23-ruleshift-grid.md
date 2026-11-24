@@ -2185,7 +2185,7 @@ git commit -m "feat: add remote-only grid pilot scaffold and Kaggle kernel"
 - [x] Confirm no local GPU job was run: no `nvidia-smi` or `transformers` import in local CI tests.
 
 **Verification record (2026-11-24, on branch `feat/ruleshift-grid`):**
-`python -m pytest` — 372 passed, exit 0. `run_grid_audit.py --maps 500` —
+`python -m pytest` — 377 passed, exit 0. `run_grid_audit.py --maps 500` —
 PASS with 0 independent solvability failures. `run_grid_smoke.py --quick
 --maps 5 --seeds 2` — exit 0 with the synthetic-not-a-finding header. The diff
 against `origin/main` contains no generated report, result, data, output,
@@ -2195,7 +2195,9 @@ expected. No local GPU job was run.
 Three post-review fixes are included in this branch: the generator's solvability
 gate now blocks the signpost, the structural audit re-checks solvability
 independently, and information gain per tool call now uses tool-only
-information through a shared `effective_map` blocking helper.
+information through a shared `effective_map` blocking helper. A follow-up
+review fix also makes the change-point belief and expected-IG move likelihoods
+use that same blocked geometry.
 
 ## Out of Scope (do not implement in this change)
 

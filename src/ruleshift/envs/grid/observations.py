@@ -231,7 +231,7 @@ def build_grid_observation(
         "last_outcome": last_outcome,
     }
     return GridPublicObservation(
-        observation_id=f"grid-obs-{state.steps}",
+        observation_id=f"grid-obs-{state.steps}-{len(history)}",
         public_obs_hash=digest(
             {"state": public_state, "public_map": public_map.to_payload()}
         ),
