@@ -100,6 +100,20 @@ def test_select_chunk_scenarios_uses_map_range():
     assert len(pilot.select_chunk_scenarios(scenarios, 95, 0)) == 5
 
 
+def test_one_map_chunk_has_exactly_55_scenarios():
+    pilot = _load_pilot_module()
+    from ruleshift.envs.grid.config import load_grid_config
+    from ruleshift.evaluator.grid_runner import build_grid_scenarios
+
+    config = load_grid_config(Path(__file__).resolve().parents[1] / "configs" / "grid_dev.yaml")
+    scenarios = build_grid_scenarios(100, 5, config)
+    assert len(scenarios) == 5500
+    chunk = pilot.select_chunk_scenarios(scenarios, 0, 1)
+    assert len(chunk) == 55
+    assert {scenario.map_seed for scenario in chunk} == {0}
+    assert {scenario.run_seed for scenario in chunk} == {0, 1, 2, 3, 4}
+
+
 def test_chunk_artifact_paths_are_stamped():
     pilot = _load_pilot_module()
     paths = pilot.chunk_artifact_paths(Path("out"), "c02")
