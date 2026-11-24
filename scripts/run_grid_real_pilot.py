@@ -323,8 +323,14 @@ def main(argv: list[str] | None = None) -> None:
             seed=scenario.run_seed, options={"scenario": scenario}
         )
         policy.name = "grid_vlm"
-        episodes.append(
-            run_grid_episode(env, policy, grid_config, scenario, observation, info)
+        episode = run_grid_episode(env, policy, grid_config, scenario, observation, info)
+        episodes.append(episode)
+        last = episode.public_rows[-1] if episode.public_rows else {}
+        print(
+            f"episode {len(episodes)}/{len(scenarios)} {scenario.scenario_id} "
+            f"steps={len(episode.public_rows)} json_valid={last.get('json_valid')} "
+            f"fallback={last.get('fallback')}",
+            flush=True,
         )
 
     # The scenario id is evaluation metadata, not a model input. It is added
