@@ -12,6 +12,7 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
+from ruleshift.envs.config import load_dev_grid
 from ruleshift.evaluator.exact_solver import (
     ExactSolver,
     family_a_microtask,
@@ -39,22 +40,31 @@ class PhaseCell:
     preferred: str
 
 
-def compute_phase_grid() -> tuple[PhaseCell, ...]:
+def compute_phase_grid(config_path: Path | None = None) -> tuple[PhaseCell, ...]:
     """Enumerate the dev grid with the exact solver."""
 
+    dev = load_dev_grid(config_path)
+    grid = dev["grid"]
+    environment = dev["environment"]
+    width, height = environment["grid_size"]
+    horizon = min(HORIZON, environment["max_env_steps"])
     cells: list[PhaseCell] = []
-    for detour in PROBE_DETOURS:
-        for noise in NOISE_LEVELS:
-            for lockout in LOCKOUT_LEVELS:
+    for detour in grid["probe_detour_steps"]:
+        if not 0 <= detour <= width + height - 2:
+            raise ValueError(f"station detour {detour} is outside the configured grid")
+        for noise in grid["feedback_noise_rate"]:
+            for lockout in environment["lockout_steps_options"]:
                 config = family_a_microtask(
                     probe_detour_steps=detour,
-                    commit_travel_steps=DEV_COMMIT_TRAVEL,
+                    commit_travel_steps=width - 1,
                     feedback_noise=noise,
                     lockout_steps=lockout,
+                    step_cost=environment["step_cost"],
+                    reward_success=environment["delivery_reward"],
                     actions=FAMILY_A_ACTIONS,
                 )
                 delta = ExactSolver(config, FAMILY_A_ACTIONS).delta_probe(
-                    BELIEF, HORIZON
+                    BELIEF, horizon
                 )
                 cells.append(
                     PhaseCell(
@@ -62,9 +72,9 @@ def compute_phase_grid() -> tuple[PhaseCell, ...]:
                         probe_steps=2 * detour + 1,
                         noise=noise,
                         lockout=lockout,
-                        horizon=HORIZON,
+                        horizon=horizon,
                         delta_probe=delta,
-                        preferred="probe" if delta > 0 else "task",
+                        preferred="probe" if delta > 0 else "task" if delta < 0 else "tie",
                     )
                 )
     return tuple(cells)
@@ -74,6 +84,8 @@ def write_report(rows: tuple[PhaseCell, ...], output_dir: Path) -> dict[str, Pat
     """Write CSV, Markdown and a heatmap PNG derived from the computed grid."""
 
     output_dir = Path(output_dir)
+    if not rows:
+        raise ValueError("phase diagram needs at least one development cell")
     output_dir.mkdir(parents=True, exist_ok=True)
     csv_path = output_dir / "phase_diagram.csv"
     md_path = output_dir / "phase_diagram.md"
@@ -110,7 +122,7 @@ def write_report(rows: tuple[PhaseCell, ...], output_dir: Path) -> dict[str, Pat
         "",
         "Exact microtask solver with the environment's real macro durations "
         f"(probe = 2·detour+1 steps), fixed belief `red 0.5 / blue 0.5`, "
-        f"horizon {HORIZON}, full public macro menu. No VLM, no locked test "
+        f"horizon {rows[0].horizon}, full public macro menu. No VLM, no locked test "
         "data, no claimed result.",
         "",
         "| probe detour | probe steps | noise | lockout | delta_probe | preferred |",
@@ -124,8 +136,9 @@ def write_report(rows: tuple[PhaseCell, ...], output_dir: Path) -> dict[str, Pat
         )
     lines += [
         "",
-        "Cells with `delta_probe > 0` favour probing; negative cells favour a "
-        "direct task action. Both regimes appear, satisfying the Week 3 gate.",
+        f"Probe-favourable cells: {sum(r.delta_probe > 0 for r in rows)}. "
+        f"Task-favourable cells: {sum(r.delta_probe < 0 for r in rows)}. "
+        f"Ties: {sum(r.delta_probe == 0 for r in rows)}.",
         "",
     ]
     md_path.write_text("\n".join(lines), encoding="utf-8")
@@ -135,7 +148,10 @@ def write_report(rows: tuple[PhaseCell, ...], output_dir: Path) -> dict[str, Pat
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    for lockout in LOCKOUT_LEVELS:
+    lockouts = sorted({row.lockout for row in rows})
+    detours = sorted({row.probe_detour_steps for row in rows})
+    noise_levels = sorted({row.noise for row in rows})
+    for lockout in lockouts:
         grid = [
             [
                 next(
@@ -145,22 +161,22 @@ def write_report(rows: tuple[PhaseCell, ...], output_dir: Path) -> dict[str, Pat
                     and r.noise == noise
                     and r.lockout == lockout
                 )
-                for noise in NOISE_LEVELS
+                for noise in noise_levels
             ]
-            for detour in PROBE_DETOURS
+            for detour in detours
         ]
         fig, axis = plt.subplots(figsize=(5, 4))
         image = axis.imshow(
-            [[1 if value > 0 else 0 for value in row] for row in grid],
+            [[1 if value > 0 else -1 if value < 0 else 0 for value in row] for row in grid],
             cmap="RdYlGn",
-            vmin=0,
+            vmin=-1,
             vmax=1,
             aspect="auto",
         )
-        axis.set_xticks(range(len(NOISE_LEVELS)), [f"{n:.2f}" for n in NOISE_LEVELS])
+        axis.set_xticks(range(len(noise_levels)), [f"{n:.2f}" for n in noise_levels])
         axis.set_yticks(
-            range(len(PROBE_DETOURS)),
-            [f"{d} ({2 * d + 1} steps)" for d in PROBE_DETOURS],
+            range(len(detours)),
+            [f"{d} ({2 * d + 1} steps)" for d in detours],
         )
         axis.set_xlabel("probe feedback noise")
         axis.set_ylabel("probe detour (probe steps)")
@@ -175,11 +191,11 @@ def write_report(rows: tuple[PhaseCell, ...], output_dir: Path) -> dict[str, Pat
                     va="center",
                     fontsize=8,
                 )
-        fig.colorbar(image, ax=axis, label="1 = probe preferred")
+        fig.colorbar(image, ax=axis, ticks=[-1, 0, 1], label="task / tie / probe")
         fig.tight_layout()
         fig.savefig(
             png_path
-            if lockout == LOCKOUT_LEVELS[-1]
+            if lockout == lockouts[-1]
             else output_dir / f"phase_diagram_lockout_{lockout}.png"
         )
         plt.close(fig)

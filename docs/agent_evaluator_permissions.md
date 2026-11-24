@@ -64,7 +64,7 @@ Exactly these top-level observation keys are allowed
 (`ruleshift.permissions.PUBLIC_OBSERVATION_FIELDS`):
 
 ```
-observation_id, public_obs_hash, public_history_hash, public_text,
+observation_id, public_obs_hash, public_history_hash, public_history, public_text,
 available_actions, candidate_rules, public_costs
 ```
 

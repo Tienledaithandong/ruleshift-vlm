@@ -1,4 +1,5 @@
-You are controlling a gate-delivery agent. This is a TEXT-ONLY diagnostic: RGB/image input is deferred to a later stage and is not used here.
+You control an agent performing repeated deliveries under a potentially changing rule.
+Choose the next macro that makes best use of the remaining steps and public costs.
 
 Use ONLY the public information below. You are not told which rule is active, when any change occurred, hidden noise, or any action value.
 
@@ -6,61 +7,12 @@ Starting prior: unless the public history below justifies a shift, treat every c
 
 Public history (public action/outcome history): {public_history}
 Visible public text: {public_text}
-Candidate rules (text only): {candidate_rules}
+Candidate rules: {candidate_rules}
 Available macro actions: {available_actions}
 Public costs: {public_costs}
 
-Describe your decision as one JSON object with the shape below. Every <...> is a
-placeholder, not a value: replace it with something you derived from THIS input.
+Return one JSON object containing only "selected_action". Replace the placeholder
+with exactly one available macro ID. Keep the response within the
+{max_new_tokens}-token generation limit.
 
-{{
-  "candidate_probabilities": {{"<rule id from the candidate list>": <number in [0,1]>}},
-  "action_predictions": [
-    {{
-      "action_id": "<macro id from the available list>",
-      "under_rules": [
-        {{
-          "rule_id": "<rule id from the candidate list>",
-          "possible_outcomes": [
-            {{"observation": "<one public outcome word>", "p": <number in [0,1]>}}
-          ]
-        }}
-      ],
-      "estimated_future_best_action": "<macro id from the available list>"
-    }}
-  ],
-  "selected_action": "<macro id from the available list>"
-}}
-
-Rules:
-- candidate_probabilities: exactly one entry per candidate rule id above; the
-  numbers lie in [0,1] and sum to 1. Start from the uniform prior unless the
-  public history justifies a shift.
-- action_predictions: at most two entries — selected_action and, when it was a
-  real alternative, the one action you compared against it. Never add a third
-  and never repeat an action.
-- under_rules: one entry per candidate rule id, each at most once. For each
-  rule, possible_outcomes lists only outcomes supported by the public text. If
-  that text describes uncertainty, include the plausible outcomes and derive
-  their probabilities from it. Probabilities lie in [0,1] and sum to 1.
-- observation: use only these public outcome words: accept, reject, success,
-  failure, none.
-- selected_action and estimated_future_best_action must be available macro ids.
-- Derive the numbers from the public text and public history only. Do not use
-  the active rule, hidden noise, or any evaluator Q-value. An answer that
-  repeats the same probabilities or the same action across different inputs, or
-  that ignores the uncertainty the public text describes, is wrong. Choose the
-  action whose expected control value best justifies its public cost.
-- Keep the JSON compact on one line and within the token budget.
-
-Decision procedure — apply it, and let it choose selected_action:
-- probe_detour is the extra travel a probe adds, commit_travel is what a
-  delivery trip costs, and delivery_reward is what a completed delivery pays.
-- A probe only pays when the travel it adds is small next to the travel and
-  reward it can save. When a probe costs a large share of the delivery it is
-  meant to protect, probing is a net loss even while the rules are uncertain.
-- If probing is not worth that cost, select the commit action for the most
-  likely candidate rule. Do not probe by default, and do not repeat the
-  action of a previous answer.
-
-Return ONLY the JSON object: no prose, no code fence.
+{{"selected_action":"<macro ID>"}}

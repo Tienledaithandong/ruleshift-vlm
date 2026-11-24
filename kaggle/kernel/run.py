@@ -16,6 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 PROJECT = Path("/kaggle/working/ruleshift-vlm")
 
 
@@ -24,66 +26,47 @@ def run(cmd):
     subprocess.run(cmd, check=True)
 
 
-matches = sorted(Path("/kaggle/input").rglob("run_real_pilot.py"))
-if not matches:
-    print("kaggle input tree:", [p.name for p in Path("/kaggle/input").iterdir()], flush=True)
-    raise SystemExit("source dataset not found under /kaggle/input")
-SOURCE = matches[0].parent.parent  # .../ruleshift-source
-print("source dataset:", SOURCE, flush=True)
+def main():
+    matches = [path for path in Path("/kaggle/input").rglob("scripts/run_real_pilot.py")
+               if (path.parents[1] / "configs/runtime.yaml").is_file()]
+    if len(matches) != 1:
+        raise SystemExit(f"expected one RuleShift source dataset, found {len(matches)}")
+    SOURCE = matches[0].parent.parent  # .../ruleshift-source
+    print("source dataset:", SOURCE, flush=True)
 
-if PROJECT.exists():
-    shutil.rmtree(PROJECT)
-shutil.copytree(SOURCE, PROJECT)
+    settings = yaml.safe_load((SOURCE / "configs/runtime.yaml").read_text(encoding="utf-8"))
+    if not settings["execution"]["allow_remote_run"]:
+        raise SystemExit("Remote pilot disabled in the source snapshot (configs/runtime.yaml)")
+    shutil.copytree(SOURCE, PROJECT)
 
-# The snapshot must be traceable to the commit it was staged from.
-marker = PROJECT / "SOURCE_COMMIT"
-if not marker.exists():
-    print("dataset root:", sorted(p.name for p in PROJECT.iterdir()), flush=True)
-    raise SystemExit("SOURCE_COMMIT marker missing: source dataset is not traceable")
-stamp = json.loads(marker.read_text(encoding="utf-8"))
-commit = str(stamp.get("commit", ""))
-print("source commit:", commit, stamp.get("short_commit"), flush=True)
-print("source subject:", stamp.get("subject"), flush=True)
-if not re.fullmatch(r"[0-9a-f]{40}", commit):
-    raise SystemExit(f"SOURCE_COMMIT does not hold a full commit id: {commit!r}")
-expected = os.environ.get("RULESHIFT_EXPECTED_COMMIT", "").strip()
-if expected and expected != commit:
-    raise SystemExit(
-        f"source commit mismatch: dataset has {commit}, expected {expected}"
+    os.chdir(PROJECT)
+    sys.path.insert(0, str(PROJECT / "src"))
+
+    run([sys.executable, "-m", "pip", "install", "-e", ".[dev,vlm]"])
+    # The dataset snapshot intentionally omits docs/ and research/, so the full
+    # pytest suite is not run here. The local repo CI already covers it.
+    run(["nvidia-smi"])
+    run(
+        [
+            sys.executable,
+            "scripts/run_real_pilot.py",
+            "--allow-download",
+            "--model-key", "qwen2.5-vl-3b",
+            "--contexts", "81",
+            "--device", "cuda",
+            "--out", "/kaggle/working/results/real",
+            "--report", "/kaggle/working/reports/real_pilot.md",
+        ]
     )
-print("expected commit check:", expected or "skipped (RULESHIFT_EXPECTED_COMMIT unset)", flush=True)
 
-os.chdir(PROJECT)
-sys.path.insert(0, str(PROJECT / "src"))
+    print("PILOT COMPLETE", flush=True)
+    for path in (
+        "/kaggle/working/reports/real_pilot.md",
+        "/kaggle/working/results/real/decisions.jsonl",
+        "/kaggle/working/results/real/evaluator_only.jsonl",
+    ):
+        print(path, Path(path).exists(), flush=True)
 
-# Allow the one-time checkpoint download inside this ephemeral kernel copy.
-runtime_config = PROJECT / "configs" / "models.yaml"
-runtime_text = runtime_config.read_text()
-runtime_text = runtime_text.replace("allow_download: false", "allow_download: true")
-runtime_text = runtime_text.replace("local_files_only: true", "local_files_only: false")
-runtime_config.write_text(runtime_text)
 
-run([sys.executable, "-m", "pip", "install", "-e", ".[dev]"])
-run([sys.executable, "-m", "pip", "install", "-q", "-U", "transformers"])
-# The dataset snapshot intentionally omits docs/ and research/, so the full
-# pytest suite is not run here. The local repo CI already covers it.
-run(["nvidia-smi"])
-run(
-    [
-        sys.executable,
-        "scripts/run_real_pilot.py",
-        "--model-key", "qwen2.5-vl-3b",
-        "--contexts", "81",
-        "--device", "cuda",
-        "--out", "/kaggle/working/results/real",
-        "--report", "/kaggle/working/reports/real_pilot.md",
-    ]
-)
-
-print("PILOT COMPLETE", flush=True)
-for path in (
-    "/kaggle/working/reports/real_pilot.md",
-    "/kaggle/working/results/real/decisions.jsonl",
-    "/kaggle/working/results/real/evaluator_only.jsonl",
-):
-    print(path, Path(path).exists(), flush=True)
+if __name__ == "__main__":
+    main()

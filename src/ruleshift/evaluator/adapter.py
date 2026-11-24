@@ -32,8 +32,8 @@ def trace_from_env(env: Any) -> EvaluatorTrace:
     state = env.evaluator_state()
     rule = str(state["mechanic_id"])
     return EvaluatorTrace(
-        scenario_id=str(state.get("scenario_id", "dev-default")),
-        true_rule_before="red",
+        scenario_id=str(state["scenario_id"]),
+        true_rule_before=str(state["initial_mechanic"]),
         true_rule_after=rule,
         shift_time=state["shift_time"],
     )

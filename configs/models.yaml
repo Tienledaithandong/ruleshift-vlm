@@ -1,10 +1,6 @@
-# Frozen-VLM candidates for the LATER experiment/evaluation run.
-# Nothing here is downloaded by the setup. `status` records only that the
-# checkpoint id and revision are pinned; no pilot has been run and preflight.py
-# still reports NO-GO until torch/transformers, a local checkpoint and a frozen
-# test configuration all exist.
+# Qwen2.5 is the pinned anchor used in the historical text-input Kaggle pilot.
 schema_version: 1
-status: PINNED_SETUP_ONLY
+status: PINNED_PILOT_ANCHOR
 default: qwen2.5-vl-3b
 
 models:

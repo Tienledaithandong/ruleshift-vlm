@@ -60,7 +60,7 @@ def test_selector_prefers_probe_when_check_is_worth_its_cost() -> None:
 
 def test_selector_stops_when_probe_cost_exceeds_decision_value() -> None:
     expensive = PublicCostModel(
-        step_cost=-0.05,
+        step_cost=-1.0,
         success_reward=10.0,
         probe_duration=8,
         commit_duration=1,
@@ -69,6 +69,15 @@ def test_selector_stops_when_probe_cost_exceeds_decision_value() -> None:
         learning_rate=1.0,
     )
     assert DivaStyleSelector().choose(prediction(), BELIEF, expensive) == "COMMIT_RED"
+
+
+def test_noisy_probe_uses_best_posterior_decision_only_once() -> None:
+    payload = prediction()
+    for row in payload["action_predictions"][0]["under_rules"]:
+        p = 0.8 if row["rule_id"] == "red" else 0.2
+        row["possible_outcomes"] = [{"observation": "accept", "p": p}, {"observation": "reject", "p": 1 - p}]
+    assert diva_decision_value(payload, BELIEF, costly())["PROBE_RED"] == pytest.approx(2.95)
+    assert DivaStyleSelector().choose(payload, BELIEF, costly()) == "PROBE_RED"
 
 
 def test_baseline_is_labelled_as_adapted() -> None:

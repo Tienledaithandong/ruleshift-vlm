@@ -53,7 +53,8 @@ class RuleShiftFilter:
             updated[(rule, False)] += probability * (1.0 - self.shift_hazard)
             share = probability * self.shift_hazard / len(targets)
             for target in targets:
-                updated[(target, True)] += share
+                key = (target, True)
+                updated[key] = updated.get(key, 0.0) + share
         return updated
 
     def advance(self, belief: Belief, primitive_steps: int = 1) -> Belief:
@@ -62,6 +63,8 @@ class RuleShiftFilter:
         if primitive_steps < 0:
             raise ValueError("primitive_steps must be non-negative")
         result = dict(belief)
+        if self.shift_hazard == 0.0:
+            return result
         for _ in range(primitive_steps):
             result = self._transition_once(result)
         return result
@@ -70,12 +73,16 @@ class RuleShiftFilter:
         """Return ``P(observation | rule, action)`` under the true model."""
 
         if action.startswith("COMMIT_"):
+            if observation not in {"accept", "reject"}:
+                return 0.0
             color = action.removeprefix("COMMIT_").lower()
             accepted = color == rule
             matched = observation == "accept"
             return 1.0 if matched == accepted else 0.0
 
         if action.startswith("PROBE_"):
+            if observation not in {"accept", "reject"}:
+                return 0.0
             color = action.removeprefix("PROBE_").lower()
             probability_accept = (
                 1.0 - self.feedback_noise if color == rule else self.feedback_noise
@@ -84,7 +91,7 @@ class RuleShiftFilter:
                 probability_accept if observation == "accept" else 1.0 - probability_accept
             )
 
-        return 1.0  # movement and wait outcomes carry no rule information
+        return float(observation == "none")
 
     def observe(self, belief: Belief, action: str, observation: str) -> Belief:
         """Bayes update on one observed action outcome."""

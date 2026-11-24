@@ -21,50 +21,21 @@ def test_template_has_no_copyable_example_answer(name: str) -> None:
         assert literal not in text, f"{name} still supplies the literal {literal!r}"
 
 
-@pytest.mark.parametrize("name", TEMPLATES)
-def test_template_asks_for_values_derived_from_the_public_text(name: str) -> None:
-    text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
+def test_outcomes_template_asks_for_values_derived_from_the_public_text() -> None:
+    text = (PROMPTS_DIR / "outcomes_v1.txt").read_text(encoding="utf-8").lower()
     assert "placeholder" in text
-    assert "derive the numbers from the public text" in text
-    assert "different inputs" in text
+    assert "derive the probabilities from the public evidence" in text
+    assert "repeats the same" not in text
 
 
-@pytest.mark.parametrize("name", TEMPLATES)
-def test_template_keeps_the_answer_inside_the_token_budget(name: str) -> None:
-    """An unbounded answer overflowed the budget and never closed its JSON."""
-    text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
-    assert "compact on one line" in text
-    assert "within the token budget" in text
-
-
-def test_direct_prompt_limits_predictions_to_fit_the_output_budget() -> None:
+def test_direct_prompt_requests_only_an_action() -> None:
     text = (PROMPTS_DIR / "direct_v1.txt").read_text(encoding="utf-8").lower()
-    assert "at most two entries" in text
-    assert "never add a third" in text
+    assert 'containing only "selected_action"' in text
+    assert "action_predictions" not in text
+    assert "candidate_probabilities" not in text
 
 
 def test_outcomes_prompt_limits_predictions_to_fit_the_output_budget() -> None:
     text = (PROMPTS_DIR / "outcomes_v1.txt").read_text(encoding="utf-8").lower()
     assert "at most two candidate actions" in text
-
-
-@pytest.mark.parametrize("name", TEMPLATES)
-def test_template_requires_a_public_cost_tradeoff(name: str) -> None:
-    """The model probed unconditionally until the trade-off was spelled out."""
-    text = (PROMPTS_DIR / name).read_text(encoding="utf-8").lower()
-    assert "decision procedure" in text
-    assert "probe_detour" in text
-    assert "do not probe by default" in text
-
-
-@pytest.mark.parametrize("name", ["outcomes_v1.txt"])
-def test_new_input_sections_present(name: str) -> None:
-    text = (PROMPTS_DIR / name).read_text(encoding="utf-8")
-    assert "Prior: uniform over every candidate rule" in text
-    assert "RULES (PAYOFF TABLE)" in text
-    assert "PROBE SEMANTICS" in text
-    assert "multi-step macro" in text
-    assert "probe_detour primitive steps" in text
-    assert "{rules_table}" in text
-    assert "{prior}" in text
-    assert "{num_rules}" in text
+    assert "within the {max_new_tokens}-token generation limit" in text

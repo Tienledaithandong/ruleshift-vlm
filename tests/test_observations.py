@@ -31,6 +31,13 @@ def test_same_frame_with_different_history_gives_different_cache_key_material() 
     assert probed.public_history_hash != passive.public_history_hash
 
 
+def test_public_observation_carries_rgb_but_payload_stays_public() -> None:
+    observation = make_observation([("wait", None, "none")])
+    assert observation.image is not None
+    assert observation.image.shape == (80, 80, 3)
+    assert "image" not in observation.to_payload()
+
+
 def test_public_text_does_not_reveal_active_rule() -> None:
     observation = make_observation([("test", "blue", "accept")])
     lowered = observation.public_text.lower()

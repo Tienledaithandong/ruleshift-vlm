@@ -31,6 +31,7 @@ class RenderState:
     gate_locked: bool
     deliveries: int
     steps: int
+    lockout_remaining: int = 0
 
 
 def digest(payload: Any) -> str:
@@ -68,8 +69,9 @@ def build_public_text(
     return (
         f"step={state.steps} pos=({state.position[0]},{state.position[1]}) "
         f"card=red,blue,green gate={'locked' if state.gate_locked else 'open'} "
-        f"deliveries={state.deliveries} station=({geometry.station[0]},"
-        f"{geometry.station[1]}) last={last_outcome or 'none'}"
+        f"lockout={state.lockout_remaining} deliveries={state.deliveries} "
+        f"station=({geometry.station[0]},{geometry.station[1]}) "
+        f"last={last_outcome or 'none'}"
     )
 
 
@@ -77,35 +79,30 @@ def build_public_observation(
     *,
     geometry: Geometry,
     state: RenderState,
-    history: Sequence[tuple[str, str | None, str]],
+    history: Sequence[str | tuple[str, str | None, str]],
     last_outcome: str | None,
     candidate_rules: tuple[str | CandidateRule, ...],
     public_costs: dict[str, float],
     available_actions: tuple[str, ...] = MACRO_ACTIONS,
+    frame: np.ndarray | None = None,
+    public_text: str | None = None,
 ) -> PublicObservation:
     """Assemble the canonical agent-visible observation object."""
 
-    state_payload = {
-        "position": list(state.position),
-        "gate_locked": state.gate_locked,
-        "deliveries": state.deliveries,
-        "steps": state.steps,
-    }
-
-    history_steps = []
-    for index, (action, detail, outcome) in enumerate(history, start=1):
-        token = f"{action.upper()}"
-        if detail:
-            token = f"{token} {detail.upper()}"
-        history_steps.append(f"Step {index}: {token} -> {outcome or 'none'}")
-    public_history = "; ".join(history_steps) if history_steps else "no prior steps"
-
+    rgb = render_rgb(geometry, state) if frame is None else frame
+    pixel_hash = hashlib.sha256(str(rgb.shape).encode("ascii") + rgb.tobytes())
+    recent_history = [
+        entry if isinstance(entry, str) else " ".join(value for value in entry if value)
+        for entry in history[-12:]
+    ]
     return PublicObservation(
         observation_id=f"obs-{state.steps}",
-        public_obs_hash=digest(state_payload),
+        public_obs_hash="sha256:" + pixel_hash.hexdigest()[:16],
         public_history_hash=digest(list(history)),
-        public_history=public_history,
-        public_text=build_public_text(geometry, state, last_outcome),
+        public_history="\n".join(recent_history),
+        public_text=public_text if public_text is not None else build_public_text(
+            geometry, state, last_outcome
+        ),
         available_actions=tuple(available_actions),
         candidate_rules=tuple(
             rule
@@ -114,4 +111,10 @@ def build_public_observation(
             for rule in candidate_rules
         ),
         public_costs=public_costs,
+        image=rgb,
     )
+
+
+def decision_event(action: str, outcome: str | None, reward: float, steps: int) -> str:
+    """Record only what the agent observed at a macro decision boundary."""
+    return f"{action} outcome={outcome or 'none'} reward={reward:.12g} steps={steps}"

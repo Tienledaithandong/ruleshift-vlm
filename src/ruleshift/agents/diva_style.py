@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from ruleshift.public_api.schemas import COMMIT_ACTIONS
 
-from .value_selector import Belief, PublicCostModel, _immediate_reward
+from .value_selector import Belief, PublicCostModel, _immediate_reward, predicted_outcome_masses
 
 
 def diva_decision_value(
@@ -28,50 +28,17 @@ def diva_decision_value(
         action = prediction.get("action_id")
         if not isinstance(action, str) or not action.startswith("PROBE_"):
             continue
-        expected_correct = 0.0
-        for rule_prediction in prediction.get("under_rules", []):
-            rule = rule_prediction.get("rule_id")
-            rule_probability = belief.get(rule, 0.0)
-            if rule_probability <= 0.0:
-                continue
-            for outcome in rule_prediction.get("possible_outcomes", []):
-                joint = rule_probability * float(outcome.get("p", 0.0))
-                if joint <= 0.0:
-                    continue
-                total = sum(
-                    belief.get(other.get("rule_id"), 0.0)
-                    * float(
-                        next(
-                            (
-                                item.get("p", 0.0)
-                                for item in other.get("possible_outcomes", [])
-                                if item.get("observation") == outcome.get("observation")
-                            ),
-                            0.0,
-                        )
-                    )
-                    for other in prediction.get("under_rules", [])
-                )
-                if total > 0.0:
-                    expected_correct += joint * (joint / total)
-
+        # E_o[max_m P(m|o)] = sum_o max_m P(m,o). This values the best
+        # decision after observing evidence, even with noisy predictions.
+        masses = predicted_outcome_masses(prediction, belief)
+        expected_correct = sum(max(by_rule.values()) for by_rule in masses.values())
+        following_commit = cost.commit_duration if cost.start_commit_duration is None else cost.start_commit_duration
+        if cost.probe_duration + following_commit > cost.remaining_horizon:
+            expected_correct = 0.0
         improvement = (expected_correct - baseline_correct) * cost.success_reward
-        probe_cost = cost.probe_duration * abs(cost.step_cost)
+        probe_cost = min(cost.probe_duration, cost.remaining_horizon) * abs(cost.step_cost)
         net_values[action] = improvement - probe_cost
     return net_values
-
-
-def _task_value(belief: Belief, cost: PublicCostModel) -> float:
-    best = 0.0
-    for action in COMMIT_ACTIONS:
-        color = action.removeprefix("COMMIT_").lower()
-        expected = sum(
-            probability
-            * _immediate_reward(action, "accept" if rule == color else "reject", cost)
-            for rule, probability in belief.items()
-        )
-        best = max(best, expected)
-    return best
 
 
 @dataclass(frozen=True)
@@ -83,11 +50,13 @@ class DivaStyleSelector:
     def choose(
         self, payload: dict, belief: Belief, cost: PublicCostModel
     ) -> str:
+        if not belief or not set(belief) <= {"red", "blue", "green"}:
+            raise ValueError("the adapted DIVA selector requires Family A card rules")
         values = diva_decision_value(payload, belief, cost)
         if not values:
             return payload.get("selected_action", "WAIT")
         best_probe = max(values, key=values.get)
-        if values[best_probe] > 0.0 and values[best_probe] > _task_value(belief, cost):
+        if values[best_probe] > 0.0:
             return best_probe
         return max(
             COMMIT_ACTIONS,

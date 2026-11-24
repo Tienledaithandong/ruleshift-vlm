@@ -19,6 +19,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
 import subprocess
@@ -32,6 +33,7 @@ INCLUDE = (
     "pyproject.toml",
     "README.md",
     "LICENSE",
+    "requirements.lock",
     "src",
     "scripts",
     "configs",
@@ -115,23 +117,11 @@ def build_stage() -> Path:
     (STAGE / "dataset-metadata.json").write_text(
         json.dumps(dataset_meta, indent=2) + "\n", encoding="utf-8"
     )
-    (STAGE / "SOURCE_COMMIT").write_text(
-        json.dumps(
-            {
-                "commit": commit,
-                "short_commit": commit[:7],
-                "subject": subject,
-                "repo_url": repo_url,
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
     return STAGE
 
 
 def main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()
     stage = build_stage()
     count = sum(1 for path in stage.rglob("*") if path.is_file())
     commit = json.loads((stage / "SOURCE_COMMIT").read_text(encoding="utf-8"))
@@ -139,7 +129,7 @@ def main() -> None:
     print(f"snapshot commit: {commit['commit']} ({commit['short_commit']})")
     print(
         "next: python -m kaggle datasets version -p "
-        f"{stage.relative_to(ROOT)} -r zip -m \"snapshot {commit['short_commit']}\""
+        f"{stage.relative_to(ROOT)} -r zip -m \"Update pilot source snapshot\""
     )
 
 

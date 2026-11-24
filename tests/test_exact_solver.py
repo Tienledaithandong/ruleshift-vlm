@@ -225,3 +225,54 @@ def test_family_a_microtask_durations_match_the_macro_executor() -> None:
     # The test outcome is observed after the outbound leg, not at the start.
     assert config.observation_steps["PROBE_BLUE"] == 3
     assert config.observation_steps["COMMIT_RED"] == 4
+
+
+def test_grid_reference_matches_env_after_rejected_commit_and_station_move() -> None:
+    from ruleshift.envs.config import EnvConfig
+    from ruleshift.envs.gate_lock import RuleShiftEnv
+    from ruleshift.evaluator.exact_solver import family_a_microtask
+
+    env = RuleShiftEnv(EnvConfig(
+        probe_detour_steps=2, lockout_steps=2, disable_shift=True, feedback_noise=0.0
+    ))
+    env.reset(seed=1)
+    config = family_a_microtask(
+        probe_detour_steps=2, commit_travel_steps=4, feedback_noise=0, lockout_steps=2
+    )
+    belief = {("red", False): 1.0}
+    pos, locked = env.geometry.start, 0
+    for action in ("COMMIT_BLUE", "COMMIT_RED", "GO_TO_STATION", "GO_TO_STATION",
+                   "PROBE_RED", "COMMIT_BLUE", "WAIT", "WAIT", "COMMIT_RED"):
+        (branch,) = macro_branches(config, belief, action, pos, locked)
+        before = env.evaluator_state()["steps_taken"]
+        _, reward, _, _, _ = env.step(action)
+        state = env.evaluator_state()
+        assert branch_reward(config, branch, branch.steps) == pytest.approx(reward)
+        assert branch.steps == state["steps_taken"] - before
+        assert branch.position == state["position"]
+        assert branch.lockout_remaining == state["lockout_remaining"]
+        assert env.public_view().public_text.endswith("last=" + branch.observation)
+        pos, locked = branch.position, branch.lockout_remaining
+
+
+def test_abstract_lockout_steps_advance_the_hidden_hazard() -> None:
+    config = MicrotaskConfig(shift_hazard=0.5, shift_targets=("blue",), lockout_steps=2)
+    (branch,) = macro_branches(config, {("red", False): 1.0}, "COMMIT_GREEN")
+    assert branch.steps == 3
+    assert branch.posterior[("red", False)] == pytest.approx(0.5**3)
+
+
+def test_grid_probe_models_shift_before_test_and_during_return_trip() -> None:
+    from ruleshift.evaluator.exact_solver import family_a_microtask
+
+    config = family_a_microtask(
+        probe_detour_steps=1, commit_travel_steps=4, feedback_noise=0,
+        lockout_steps=0, shift_hazard=0.5,
+    )
+    branches = macro_branches(config, {("red", False): 1.0}, "PROBE_RED")
+    accepted = next(branch for branch in branches if branch.observation == "accept")
+    # No shift on the two steps up to and including the test. A shift is
+    # still possible on the one-step return trip even after a clean accept.
+    assert accepted.probability == pytest.approx(0.25)
+    assert accepted.posterior[("red", False)] == pytest.approx(0.5)
+    assert accepted.posterior[("blue", True)] == pytest.approx(0.25)

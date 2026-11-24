@@ -58,6 +58,7 @@ MACRO_ACTIONS: tuple[str, ...] = FAMILY_A_ACTIONS + tuple(
 )
 
 COMMIT_ACTIONS_FROZEN: frozenset[str] = frozenset(COMMIT_ACTIONS)
+TASK_ACTIONS: frozenset[str] = frozenset((*COMMIT_ACTIONS, "GO_SAFE", "CROSS_BRIDGE"))
 PROBE_ACTIONS_FROZEN: frozenset[str] = frozenset(PROBE_ACTIONS)
 MACRO_ACTIONS_FROZEN: frozenset[str] = frozenset(MACRO_ACTIONS)
 FAMILY_A_ACTIONS_FROZEN: frozenset[str] = frozenset(FAMILY_A_ACTIONS)
@@ -75,6 +76,8 @@ PUBLIC_COST_KEYS: frozenset[str] = frozenset(
         "primitive_step",
         "probe_test",
         "probe_detour",
+        "station_travel",
+        "start_to_gate",
         "commit_travel",
         "lockout",
         "delivery_reward",
@@ -124,7 +127,7 @@ VLM_OUTPUT_SCHEMA: dict[str, Any] = {
                             "additionalProperties": False,
                             "required": sorted(RULE_PREDICTION_FIELDS),
                             "properties": {
-                                "rule_id": {"type": "string", "enum": list(RULE_IDS)},
+                                "rule_id": {"type": "string", "enum": sorted(KNOWN_RULE_IDS)},
                                 "possible_outcomes": {
                                     "type": "array",
                                     "minItems": 1,
@@ -161,27 +164,26 @@ VLM_OUTPUT_SCHEMA: dict[str, Any] = {
 
 
 def _is_number(value: Any) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(float(value))
-    )
+    try:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def _sums_to_one(values: list[float], tolerance: float = 1e-6) -> bool:
     return abs(sum(values) - 1.0) <= tolerance
 
 
-def validate_candidate_probabilities(mapping: Any) -> list[str]:
+def validate_candidate_probabilities(mapping: Any, rule_ids: tuple[str, ...] = RULE_IDS) -> list[str]:
     """Validate ``b_hat(m)`` over the closed rule set."""
 
     errors: list[str] = []
     if not isinstance(mapping, dict):
         return ["candidate_probabilities must be an object"]
 
-    if set(mapping) != set(RULE_IDS):
+    if set(mapping) != set(rule_ids):
         errors.append(
-            "candidate_probabilities keys must be exactly " + ", ".join(RULE_IDS)
+            "candidate_probabilities keys must be exactly " + ", ".join(rule_ids)
         )
 
     numeric: list[float] = []
@@ -199,7 +201,11 @@ def validate_candidate_probabilities(mapping: Any) -> list[str]:
     return errors
 
 
-def validate_action_predictions(predictions: Any) -> list[str]:
+def validate_action_predictions(
+    predictions: Any,
+    available_actions: tuple[str, ...] = MACRO_ACTIONS,
+    rule_ids: tuple[str, ...] = RULE_IDS,
+) -> list[str]:
     """Validate counterfactual outcome predictions for candidate macros."""
 
     errors: list[str] = []
@@ -217,7 +223,7 @@ def validate_action_predictions(predictions: Any) -> list[str]:
             errors.append(f"{prefix} keys must be exactly {sorted(PREDICTION_FIELDS)}")
 
         action_id = prediction.get("action_id")
-        if action_id not in MACRO_ACTIONS_FROZEN:
+        if action_id not in available_actions:
             errors.append(f"{prefix}.action_id is not a valid macro action")
         elif action_id in seen_actions:
             errors.append(f"{prefix}.action_id is duplicated")
@@ -225,7 +231,7 @@ def validate_action_predictions(predictions: Any) -> list[str]:
             seen_actions.add(action_id)
 
         future_action = prediction.get("estimated_future_best_action")
-        if future_action not in MACRO_ACTIONS_FROZEN:
+        if future_action not in available_actions:
             errors.append(f"{prefix}.estimated_future_best_action is not a valid macro")
 
         under_rules = prediction.get("under_rules")
@@ -246,7 +252,7 @@ def validate_action_predictions(predictions: Any) -> list[str]:
                 )
 
             rule_id = rule_prediction.get("rule_id")
-            if rule_id not in KNOWN_RULE_IDS:
+            if rule_id not in rule_ids:
                 errors.append(f"{rule_prefix}.rule_id is not a known rule id")
             elif rule_id in seen_rules:
                 errors.append(f"{rule_prefix}.rule_id is duplicated")
@@ -259,6 +265,7 @@ def validate_action_predictions(predictions: Any) -> list[str]:
                 continue
 
             probabilities: list[float] = []
+            seen_outcomes: set[str] = set()
             for outcome_index, outcome in enumerate(outcomes):
                 out_prefix = f"{rule_prefix}.possible_outcomes[{outcome_index}]"
                 if not isinstance(outcome, dict):
@@ -268,8 +275,13 @@ def validate_action_predictions(predictions: Any) -> list[str]:
                     errors.append(
                         f"{out_prefix} keys must be exactly {sorted(OUTCOME_FIELDS)}"
                     )
-                if outcome.get("observation") not in FEEDBACK_OUTCOMES:
+                word = outcome.get("observation")
+                if not isinstance(word, str) or word not in FEEDBACK_OUTCOMES:
                     errors.append(f"{out_prefix}.observation is not in vocabulary")
+                elif word in seen_outcomes:
+                    errors.append(f"{out_prefix}.observation is duplicated")
+                else:
+                    seen_outcomes.add(word)
                 probability = outcome.get("p")
                 if not _is_number(probability):
                     errors.append(f"{out_prefix}.p must be a finite number")
@@ -280,11 +292,17 @@ def validate_action_predictions(predictions: Any) -> list[str]:
 
             if len(probabilities) == len(outcomes) and not _sums_to_one(probabilities):
                 errors.append(f"{rule_prefix}.possible_outcomes p-values must sum to 1")
+        if seen_rules != set(rule_ids):
+            errors.append(f"{prefix}.under_rules must cover each candidate rule")
 
     return errors
 
 
-def validate_structured_vlm_output(payload: Any) -> list[str]:
+def validate_structured_vlm_output(
+    payload: Any,
+    available_actions: tuple[str, ...] = MACRO_ACTIONS,
+    rule_ids: tuple[str, ...] = RULE_IDS,
+) -> list[str]:
     """Validate the complete structured VLM output, including no-leak checks."""
 
     errors: list[str] = []
@@ -297,15 +315,15 @@ def validate_structured_vlm_output(payload: Any) -> list[str]:
     for location, name in find_forbidden_fields(payload):
         errors.append(f"privileged field {name!r} leaked at {location}")
 
-    if payload.get("selected_action") not in MACRO_ACTIONS_FROZEN:
+    if payload.get("selected_action") not in available_actions:
         errors.append("selected_action is not a valid macro action")
 
     if "candidate_probabilities" in payload:
         errors.extend(
-            validate_candidate_probabilities(payload["candidate_probabilities"])
+            validate_candidate_probabilities(payload["candidate_probabilities"], rule_ids)
         )
     if "action_predictions" in payload:
-        errors.extend(validate_action_predictions(payload["action_predictions"]))
+        errors.extend(validate_action_predictions(payload["action_predictions"], available_actions, rule_ids))
 
     return errors
 
@@ -317,7 +335,7 @@ def validate_public_observation(payload: Any) -> list[str]:
     if not isinstance(payload, dict):
         return ["public observation must be a JSON object"]
 
-    if set(payload) != set(PUBLIC_OBSERVATION_FIELDS):
+    if set(payload) not in (PUBLIC_OBSERVATION_FIELDS, PUBLIC_OBSERVATION_FIELDS - {"public_history"}):
         errors.append(
             "public observation keys must be exactly "
             f"{sorted(PUBLIC_OBSERVATION_FIELDS)}"
@@ -332,14 +350,16 @@ def validate_public_observation(payload: Any) -> list[str]:
 
     if not isinstance(payload.get("public_text"), str):
         errors.append("public_text must be a string")
+    if not isinstance(payload.get("public_history", ""), str):
+        errors.append("public_history must be a string")
 
     available = payload.get("available_actions")
     if not isinstance(available, list) or not available:
         errors.append("available_actions must be a non-empty array")
     else:
-        if any(action not in MACRO_ACTIONS_FROZEN for action in available):
+        if any(action not in MACRO_ACTIONS for action in available):
             errors.append("available_actions contains an unknown macro id")
-        if len(set(available)) != len(available):
+        elif len(set(available)) != len(available):
             errors.append("available_actions contains duplicates")
 
     rules = payload.get("candidate_rules")
@@ -350,7 +370,7 @@ def validate_public_observation(payload: Any) -> list[str]:
             if not isinstance(rule, dict) or set(rule) != {"rule_id", "description"}:
                 errors.append(f"candidate_rules[{index}] must have rule_id/description")
                 continue
-            if rule["rule_id"] not in KNOWN_RULE_IDS:
+            if not isinstance(rule["rule_id"], str) or rule["rule_id"] not in KNOWN_RULE_IDS:
                 errors.append(f"candidate_rules[{index}].rule_id is unknown")
             if not isinstance(rule["description"], str) or not rule["description"]:
                 errors.append(f"candidate_rules[{index}].description must be a string")

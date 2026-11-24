@@ -1,0 +1,51 @@
+# VALIDATION-ONLY configuration. Not the locked test set and not the dev grid.
+# Select methods and prompts here; do not freeze test scenarios from this file.
+schema_version: 1
+split: validation
+name: ruleshift-validation-v0.1
+description: >-
+  Small paired Family A grid with values disjoint from the development grid and
+  the held-out test fixture. It is for method/prompt selection before freeze.
+
+seeds:
+  master: 20261201
+  episode_offset: 2000
+  streams:
+    shift_trigger: SHIFT_TRIGGER
+    shift_target: SHIFT_TARGET
+    probe_feedback: PROBE_FEEDBACK
+    hazard_outcome: HAZARD_OUTCOME
+    observation_noise: OBSERVATION_NOISE
+
+environment:
+  family: gate_lock
+  grid_size: [5, 5]
+  max_env_steps: 60
+  seed_rule: red
+  candidate_rules: [red, blue, green]
+  delivery_reward: 10.0
+  step_cost: -0.05
+  lockout_steps_options: [1, 5]
+  probe_round_trip: true
+
+grid:
+  probe_detour_steps: [1, 3]
+  feedback_noise_rate: [0.02, 0.08]
+  task_action_diagnosticity: [low, high]
+  shift_condition: [no_shift, low_hazard]
+
+shift:
+  max_shifts_per_episode: 1
+  no_shift_is_valid_episode: true
+  hazard_over_full_horizon: true
+  narrow_time_window: false
+  expose_progress_feature: false
+  log_shift_time_to_agent: false
+
+model_call_cap:
+  per_episode: 6
+  note: Cap applies identically to every model-side method; scripted baselines make no model calls.
+
+planned_splits:
+  test_locked: NOT_DEFINED
+  note: This validation split is not a locked test and must not be reported as one.

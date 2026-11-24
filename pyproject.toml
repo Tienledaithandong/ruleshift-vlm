@@ -5,13 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ruleshift-vlm"
 version = "0.1.0"
-description = "Value-aware probing under hidden dynamics shifts: Week 1 contracts and static interfaces"
+description = "CPU-first research harness for value-aware probing under hidden dynamics shifts"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 license = "MIT"
 license-files = ["LICENSE"]
-# Week 1 core is standard-library only so the repo runs on any CPU Python 3.11.
-# Gymnasium/numpy/pydantic/Pillow are introduced in Week 2 when needed.
+# The public schema and agent interfaces are usable without simulator dependencies.
 dependencies = []
 
 [project.optional-dependencies]
@@ -34,6 +33,10 @@ dev = [
 # `dev` extra, because the CPU harness and its tests never need torch.
 # Install with: python -m pip install -e '.[vlm]'
 vlm = [
+    "gymnasium>=1.0,<2",
+    "numpy>=1.26",
+    "Pillow>=10",
+    "PyYAML>=6",
     "torch>=2.1",
     "transformers>=4.45",
     "accelerate>=0.30",
@@ -41,6 +44,12 @@ vlm = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+ruleshift = ["prompts/*.txt"]
+
+[tool.setuptools.data-files]
+"share/ruleshift/configs" = ["configs/dev.yaml", "configs/validation.yaml", "configs/preregistered_test.yaml"]
 
 [tool.pytest.ini_options]
 minversion = "8"

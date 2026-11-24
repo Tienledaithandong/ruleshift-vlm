@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +11,7 @@ from ruleshift.envs.config import EnvConfig
 from ruleshift.envs.gate_lock import RuleShiftEnv
 from ruleshift.evaluator.closed_loop import (
     DEFAULT_VLM_CALL_CAP,
+    ClosedLoopOutput,
     _StubMethod,
     _last_outcome,
     build_family_a_scenarios,
@@ -182,6 +184,19 @@ def test_default_call_cap_matches_the_preregistered_budget() -> None:
     assert episode.vlm_calls <= DEFAULT_VLM_CALL_CAP
 
 
+def test_malformed_calls_spend_budget_and_episode_runs_to_physical_horizon():
+    from ruleshift.agents.vlm_backend import StubVLMBackend
+
+    config = _config(max_env_steps=17)
+    episode = run_episode(config, "direct", 3, "invalid", StubVLMBackend(malformed_every=1),
+                          max_vlm_calls_per_episode=2)
+    assert episode.steps == 17 and episode.vlm_calls == 2
+    assert episode.call_cap_hits == 15
+    assert all(row["chosen_action"] == "WAIT" for row in episode.public_rows)
+    assert [row["json_valid"] for row in episode.public_rows[:2]] == [False, False]
+    assert episode.invalid_actions == 0
+
+
 def test_public_rows_are_unique_per_scenario_seed_decision() -> None:
     scenarios = build_family_a_scenarios()[:2]
     result = run_closed_loop(
@@ -209,6 +224,32 @@ def test_paired_summary_clusters_seeds_within_scenario() -> None:
     summary = result[("m1_stub", "never_probe")]
     assert summary.n_scenarios == len(scenarios)
     assert summary.n_episodes == len(scenarios) * 3
+
+
+def test_real_report_is_not_mislabeled_as_synthetic(tmp_path) -> None:
+    result = ClosedLoopOutput({}, {}, synthetic=False)
+    report = write_report(result, tmp_path / "real.md")
+    text = report.read_text(encoding="utf-8")
+    assert "REAL BACKEND" in text
+    assert "SYNTHETIC: the model-side methods" not in text
+
+
+def test_validation_split_is_paired_and_disjoint_from_dev() -> None:
+    root = Path(__file__).resolve().parents[1]
+    dev = build_family_a_scenarios(root / "configs" / "dev.yaml")
+    validation = build_family_a_scenarios(root / "configs" / "validation.yaml")
+    assert len(validation) == 16
+    assert {config.probe_detour_steps for _, config in validation}.isdisjoint(
+        {config.probe_detour_steps for _, config in dev}
+    )
+    assert {config.feedback_noise for _, config in validation}.isdisjoint(
+        {config.feedback_noise for _, config in dev}
+    )
+    assert {config.lockout_steps for _, config in validation}.isdisjoint(
+        {config.lockout_steps for _, config in dev}
+    )
+    assert any(config.disable_shift for _, config in validation)
+    assert any(not config.disable_shift for _, config in validation)
 
 
 def test_documented_method_ids_without_the_stub_suffix_are_accepted() -> None:

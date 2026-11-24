@@ -12,7 +12,6 @@ from ruleshift.evaluator.baselines import (
 )
 from ruleshift.evaluator.exact_solver import ExactSolver, MicrotaskConfig, freeze_belief
 from ruleshift.public_api.interface import CandidateRule, PublicObservation
-from ruleshift.public_api.schemas import MACRO_ACTIONS_FROZEN
 
 
 def public_observation() -> PublicObservation:
@@ -64,7 +63,7 @@ def test_random_probe_is_reproducible_from_public_hash() -> None:
         second.choose(observation) for _ in range(20)
     ]
     samples = {first.choose(observation) for _ in range(200)}
-    assert samples <= MACRO_ACTIONS_FROZEN
+    assert samples <= set(observation.available_actions)
     assert any(action.startswith("PROBE_") for action in samples)
     assert any(action.startswith("COMMIT_") for action in samples)
 

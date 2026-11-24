@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from ruleshift.agents.cache import ResponseCache
@@ -14,7 +16,13 @@ from ruleshift.evaluator.diagnostics import (
 from ruleshift.evaluator.offline_audit import build_offline_contexts
 from ruleshift.public_api.schemas import MACRO_ACTIONS_FROZEN
 
-CONTEXTS = build_offline_contexts()[:8]
+ALL_CONTEXTS = build_offline_contexts()
+CONTEXTS = ALL_CONTEXTS[:8]
+_ALL_RULES = {
+    rule.rule_id: rule
+    for context in ALL_CONTEXTS
+    for rule in context.public_observation.candidate_rules
+}
 
 
 @pytest.mark.parametrize("intervention", INTERVENTIONS)
@@ -88,11 +96,7 @@ class _FixedBackend:
 
 
 def _tie_breaking_payload() -> dict:
-    """COMMIT_BLUE wins on a tie; COMMIT_RED wins once red is certain.
-
-    Outcomes are listed blue-first so a flat marginal belief ties and picks the
-    first maximal estimate, while the oracle (red = 1.0) flips the choice.
-    """
+    """A confident blue model prior switches after the lottery excludes blue."""
 
     def under_rules(accepted_rule: str) -> list[dict]:
         return [
@@ -109,7 +113,7 @@ def _tie_breaking_payload() -> dict:
         ]
 
     return {
-        "candidate_probabilities": {"red": 0.5, "blue": 0.5, "green": 0.0},
+        "candidate_probabilities": {"red": 0.0, "blue": 1.0, "green": 0.0},
         "action_predictions": [
             {
                 "action_id": "COMMIT_BLUE",
@@ -117,22 +121,39 @@ def _tie_breaking_payload() -> dict:
                 "estimated_future_best_action": "COMMIT_BLUE",
             },
             {
-                "action_id": "COMMIT_RED",
+                "action_id": "PROBE_RED",
                 "under_rules": under_rules("red"),
                 "estimated_future_best_action": "COMMIT_RED",
             },
         ],
-        "selected_action": "COMMIT_RED",
+        "selected_action": "COMMIT_BLUE",
     }
 
 
 def test_oracle_belief_intervention_changes_the_decision() -> None:
-    contexts = CONTEXTS[:2]
+    # This test isolates the belief intervention: the test-only public menu
+    # retains the model's confident blue rule so that a wrong-color commit is
+    # available. Production contexts expose only the two rules in the lottery.
+    contexts = tuple(
+        replace(
+            c,
+            public_observation=replace(
+                c.public_observation,
+                candidate_rules=tuple(
+                    _ALL_RULES[rule] for rule in ("red", "blue", "green")
+                ),
+            ),
+        )
+        for c in ALL_CONTEXTS
+        if ("blue", False) not in c.belief
+        and c.public_observation.public_costs["probe_detour"] == 0
+    )
+    assert contexts
     backend = _FixedBackend(_tie_breaking_payload())
     baseline = run_diagnostic(contexts, backend, ResponseCache(None), "baseline")
     oracle = run_diagnostic(contexts, backend, ResponseCache(None), "oracle_belief")
     assert {d["chosen_action"] for d in baseline.decisions} == {"COMMIT_BLUE"}
-    assert {d["chosen_action"] for d in oracle.decisions} == {"COMMIT_RED"}
+    assert {d["chosen_action"] for d in oracle.decisions} == {"PROBE_RED"}
 
 
 def test_oracle_outcomes_intervention_rewrites_predictions() -> None:
@@ -141,7 +162,7 @@ def test_oracle_outcomes_intervention_rewrites_predictions() -> None:
     payload = _tie_breaking_payload()
     rewritten = _true_outcomes(payload)
     for prediction in rewritten["action_predictions"]:
-        color = prediction["action_id"].removeprefix("COMMIT_").lower()
+        color = prediction["action_id"].split("_", 1)[1].lower()
         for rule_prediction in prediction["under_rules"]:
             assert rule_prediction["possible_outcomes"] == [
                 {
