@@ -165,10 +165,22 @@ def test_grid_vlm_output_rejects_bad_probabilities():
         "action": "UP",
     }
     errors = validate_grid_vlm_output(payload)
-    assert any("sum" in error for error in errors)
+    assert any("positive" in error for error in errors)
 
+    # The frozen VLM often returns a subset of the menu and rounded sums;
+    # both are accepted as long as the ids are known and some mass is positive.
     payload["hypothesis_probabilities"] = {"base": 1.0}
-    assert validate_grid_vlm_output(payload)
+    assert validate_grid_vlm_output(payload) == []
+    payload["hypothesis_probabilities"] = {rule: 0.6 if rule == "base" else 0.09 for rule in GRID_RULE_IDS}
+    assert validate_grid_vlm_output(payload) == []
+
+
+def test_grid_vlm_output_rejects_unknown_hypothesis_id():
+    payload = {
+        "hypothesis_probabilities": {"not_a_rule": 1.0},
+        "action": "UP",
+    }
+    assert any("unknown" in error for error in validate_grid_vlm_output(payload))
 
 
 def test_grid_vlm_output_requires_target_only_for_inspect():

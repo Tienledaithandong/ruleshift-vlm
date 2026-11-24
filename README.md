@@ -60,7 +60,7 @@ project_0/
 │   ├── evaluator/                 # privileged labels and references, including grid_* evaluators
 │   ├── agents/                    # public-only policies, grid_* baselines/selector/VLM scaffold
 │   └── prompts/                   # direct_v1.txt, outcomes_v1.txt, grid_v1.txt
-└── tests/                         # 384 tests, all passing
+└── tests/                         # 385 tests, all passing
 ```
 
 ## Verify the setup
