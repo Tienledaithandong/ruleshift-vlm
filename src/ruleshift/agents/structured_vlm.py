@@ -71,11 +71,15 @@ def build_prediction_request(
         )
     else:
         prompt = render_outcomes_prompt(observation, budget)
+    input_mode = str(getattr(backend, "input_mode", "text"))
+    image = observation.image if input_mode == "rgb" else None
     return ModelRequest(
         model_id=backend.model_id,  # type: ignore[attr-defined]
         prompt=prompt,
         image_hash=observation.public_obs_hash,
         history_hash=observation.public_history_hash,
+        image=image,
+        input_mode=input_mode,
         available_actions=tuple(observation.available_actions),
         candidate_hash=candidate_hash,
         decoding_seed=decoding_seed,

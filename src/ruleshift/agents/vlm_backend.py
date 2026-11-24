@@ -13,8 +13,9 @@ import hashlib
 import json
 import random
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from ruleshift.public_api.schemas import HAZARD_REGIME_IDS, RULE_IDS, TASK_ACTIONS, validate_structured_vlm_output
 
@@ -44,6 +45,14 @@ class ModelRequest:
     #: "text" means the backend never receives the RGB frame; only the prompt
     #: and decoding metadata identify the request. "rgb" includes the pixels.
     input_mode: str = "text"
+    #: Local RGB frame (H x W x 3 uint8) for P0. It is not serialized into the
+    #: public cache; ``image_hash`` is the stable identity. ``compare=False``
+    #: keeps dataclass equality from touching a NumPy array.
+    image: Any | None = field(default=None, compare=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if self.input_mode not in ("text", "rgb"):
+            raise ValueError(f"unsupported input_mode: {self.input_mode}")
 
     def fingerprint(self) -> str:
         """Hash every public factor that can change the correct response."""
@@ -199,13 +208,17 @@ class TransformersVLMBackend:
         local_files_only: bool = True,
         cache_dir: str | Path | None = None,
         max_new_tokens: int = 256,
+        input_mode: str = "text",
     ) -> None:
+        if input_mode not in ("text", "rgb"):
+            raise ValueError(f"unsupported input_mode: {input_mode}")
         self.model_id = model_id
         self.device = device
         self.revision = revision
         self.dtype = dtype
         self.local_files_only = local_files_only
         self.cache_dir = cache_dir
+        self.input_mode = input_mode
         if max_new_tokens < 1:
             raise ValueError("max_new_tokens must be positive")
         self.max_new_tokens = max_new_tokens
@@ -253,7 +266,19 @@ class TransformersVLMBackend:
         import time
 
         started = time.perf_counter()
-        messages = [{"role": "user", "content": [{"type": "text", "text": request.prompt}]}]
+        if request.input_mode != self.input_mode:
+            raise ValueError(
+                f"request input mode {request.input_mode!r} does not match backend "
+                f"mode {self.input_mode!r}"
+            )
+        content: list[dict[str, Any]] = [{"type": "text", "text": request.prompt}]
+        if self.input_mode == "rgb":
+            if request.image is None:
+                raise ValueError("RGB input mode requires request.image")
+            from PIL import Image
+
+            content.append({"type": "image", "image": Image.fromarray(request.image)})
+        messages = [{"role": "user", "content": content}]
         rendered = self._processor.apply_chat_template(
             messages,
             tokenize=True,

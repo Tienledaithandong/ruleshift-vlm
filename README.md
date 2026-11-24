@@ -60,8 +60,11 @@ git-ignored `kaggle_outputs/` directory in the original workspace.
 
 ## Current scope
 
-The model path consumes public text. P0 requires passing the actual public RGB
-frame through the processor and verifying pixel-dependent requests. The
+The default model path still consumes public text. The P0 plumbing now attaches
+the rendered public RGB frame to the observation and forwards it to the
+processor when `TransformersVLMBackend(input_mode="rgb")` is selected; a
+pixel-dependence test covers request identity and forwarding. A real
+pixel-dependent VLM run has not been executed, so P0 remains unvalidated. The
 primary endpoint is paired closed-loop return after real validation and a test
 freeze. Prompt changes, the P0 path and agent comparisons belong on development
 or validation inputs. The locked configuration remains `DRAFT_NOT_FROZEN`.

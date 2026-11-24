@@ -111,6 +111,7 @@ def build_public_observation(
             for rule in candidate_rules
         ),
         public_costs=public_costs,
+        image=rgb,
     )
 
 

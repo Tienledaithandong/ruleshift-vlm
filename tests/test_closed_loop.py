@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +11,7 @@ from ruleshift.envs.config import EnvConfig
 from ruleshift.envs.gate_lock import RuleShiftEnv
 from ruleshift.evaluator.closed_loop import (
     DEFAULT_VLM_CALL_CAP,
+    ClosedLoopOutput,
     _StubMethod,
     _last_outcome,
     build_family_a_scenarios,
@@ -186,6 +188,32 @@ def test_paired_summary_clusters_seeds_within_scenario() -> None:
     summary = result[("m1_stub", "never_probe")]
     assert summary.n_scenarios == len(scenarios)
     assert summary.n_episodes == len(scenarios) * 3
+
+
+def test_real_report_is_not_mislabeled_as_synthetic(tmp_path) -> None:
+    result = ClosedLoopOutput({}, {}, synthetic=False)
+    report = write_report(result, tmp_path / "real.md")
+    text = report.read_text(encoding="utf-8")
+    assert "REAL BACKEND" in text
+    assert "SYNTHETIC: the model-side methods" not in text
+
+
+def test_validation_split_is_paired_and_disjoint_from_dev() -> None:
+    root = Path(__file__).resolve().parents[1]
+    dev = build_family_a_scenarios(root / "configs" / "dev.yaml")
+    validation = build_family_a_scenarios(root / "configs" / "validation.yaml")
+    assert len(validation) == 16
+    assert {config.probe_detour_steps for _, config in validation}.isdisjoint(
+        {config.probe_detour_steps for _, config in dev}
+    )
+    assert {config.feedback_noise for _, config in validation}.isdisjoint(
+        {config.feedback_noise for _, config in dev}
+    )
+    assert {config.lockout_steps for _, config in validation}.isdisjoint(
+        {config.lockout_steps for _, config in dev}
+    )
+    assert any(config.disable_shift for _, config in validation)
+    assert any(not config.disable_shift for _, config in validation)
 
 
 def test_documented_method_ids_without_the_stub_suffix_are_accepted() -> None:

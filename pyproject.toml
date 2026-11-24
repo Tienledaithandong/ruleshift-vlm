@@ -49,7 +49,7 @@ where = ["src"]
 ruleshift = ["prompts/*.txt"]
 
 [tool.setuptools.data-files]
-"share/ruleshift/configs" = ["configs/dev.yaml", "configs/preregistered_test.yaml"]
+"share/ruleshift/configs" = ["configs/dev.yaml", "configs/validation.yaml", "configs/preregistered_test.yaml"]
 
 [tool.pytest.ini_options]
 minversion = "8"

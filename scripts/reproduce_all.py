@@ -47,6 +47,12 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # A synthetic reproduction is a cold run: do not silently turn the
+    # published call count into a cache-hit count on a second invocation.
+    for cache_name in (ROOT / "data" / "stub_cache.jsonl",
+                       ROOT / "results" / "history" / "stub_cache.jsonl"):
+        cache_name.unlink(missing_ok=True)
+
     for command in COMMANDS:
         print(f"==> {' '.join(command)}", flush=True)
         completed = subprocess.run(

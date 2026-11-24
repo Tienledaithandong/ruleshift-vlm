@@ -44,6 +44,10 @@ class PublicObservation:
     candidate_rules: tuple[CandidateRule, ...]
     public_costs: Mapping[str, float] = field(default_factory=dict)
     public_history: str = ""
+    #: Local RGB frame for P0 only. It is deliberately excluded from the
+    #: serialized public payload and from structural comparison; callers that
+    #: need it must opt in explicitly through the backend input mode.
+    image: Any | None = field(default=None, compare=False, repr=False)
 
     def to_payload(self) -> dict[str, Any]:
         """Serialize to the canonical agent-visible payload shape."""

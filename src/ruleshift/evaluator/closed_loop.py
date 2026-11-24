@@ -222,8 +222,8 @@ def build_family_a_scenarios(config_path: Path | None = None) -> tuple[tuple[str
     """Expand the configured development grid into paired Family A scenarios."""
 
     dev = load_dev_grid(config_path)
-    if dev["split"] != "dev" or dev["environment"]["family"] != "gate_lock":
-        raise ValueError("the development runner requires a Family A dev configuration")
+    if dev["split"] not in ("dev", "validation") or dev["environment"]["family"] != "gate_lock":
+        raise ValueError("the runner requires a Family A dev or validation configuration")
     environment = dev["environment"]
     grid = dev["grid"]
     configs = []
@@ -488,20 +488,31 @@ def write_episode_files(result: ClosedLoopOutput, output_dir: Path) -> tuple[Pat
 
 
 def write_report(result: ClosedLoopOutput, path: Path) -> Path:
-    """Write the Week 7 report; all numbers here are synthetic."""
+    """Write the Week 7 report, synthetic or real, with explicit provenance."""
 
-    if not result.synthetic:
-        raise ValueError("this report writer is for synthetic closed-loop checks")
+    if result.synthetic:
+        title = "# Week 7 — Family A closed loop (SYNTHETIC)"
+        disclaimer = (
+            "**SYNTHETIC: the model-side methods use a deterministic stub. No VLM "
+            "was run.** This validates the loop, the cost accounting and the "
+            "separation of public/evaluator traces — not model behaviour."
+        )
+    else:
+        title = "# Week 7 — Family A closed loop (REAL BACKEND)"
+        disclaimer = (
+            "**REAL BACKEND: a frozen model produced the model-side decisions.** "
+            "This is a development-grid run unless it was separately frozen; "
+            "do not treat it as a held-out or locked evaluation."
+        )
     lines = [
-        "# Week 7 — Family A closed loop (SYNTHETIC)",
+        title,
         "",
-        "**SYNTHETIC: the model-side methods use a deterministic stub. No VLM "
-        "was run.** This validates the loop, the cost accounting and the "
-        "separation of public/evaluator traces — not model behaviour.",
+        disclaimer,
         "",
         "All methods use the same public macro menu, the same macro executor "
         "and the same primitive-step budget. Costs are charged once in the "
-        "shared reward stream.",
+        "shared reward stream. The 6-call cap and ``WAIT`` fallback apply to "
+        "model-side methods; scripted baselines make no model calls.",
         "",
         "| Comparison | Scenarios | Mean paired difference | 95% CI |",
         "|---|---:|---:|---|",

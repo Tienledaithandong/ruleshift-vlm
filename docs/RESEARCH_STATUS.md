@@ -9,7 +9,7 @@ numbers here denote acceptance criteria. Later-week modules already exist.
 | W1 specification and literature | Public/evaluator contracts, protocol and literature matrix exist. | Reading notes cover metadata, abstracts and READMEs. Full-text comparison and the diagnosticity definition remain open. |
 | W2–3 environment and reference | CPU Gymnasium tests, deterministic event streams, cost tests, finite-horizon Family A microtasks and a dev phase diagram. | Exact labels apply only within their declared microtask assumptions. The full shifting environment uses separate references. |
 | W4 offline pilot | Archived Qwen2.5-VL-3B P1 inference on Kaggle. v12 parsed all decisions and always chose the same macro. Both revised designs run on CPU. | Assess choice, fallback, label coverage, costs and errors on a fresh authorized pilot. |
-| W5–6 method and validation | Public selectors, adapted DIVA, ablation components, matched-budget rollout and paired-CI code. | P0 RGB inference and real paired validation against direct and DIVA are pending. The test configuration is still a draft. |
+| W5–6 method and validation | Public selectors, adapted DIVA, ablation components, matched-budget rollout and paired-CI code. RGB request/cache plumbing, a pixel-dependence test, a validation grid and a real-backend closed-loop CLI now exist. | P0 RGB inference and real paired validation against direct and DIVA are pending. The test configuration is still a draft. |
 | W7–11 experiments | Family A rollouts, Family B simulator and analytical reference, synthetic held-out fixtures, component diagnostics and stress tools exist. | Real closed-loop effects, cross-family transfer, held-out estimates and causal attribution remain unmeasured. |
 | W12 paper | The master plan defines a write-up and pivot rule. | Evaluate the empirical gates before making a method or novelty claim. |
 
@@ -75,5 +75,5 @@ manifest hashes canonical sources and excludes older Kaggle snapshots.
 
 1. Exercise the corrected Family A references, P1 public contexts, call budgets and result accounting on CPU. Keep calibration and oracle values evaluator-side.
 2. At the next explicitly approved model run, use a fresh output directory and record the prompt, input mode, checkpoint revision, source hashes and generation settings. Inspect the distribution of actions and the distinct inputs behind it. A constant policy can be a genuine result once the task and labels are sound.
-3. Validate a real public-RGB path for P0. Compare M1, direct and adapted DIVA on validation scenarios under the same input, call cap and primitive horizon. Select methods and prompts on validation.
+3. Run a real public-RGB path for P0. Compare M1, direct and adapted DIVA on validation scenarios under the same input, call cap and primitive horizon. Select methods and prompts on validation; the plumbing and validation grid are in place, but no pixel-dependent VLM result exists yet.
 4. Apply the W6 decision rule, record a frozen protocol and scenario list if warranted, and only then open the locked evaluation. Keep Family B, CUSUM and the Gemini prototype outside the current W4 claim.
