@@ -1,7 +1,19 @@
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
 import sys
+from types import SimpleNamespace
+
+
+def _load_pilot_module():
+    path = Path(__file__).resolve().parents[1] / "scripts" / "run_grid_real_pilot.py"
+    spec = importlib.util.spec_from_file_location("run_grid_real_pilot", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
 
 
 def test_smoke_script_writes_outputs(tmp_path):
@@ -41,3 +53,72 @@ def test_grid_real_pilot_refuses_local_cuda_without_kaggle_env(tmp_path):
     )
     assert result.returncode == 2
     assert "RULESHIFT_KAGGLE" in result.stdout + result.stderr
+
+def test_behavioral_gate_rejects_constant_action():
+    pilot = _load_pilot_module()
+    rows = [
+        {"chosen_action": "LEFT", "agent_position": [1, 1], "env_steps": 0,
+         "json_valid": True, "fallback": False},
+        {"chosen_action": "LEFT", "agent_position": [1, 2], "env_steps": 1,
+         "json_valid": True, "fallback": False},
+    ]
+    gate = pilot.behavioral_gate(rows, 2)
+    assert gate["passed"] is False
+    assert gate["distinct_actions"] == ["LEFT"]
+
+
+def test_behavioral_gate_passes_two_actions_and_movement():
+    pilot = _load_pilot_module()
+    rows = [
+        {"chosen_action": "LEFT", "agent_position": [1, 1], "env_steps": 0,
+         "json_valid": True, "fallback": False},
+        {"chosen_action": "UP", "agent_position": [1, 2], "env_steps": 1,
+         "json_valid": True, "fallback": False},
+    ]
+    gate = pilot.behavioral_gate(rows, 2)
+    assert gate["passed"] is True
+    assert gate["moved_steps"] == 1
+
+
+def test_behavioral_gate_rejects_fallback_and_invalid_json():
+    pilot = _load_pilot_module()
+    rows = [
+        {"chosen_action": "LEFT", "agent_position": [1, 1], "env_steps": 0,
+         "json_valid": False, "fallback": True},
+        {"chosen_action": "UP", "agent_position": [1, 2], "env_steps": 1,
+         "json_valid": True, "fallback": False},
+    ]
+    assert pilot.behavioral_gate(rows, 2)["passed"] is False
+
+
+def test_select_chunk_scenarios_uses_map_range():
+    pilot = _load_pilot_module()
+    scenarios = tuple(SimpleNamespace(map_seed=map_seed) for map_seed in range(100))
+    selected = pilot.select_chunk_scenarios(scenarios, 20, 10)
+    assert {scenario.map_seed for scenario in selected} == set(range(20, 30))
+    assert len(selected) == 10
+    assert len(pilot.select_chunk_scenarios(scenarios, 95, 0)) == 5
+
+
+def test_one_map_chunk_has_exactly_55_scenarios():
+    pilot = _load_pilot_module()
+    from ruleshift.envs.grid.config import load_grid_config
+    from ruleshift.evaluator.grid_runner import build_grid_scenarios
+
+    config = load_grid_config(Path(__file__).resolve().parents[1] / "configs" / "grid_dev.yaml")
+    scenarios = build_grid_scenarios(100, 5, config)
+    assert len(scenarios) == 5500
+    chunk = pilot.select_chunk_scenarios(scenarios, 0, 1)
+    assert len(chunk) == 55
+    assert {scenario.map_seed for scenario in chunk} == {0}
+    assert {scenario.run_seed for scenario in chunk} == {0, 1, 2, 3, 4}
+
+
+def test_chunk_artifact_paths_are_stamped():
+    pilot = _load_pilot_module()
+    paths = pilot.chunk_artifact_paths(Path("out"), "c02")
+    assert paths["decisions"].name == "grid_real_decisions.c02.jsonl"
+    assert paths["evaluator"].name == "grid_real_evaluator_only.c02.jsonl"
+    assert paths["cache"].name == "response_cache.c02.jsonl"
+    report = pilot.chunk_report_path(Path("reports/pilot.md"), "c02")
+    assert report.name == "pilot.c02.md"

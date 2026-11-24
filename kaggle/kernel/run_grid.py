@@ -71,8 +71,10 @@ os.environ["RULESHIFT_KAGGLE"] = "1"
 
 report = "/kaggle/working/reports/grid_real_pilot.md"
 out = "/kaggle/working/results/grid_real"
-decisions = f"{out}/grid_real_decisions.jsonl"
-evaluator = f"{out}/grid_real_evaluator_only.jsonl"
+chunk_id = "smoke"
+decisions = f"{out}/grid_real_decisions.{chunk_id}.jsonl"
+evaluator = f"{out}/grid_real_evaluator_only.{chunk_id}.jsonl"
+chunk_report = "/kaggle/working/reports/grid_real_pilot.smoke.md"
 
 run(
     [
@@ -80,14 +82,17 @@ run(
         "scripts/run_grid_real_pilot.py",
         "--model-key", "qwen2.5-vl-3b",
         "--device", "cuda",
-        "--maps", "3",
+        "--maps", "1",
         "--seeds", "1",
-        "--max-episodes", "20",
+        "--max-episodes", "2",
+        "--map-offset", "0",
+        "--map-count", "1",
+        "--chunk-id", chunk_id,
         "--out", out,
         "--report", report,
     ]
 )
 
-print("GRID PILOT COMPLETE (scaffold, not a scientific finding)", flush=True)
-for path in (report, decisions, evaluator):
+print("GRID SMOKE COMPLETE (scaffold, not a scientific finding)", flush=True)
+for path in (chunk_report, decisions, evaluator):
     print(path, Path(path).exists(), flush=True)

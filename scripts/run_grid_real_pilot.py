@@ -34,7 +34,6 @@ ROOT = Path(__file__).resolve().parents[1]
 MODELS_CONFIG = "configs/models.yaml"
 PREREG_CONFIG = "configs/preregistered_test.yaml"
 DISCLAIMER = "REAL FROZEN VLM — SCAFFOLD RUN, NOT A SCIENTIFIC FINDING"
-SUPPORTED_SCENARIOS = frozenset({"identification", "change_detection", "no_shift"})
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -47,9 +46,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--report", default="reports/grid_real_pilot.md")
     parser.add_argument("--config", default="configs/grid_dev.yaml")
     parser.add_argument(
-        "--max-episodes", type=int, default=20,
-        help="cap on the number of episodes actually executed (scaffold only)",
+        "--max-episodes", type=int, default=None,
+        help="optional cap on episodes actually executed; default is no cap",
     )
+    parser.add_argument("--map-offset", type=int, default=0)
+    parser.add_argument(
+        "--map-count", type=int, default=0,
+        help="number of maps to run; 0 means every map from map-offset onward",
+    )
+    parser.add_argument("--chunk-id", default="default")
     return parser.parse_args(argv)
 
 
@@ -75,8 +80,83 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def behavioral_gate(public_rows: list[dict], episode_count: int) -> dict:
+    """Return the P0 smoke gate; a constant-action policy must not scale."""
+
+    actions = [str(row.get("chosen_action", "")) for row in public_rows]
+    positions = [tuple(row.get("agent_position") or ()) for row in public_rows]
+    steps = [int(row.get("env_steps", 0) or 0) for row in public_rows]
+    moved = 0
+    for index in range(1, len(positions)):
+        if steps[index] > steps[index - 1] and positions[index] != positions[index - 1]:
+            moved += 1
+    full_menu = all(bool(row.get("json_valid", False)) for row in public_rows)
+    fallback_count = sum(bool(row.get("fallback", False)) for row in public_rows)
+    distinct_actions = sorted(set(action for action in actions if action))
+    gate = {
+        "episodes": int(episode_count),
+        "full_menu_rate": _mean([float(row.get("json_valid", False)) for row in public_rows]),
+        "fallback_count": int(fallback_count),
+        "distinct_actions": distinct_actions,
+        "moved_steps": int(moved),
+    }
+    gate["passed"] = bool(
+        episode_count >= 2
+        and bool(public_rows)
+        and full_menu
+        and fallback_count == 0
+        and len(distinct_actions) >= 2
+        and moved > 0
+    )
+    return gate
+
+
+def select_chunk_scenarios(
+    scenarios: tuple, map_offset: int, map_count: int
+) -> tuple:
+    """Select a contiguous map range without changing scenario order."""
+
+    if map_offset < 0 or map_count < 0:
+        raise ValueError("map_offset and map_count must be non-negative")
+    if map_count == 0:
+        return tuple(
+            scenario for scenario in scenarios if int(scenario.map_seed) >= map_offset
+        )
+    end = map_offset + map_count
+    return tuple(
+        scenario
+        for scenario in scenarios
+        if map_offset <= int(scenario.map_seed) < end
+    )
+
+
+def chunk_artifact_paths(out_dir: Path, chunk_id: str) -> dict[str, Path]:
+    """Return chunk-stamped decision/evaluator/cache paths."""
+
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", chunk_id):
+        raise ValueError(f"invalid chunk_id: {chunk_id!r}")
+    return {
+        "decisions": out_dir / f"grid_real_decisions.{chunk_id}.jsonl",
+        "evaluator": out_dir / f"grid_real_evaluator_only.{chunk_id}.jsonl",
+        "cache": out_dir / f"response_cache.{chunk_id}.jsonl",
+    }
+
+
+def chunk_report_path(report_path: Path, chunk_id: str) -> Path:
+    """Return a chunk-stamped report path beside the requested report."""
+
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", chunk_id):
+        raise ValueError(f"invalid chunk_id: {chunk_id!r}")
+    return report_path.with_name(
+        f"{report_path.stem}.{chunk_id}{report_path.suffix}"
+    )
+
+
 def _markdown(payload: dict) -> str:
     metrics = payload["metrics"]
+    gate = payload["gate"]
+    gate_label = "PASS" if gate["passed"] else "FAIL"
+    gate_actions = ", ".join(gate["distinct_actions"]) or "(none)"
     lines = [
         f"# {DISCLAIMER}",
         "",
@@ -89,6 +169,9 @@ def _markdown(payload: dict) -> str:
         f"- Grid config: `{payload['config']}`",
         f"- Maps: {payload['maps']}; seeds: {payload['seeds']}; "
         f"max episodes: {payload['max_episodes']}",
+        f"- Chunk: `{payload.get('chunk_id', 'default')}`; "
+        f"map range: [{payload.get('map_offset', 0)}, "
+        f"{payload.get('map_offset', 0) + payload.get('map_count', 0)})",
         f"- Scenarios run: {payload['scenarios']}; episodes: {payload['episodes']}; "
         f"public decision rows: {payload['public_rows']}",
         f"- Preregistered test config status: `{payload['prereg_status']}` "
@@ -100,13 +183,29 @@ def _markdown(payload: dict) -> str:
         "| --- | ---: |",
         f"| JSON-valid decision rate | {metrics['json_valid_rate']:.4f} |",
         f"| Valid-action rate | {metrics['valid_action_rate']:.4f} |",
+        f"| Fallback decision rate | {metrics.get('fallback_rate', 0.0):.4f} |",
         f"| Mean output tokens per decision | {metrics['mean_output_tokens']:.2f} |",
         f"| Total output tokens | {metrics['total_output_tokens']} |",
         f"| Cache hit rate | {metrics['cache_hit_rate']:.4f} |",
+        f"| Cache hits | {metrics.get('cache_hits', 0)} |",
         f"| Model calls (new responses) | {metrics['model_calls']} |",
         "",
         "The v10 lesson is honoured here: `max_new_tokens=2048` is never "
         "shrunk, because a truncated JSON response is counted as invalid.",
+        "",
+        "## Behavioural gate (P0)",
+        "",
+        "A smoke run may inform a decision only if it exercises more than one "
+        "action and contains no parser fallback. Passing this gate is still "
+        "not a scientific finding; failing it blocks any larger run.",
+        "",
+        "| Check | Value |",
+        "| --- | --- |",
+        f"| Full-menu JSON valid | {gate['full_menu_rate']:.4f} |",
+        f"| Parser fallbacks | {gate['fallback_count']} |",
+        f"| Distinct actions | {gate_actions} |",
+        f"| Moving steps | {gate['moved_steps']} |",
+        f"| Verdict | **{gate_label}** |",
         "",
         "## Paired 95% CI (scenario-level bootstrap) — PLACEHOLDER",
         "",
@@ -201,18 +300,21 @@ def main(argv: list[str] | None = None) -> None:
 
     out_dir = ROOT / args.out
     out_dir.mkdir(parents=True, exist_ok=True)
-    cache = ResponseCache(out_dir / "response_cache.jsonl")
+    artifact_paths = chunk_artifact_paths(out_dir, args.chunk_id)
+    cache = ResponseCache(artifact_paths["cache"])
     policy = GridVLMPolicy(backend, policy_config, cache)
 
     config_path = ROOT / args.config
     if not config_path.exists():
         raise SystemExit(f"config not found: {config_path}")
     grid_config = load_grid_config(config_path)
-    scenarios = tuple(
-        scenario
-        for scenario in build_grid_scenarios(args.maps, args.seeds, grid_config)
-        if scenario.scenario_type in SUPPORTED_SCENARIOS
-    )[: args.max_episodes]
+    scenarios = select_chunk_scenarios(
+        build_grid_scenarios(args.maps, args.seeds, grid_config),
+        args.map_offset,
+        args.map_count,
+    )
+    if args.max_episodes is not None:
+        scenarios = scenarios[: args.max_episodes]
 
     episodes = []
     for scenario in scenarios:
@@ -225,7 +327,13 @@ def main(argv: list[str] | None = None) -> None:
             run_grid_episode(env, policy, grid_config, scenario, observation, info)
         )
 
-    public_rows = [row for episode in episodes for row in episode.public_rows]
+    # The scenario id is evaluation metadata, not a model input. It is added
+    # only after the episode so a public decision file can be merged by chunk.
+    public_rows = [
+        dict(row, scenario_id=episode.scenario_id)
+        for episode in episodes
+        for row in episode.public_rows
+    ]
     leaks = [
         (index, hits)
         for index, row in enumerate(public_rows)
@@ -238,26 +346,27 @@ def main(argv: list[str] | None = None) -> None:
         )
     evaluator_rows = [row for episode in episodes for row in episode.evaluator_rows]
 
-    decisions_path = out_dir / "grid_real_decisions.jsonl"
-    evaluator_path = out_dir / "grid_real_evaluator_only.jsonl"
-    decisions_path.write_text(
+    artifact_paths["decisions"].write_text(
         "".join(json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n"
                 for row in public_rows),
         encoding="utf-8",
     )
-    evaluator_path.write_text(
+    artifact_paths["evaluator"].write_text(
         "".join(json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n"
                 for row in evaluator_rows),
         encoding="utf-8",
     )
 
+    gate = behavioral_gate(public_rows, len(episodes))
     metrics = {
         "json_valid_rate": _mean([float(row.get("json_valid", False)) for row in public_rows]),
         "valid_action_rate": _mean([float(row.get("valid_action", False)) for row in public_rows]),
+        "fallback_rate": _mean([float(row.get("fallback", False)) for row in public_rows]),
         "mean_output_tokens": _mean([float(row.get("output_tokens", 0)) for row in public_rows]),
         "total_output_tokens": int(sum(int(row.get("output_tokens", 0)) for row in public_rows)),
         "cache_hit_rate": _mean([float(row.get("cache_hit", False)) for row in public_rows]),
-        "model_calls": int(policy.model_calls),
+        "cache_hits": int(policy.total_cache_hits),
+        "model_calls": int(policy.total_model_calls),
     }
     payload = {
         "disclaimer": DISCLAIMER,
@@ -268,21 +377,26 @@ def main(argv: list[str] | None = None) -> None:
         "config": str(args.config),
         "maps": int(args.maps),
         "seeds": int(args.seeds),
-        "max_episodes": int(args.max_episodes),
+        "max_episodes": args.max_episodes,
+        "map_offset": int(args.map_offset),
+        "map_count": int(args.map_count),
+        "chunk_id": str(args.chunk_id),
         "scenarios": len(scenarios),
         "episodes": len(episodes),
         "public_rows": len(public_rows),
         "prereg_status": prereg_status,
         "metrics": metrics,
+        "gate": gate,
     }
 
-    report_path = ROOT / args.report
+    report_path = chunk_report_path(ROOT / args.report, args.chunk_id)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(_markdown(payload), encoding="utf-8")
 
     print(DISCLAIMER)
     print(f"episodes={len(episodes)} public_rows={len(public_rows)}")
-    for path in (report_path, decisions_path, evaluator_path):
+    print(f"behavioral_gate={gate['passed']} details={gate}")
+    for path in (report_path, artifact_paths["decisions"], artifact_paths["evaluator"]):
         print(path)
 
 

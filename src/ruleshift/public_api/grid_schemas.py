@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from ruleshift.permissions import find_forbidden_fields
 
@@ -274,8 +274,25 @@ def validate_grid_action(action: Any, action_mask: Any, grid_size: Any) -> list[
     return errors
 
 
-def validate_grid_vlm_output(payload: Any) -> list[str]:
-    """Validate the structured grid VLM output, including the no-leak check."""
+#: A probability vector is accepted only when it covers the full public menu
+#: and sums to one within this tolerance. The tolerance absorbs ordinary
+#: decimal rounding; it is deliberately not wide enough to hide an omitted
+#: hypothesis or a materially miscalibrated vector.
+GRID_PROBABILITY_SUM_TOLERANCE = 0.02
+
+
+def validate_grid_vlm_output(
+    payload: Any,
+    *,
+    candidate_rule_ids: Sequence[str] | None = None,
+) -> list[str]:
+    """Validate the structured grid VLM output, including the no-leak check.
+
+    ``candidate_rule_ids`` is the public menu shown in this observation. When
+    omitted, the full frozen grid menu is used. The returned probabilities must
+    cover that menu exactly: a partial distribution is not a valid belief and
+    must never be hidden by the action fallback.
+    """
 
     if not isinstance(payload, dict):
         return ["grid VLM output must be a JSON object"]
@@ -288,6 +305,9 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
     for location, name in find_forbidden_fields(payload):
         errors.append(f"privileged field {name!r} leaked at {location}")
 
+    expected_rules = tuple(
+        GRID_RULE_IDS if candidate_rule_ids is None else candidate_rule_ids
+    )
     if "hypothesis_probabilities" not in payload:
         errors.append("hypothesis_probabilities is required")
     else:
@@ -295,11 +315,19 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
         if not isinstance(probabilities, dict):
             errors.append("hypothesis_probabilities must be an object")
         else:
-            unknown = set(probabilities) - set(GRID_RULE_IDS)
+            expected_set = set(expected_rules)
+            reported_set = set(probabilities)
+            unknown = reported_set - expected_set
             if unknown:
                 errors.append(
                     "hypothesis_probabilities has unknown ids: "
                     + ", ".join(sorted(map(str, unknown)))
+                )
+            missing = expected_set - reported_set
+            if missing:
+                errors.append(
+                    "hypothesis_probabilities is missing ids: "
+                    + ", ".join(sorted(map(str, missing)))
                 )
             numeric: list[float] = []
             for rule_id, value in probabilities.items():
@@ -315,9 +343,16 @@ def validate_grid_vlm_output(payload: Any) -> list[str]:
                     )
             if numeric and sum(numeric) <= 0.0:
                 errors.append("hypothesis_probabilities needs at least one positive value")
-            # The frozen VLM may return a subset of the menu and rounded sums.
-            # Accept those as public diagnostics instead of forcing a fallback
-            # action; calibration metrics read the reported values as-is.
+            elif (
+                numeric
+                and not missing
+                and not unknown
+                and abs(sum(numeric) - 1.0) > GRID_PROBABILITY_SUM_TOLERANCE
+            ):
+                errors.append(
+                    "hypothesis_probabilities must sum to 1 within "
+                    f"{GRID_PROBABILITY_SUM_TOLERANCE:g}"
+                )
 
 
     action = payload.get("action")

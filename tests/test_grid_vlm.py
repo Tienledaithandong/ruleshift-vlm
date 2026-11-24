@@ -150,6 +150,56 @@ def test_policy_falls_back_on_malformed_output():
     action = policy.choose(obs, {})
     assert action.kind in {"UP", "DOWN", "LEFT", "RIGHT", "INTERACT"}
     assert policy.last_json_valid is False
+    assert policy.last_fallback is True
+    assert policy.last_parse_errors
+
+
+def test_policy_falls_back_on_partial_menu():
+    import json
+
+    from ruleshift.agents.vlm_backend import ModelResponse
+
+    class PartialBackend:
+        def generate(self, request):
+            payload = {
+                "hypothesis_probabilities": {
+                    "base": 0.6, "remap_swap": 0.3, "remap_rotate": 0.1
+                },
+                "action": "LEFT",
+                "confidence": 0.8,
+            }
+            text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+            return ModelResponse(text, 0, 20, 0.0, "partial", "GRID_PARTIAL")
+
+    policy = GridVLMPolicy(
+        PartialBackend(), config=GridVLMConfig(model_id="stub-grid-v0", revision=None)
+    )
+    obs = observation()
+    policy.reset(obs, {})
+    action = policy.choose(obs, {})
+    assert action.kind in obs.action_mask
+    assert policy.last_json_valid is False
+    assert policy.last_fallback is True
+    assert any("missing ids" in error for error in policy.last_parse_errors)
+    policy.record(action, obs, 0.0, {})
+    row = policy.last_public_row()
+    assert row["fallback"] is True
+    assert row["parse_error_count"] >= 1
+    assert find_forbidden_fields(row) == []
+
+
+def test_policy_lifetime_totals_survive_episode_reset():
+    policy = GridVLMPolicy(
+        GridStubBackend(), config=GridVLMConfig(model_id="stub-grid-v0", revision=None)
+    )
+    obs = observation()
+    policy.reset(obs, {})
+    policy.choose(obs, {})
+    assert policy.total_model_calls == 1
+    policy.reset(obs, {})
+    policy.choose(obs, {})
+    assert policy.total_model_calls == 1
+    assert policy.total_cache_hits == 1
 
 
 def test_policy_rows_are_public_only():
@@ -181,7 +231,7 @@ def test_record_works_without_explicit_reset():
 
 
 def test_prompt_version_is_pinned():
-    assert GRID_PROMPT_VERSION == "grid_v2"
+    assert GRID_PROMPT_VERSION == "grid_v3"
 
 
 def test_tool_result_reaches_history_text_and_prompt():

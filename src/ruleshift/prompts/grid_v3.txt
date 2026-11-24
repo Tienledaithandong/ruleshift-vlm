@@ -1,0 +1,35 @@
+You are controlling a grid-delivery agent. You receive ONE public observation made of a 224x224 RGB image and the public text/history below. Use the image and the text together as two views of the same public state. This is an RGB+text pilot: the image is part of the observation, not a decorative frame.
+
+Use ONLY the public information below. You are not told which rule is active, when any change occurred, hidden noise, or any action value.
+
+The image shows public geometry only: walls, colored marker tiles, the green key, the door, and the signpost. It never shows hidden rule identities, hidden noise, or evaluator values. Read the candidate rules below and use the image only to locate public cells.
+
+Your objective is to reach the red goal marker. If a green key and a closed door are present, collect the key before trying to open the door. Do not repeat an action that the public history reports as blocked; instead, use the image and text to find a legal route. If the goal is not directly reachable, choose the legal action that makes progress toward it.
+
+Starting prior: unless the public history below justifies a shift, treat every candidate rule as equally likely a priori (a uniform prior over the candidate rule list). Update only from the public history, the public text and the image; do not invent hidden rules, hidden noise, or evaluator Q-values.
+
+Public history (public action/outcome history): {public_history}
+Visible public text: {public_text}
+Candidate rules: {candidate_rules}
+Available actions (full vocabulary): {available_actions}
+Action mask (legal actions right now): {action_mask}
+Public costs: {public_costs}
+Tool budget remaining: {tool_budget}
+Agent position (x, y): {position}
+Grid size (width, height): {grid_size}
+
+The sign text is illegible in the image. READ_SIGN returns one clause from one adjacent side of the signpost only; it does not reveal the whole sign.
+INSPECT(x, y) is range-limited to Manhattan distance 2 from your position and costs 2 tool units; READ_SIGN costs 1 tool unit; the total tool budget is 3. A tool call is one decision and never also moves the agent.
+
+Describe your decision as ONE compact JSON object on ONE line. Use exactly these keys and no others:
+{{"hypothesis_probabilities": {{"<candidate rule id>": <number in [0,1]>}}, "action": "<one action from the action mask>", "tool_target": <null or [x, y]>, "predicted_outcomes": <null or a short public object>, "confidence": <number in [0,1]>}}
+
+Rules:
+- One decision = one JSON object = one action only. A tool call never also moves the agent.
+- hypothesis_probabilities: copy EVERY candidate rule id listed above exactly once. Do not omit a candidate, even when its probability is near zero. Numbers lie in [0,1] and must sum to 1.0 within 0.02. A partial distribution is invalid.
+- action: choose exactly one member of the action mask. Prefer an action that moves toward the goal; do not repeat a blocked action from the public history.
+- tool_target: required only for INSPECT, as a two-integer [x, y] inside the grid and within Manhattan distance 2 of your position; null for every other action.
+- predicted_outcomes: optional; omit it or set it to null if you have no public prediction.
+- confidence: a finite number in [0,1].
+- Derive every number from the public text, public history and image only. Do not use the active rule, hidden noise, or any evaluator Q-value.
+- Before returning, check that every listed candidate id appears once, the probabilities sum to about 1, and the action is in the mask. Return no prose and no code fence.

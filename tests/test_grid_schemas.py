@@ -167,12 +167,33 @@ def test_grid_vlm_output_rejects_bad_probabilities():
     errors = validate_grid_vlm_output(payload)
     assert any("positive" in error for error in errors)
 
-    # The frozen VLM often returns a subset of the menu and rounded sums;
-    # both are accepted as long as the ids are known and some mass is positive.
+    # A partial menu is not a belief: it is a schema failure and must fall
+    # back rather than being counted as a valid decision.
     payload["hypothesis_probabilities"] = {"base": 1.0}
+    partial = validate_grid_vlm_output(payload)
+    assert any("missing ids" in error for error in partial)
+
+    # A rounded full menu is accepted only within the documented tolerance.
+    payload["hypothesis_probabilities"] = {
+        rule: 0.6 if rule == "base" else 0.09 for rule in GRID_RULE_IDS
+    }
+    assert any("sum to 1" in error for error in validate_grid_vlm_output(payload))
+
+    payload["hypothesis_probabilities"] = {
+        rule: 0.6 if rule == "base" else 0.08 for rule in GRID_RULE_IDS
+    }
     assert validate_grid_vlm_output(payload) == []
-    payload["hypothesis_probabilities"] = {rule: 0.6 if rule == "base" else 0.09 for rule in GRID_RULE_IDS}
-    assert validate_grid_vlm_output(payload) == []
+
+
+def test_grid_vlm_output_uses_the_observation_candidate_menu():
+    payload = {
+        "hypothesis_probabilities": {"base": 0.5, "remap_swap": 0.5},
+        "action": "UP",
+    }
+    assert validate_grid_vlm_output(payload)
+    assert validate_grid_vlm_output(
+        payload, candidate_rule_ids=("base", "remap_swap")
+    ) == []
 
 
 def test_grid_vlm_output_rejects_unknown_hypothesis_id():
