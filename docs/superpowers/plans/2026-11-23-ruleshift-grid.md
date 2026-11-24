@@ -2185,7 +2185,7 @@ git commit -m "feat: add remote-only grid pilot scaffold and Kaggle kernel"
 - [x] Confirm no local GPU job was run: no `nvidia-smi` or `transformers` import in local CI tests.
 
 **Verification record (2026-11-24, on branch `feat/ruleshift-grid`):**
-`python -m pytest` — 377 passed, exit 0. `run_grid_audit.py --maps 500` —
+`python -m pytest` — 383 passed, exit 0. `run_grid_audit.py --maps 500` —
 PASS with 0 independent solvability failures. `run_grid_smoke.py --quick
 --maps 5 --seeds 2` — exit 0 with the synthetic-not-a-finding header. The diff
 against `origin/main` contains no generated report, result, data, output,
@@ -2197,7 +2197,9 @@ gate now blocks the signpost, the structural audit re-checks solvability
 independently, and information gain per tool call now uses tool-only
 information through a shared `effective_map` blocking helper. A follow-up
 review fix also makes the change-point belief and expected-IG move likelihoods
-use that same blocked geometry.
+use that same blocked geometry. Tier B now sends the public 224x224 image next
+to a single merged RGB+text prompt (`grid_v2`) with a 2048-token budget; the
+real Kaggle smoke is a separate remote gate.
 
 ## Out of Scope (do not implement in this change)
 

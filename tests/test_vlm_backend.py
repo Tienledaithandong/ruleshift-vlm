@@ -7,6 +7,7 @@ import json
 from ruleshift.agents.vlm_backend import (
     ModelRequest,
     StubVLMBackend,
+    build_chat_messages,
     parse_structured_output,
     render_prompt,
 )
@@ -76,6 +77,27 @@ def test_invalid_selected_action_is_rejected() -> None:
     payload, errors = parse_structured_output(response.text, ("COMMIT_RED", "WAIT"))
     assert payload is None
     assert any("action" in error.lower() for error in errors)
+
+
+def test_model_request_keeps_raw_image_out_of_cache_fingerprint() -> None:
+    base = make_request()
+    with_image = make_request(image=object())
+    assert with_image.image is not None
+    # The digest, not the raw pixels, is part of cache identity.
+    assert base.fingerprint() == with_image.fingerprint()
+
+
+def test_chat_messages_include_image_only_when_present() -> None:
+    text_only = build_chat_messages(make_request(prompt="public text"))
+    assert text_only[0]["content"] == "public text"
+
+    multimodal = build_chat_messages(
+        make_request(prompt="public text", image=(1, 2, 3))
+    )
+    assert multimodal[0]["content"] == [
+        {"type": "text", "text": "public text"},
+        {"type": "image", "image": (1, 2, 3)},
+    ]
 
 
 def test_fingerprint_changes_with_public_history() -> None:

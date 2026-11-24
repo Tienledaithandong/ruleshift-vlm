@@ -20,7 +20,7 @@ and PR #3.
 
 Current status on this branch:
 
-- 377 tests pass; `preflight.py` still prints NO-GO, as expected while
+- 383 tests pass; `preflight.py` still prints NO-GO, as expected while
   `configs/preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`.
 - RuleShift-Grid adds Tier A (stochastic grid environment, partial tools,
   change-point belief, public A* reference, matched-budget baselines) and a
@@ -33,13 +33,15 @@ Current status on this branch:
   reviewer pass found no Critical issues; its one Important finding (raw-map
   belief likelihoods near blockers) is fixed in this branch, along with three
   minor schema/ID issues. The remaining minor (`hazard_safety_threshold` is not
-  threaded from config) is deferred.
+  threaded from config) is deferred. Tier B was subsequently wired to send the
+  public image with a single merged RGB+text prompt (`grid_v2`) at a 2048-token
+  budget; a real Kaggle smoke remains a remote gate.
 - The required 100-map x 5-seed scientific run has **not** been executed with
   the frozen VLM. All smoke/audit output remains a pipeline check, never a
   finding. No local GPU job has been run.
 
 The "193 tests" and "204 tests" figures below are historical counts; README now
-reports 377.
+reports 383.
 
 ---
 

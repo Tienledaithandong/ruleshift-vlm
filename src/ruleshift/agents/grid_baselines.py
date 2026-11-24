@@ -81,9 +81,12 @@ class _ObservationView:
         self.action_mask = tuple(payload.get("action_mask", ()))
         self.tool_budget_remaining = int(payload["tool_budget_remaining"])
         self.image_hash = str(payload.get("image_hash", ""))
+        # Public pixels are allowed as agent input, but must never be copied
+        # into a logged public decision row (only their digest is).
+        self.image = payload.get("image")
 
     def to_payload(self) -> dict[str, Any]:
-        return self._payload
+        return {key: value for key, value in self._payload.items() if key != "image"}
 
 
 def as_observation(observation: Any) -> Any:

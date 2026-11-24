@@ -36,6 +36,42 @@ def test_prompt_lists_the_grid_actions():
         assert action in text
 
 
+def test_merged_prompt_uses_the_public_image():
+    text = render_grid_prompt(observation())
+    assert "TEXT-ONLY" not in text
+    assert "image" in text.lower()
+
+
+def test_public_rows_never_include_the_raw_image():
+    view = observation()
+    assert view.image is not None
+    assert "image" not in view.to_payload()
+    assert view.to_payload()["image_hash"]
+
+
+def test_policy_sends_public_image_to_backend():
+    class CapturingBackend(GridStubBackend):
+        def __init__(self):
+            super().__init__()
+            self.request = None
+
+        def generate(self, request):
+            self.request = request
+            return super().generate(request)
+
+    backend = CapturingBackend()
+    obs = observation()
+    policy = GridVLMPolicy(backend, GridVLMConfig(model_id="stub-grid-v0"))
+    policy.choose(obs, {})
+    assert backend.request is not None
+    assert backend.request.image is obs.image
+    assert backend.request.image_hash == obs.image_hash
+
+
+def test_grid_token_budget_is_raised():
+    assert GridVLMConfig(model_id="stub-grid-v0").max_new_tokens == 2048
+
+
 def test_parser_accepts_a_valid_grid_output():
     payload = {
         "hypothesis_probabilities": {rule: 1 / len(GRID_RULE_IDS) for rule in GRID_RULE_IDS},
@@ -145,7 +181,7 @@ def test_record_works_without_explicit_reset():
 
 
 def test_prompt_version_is_pinned():
-    assert GRID_PROMPT_VERSION == "grid_v1"
+    assert GRID_PROMPT_VERSION == "grid_v2"
 
 
 def test_tool_result_reaches_history_text_and_prompt():
