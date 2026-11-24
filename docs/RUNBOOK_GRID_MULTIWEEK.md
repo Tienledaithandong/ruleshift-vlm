@@ -16,7 +16,7 @@ human, and the gates below must pass in order.
 
 ## 1. Freeze the provenance
 
-Generate the manifest twice and compare byte-for-byte:
+The human READY commit must land first. The manifest hashes configs/preregistered_test.yaml, so generating it while that file is still DRAFT produces a manifest that cannot describe the locked run. After the READY commit, generate the manifest twice and compare byte-for-byte:
 
     python scripts/grid_freeze_manifest.py --out reports/grid_freeze_manifest.json
     python scripts/grid_freeze_manifest.py --out reports/grid_freeze_manifest.recheck.json
