@@ -97,6 +97,7 @@ class AuditMetrics:
     n_contexts: int
     json_valid_rate: float
     valid_action_rate: float
+    correct_argmax_rate: float
     over_probe_rate: float
     under_probe_rate: float
     mean_decision_regret: float | None
@@ -112,6 +113,20 @@ class AuditMetrics:
     invalid_json_count: int
     invalid_action_count: int
     fallback_count: int
+    #: Stratified diagnostics: all decisions, both delta_probe signs, and detours.
+    strata: tuple[DecisionStratum, ...] = ()
+
+
+def _stratum(key: str, rows: list[dict]) -> DecisionStratum:
+    regrets = [row["regret"] for row in rows if row["regret"] is not None]
+    return DecisionStratum(
+        key=key,
+        n_contexts=len(rows),
+        n_probes=sum(row["probe"] for row in rows),
+        n_correct_argmax=sum(row["correct_argmax"] for row in rows),
+        n_labelled=len(regrets),
+        mean_decision_regret=(sum(regrets) / len(regrets)) if regrets else None,
+    )
 
 
 class _Backend(Protocol):
@@ -223,6 +238,7 @@ def run_offline_audit(
     cache: ResponseCache,
     *,
     method: str = "direct",
+    max_new_tokens: int | None = None,
 ) -> tuple[list[dict], AuditMetrics]:
     """Run direct or M1 over contexts and score probe decisions.
 
@@ -238,12 +254,15 @@ def run_offline_audit(
     records: list[dict] = []
     labels: list[dict] = []
     scored: list[dict] = []
+    flags: list[dict] = []
     call_count = 0
 
     for context in contexts:
         observation = context.public_observation
         direct = method == "direct"
-        request = build_prediction_request(observation, backend, direct=direct)
+        request = build_prediction_request(
+            observation, backend, direct=direct, max_new_tokens=max_new_tokens
+        )
         cached = cache.get(request)
         cache_hit = cached is not None
         if cached is None:
@@ -361,6 +380,7 @@ def run_offline_audit(
                 "regret": regret,
             }
         )
+        flags.append({"over_probe": over_probe, "under_probe": under_probe})
 
     n = len(records)
     covered_regrets = [
@@ -386,6 +406,7 @@ def run_offline_audit(
         n_contexts=len(records),
         json_valid_rate=sum(r["json_valid"] for r in records) / n,
         valid_action_rate=sum(r["schema_valid"] for r in records) / n,
+        correct_argmax_rate=sum(r["correct_argmax"] for r in scored) / n,
         over_probe_rate=sum(f["over_probe"] for f in flags) / n,
         under_probe_rate=sum(f["under_probe"] for f in flags) / n,
         mean_decision_regret=(
@@ -407,6 +428,7 @@ def run_offline_audit(
         invalid_json_count=sum(not r["json_valid"] for r in records),
         invalid_action_count=sum(r["invalid_action"] for r in records),
         fallback_count=sum(r["fallback"] for r in records),
+        strata=tuple(strata),
     )
     return records, metrics
 
@@ -486,6 +508,7 @@ Privileged labels: `{Path(evaluator_path).name}` (never joined into model input)
 |---|---:|
 | JSON valid rate | {metrics.json_valid_rate:.3f} |
 | Schema-valid action rate | {metrics.valid_action_rate:.3f} |
+| Correct-argmax rate (chosen macro is exact Q* optimal) | {metrics.correct_argmax_rate:.3f} |
 | Invalid JSON / invalid action / WAIT fallbacks | {metrics.invalid_json_count} / {metrics.invalid_action_count} / {metrics.fallback_count} |
 | Over-probe rate (probed when exact label says do not) | {metrics.over_probe_rate:.3f} |
 | Under-probe rate (did not probe when label says probe) | {metrics.under_probe_rate:.3f} |

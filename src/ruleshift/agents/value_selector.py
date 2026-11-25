@@ -15,7 +15,7 @@ from typing import Mapping
 
 from ruleshift.public_api.schemas import COMMIT_ACTIONS
 
-from .consistency import Belief
+from .consistency import Belief, HistoryConsistencyUpdater
 
 #: The multi-step Vhat branches over every predicted action and outcome, so its
 #: state space grows exponentially with the horizon. A closed-loop episode can
@@ -44,6 +44,8 @@ class PublicCostModel:
     lockout_steps: int = 0
     remaining_horizon: int = 3
     learning_rate: float = 0.3
+    noise_floor: float = 0.02
+    relevance_decay: float = 0.01
     start_commit_duration: int | None = None
 
     def __post_init__(self) -> None:

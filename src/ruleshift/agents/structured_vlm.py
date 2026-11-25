@@ -47,9 +47,6 @@ def render_outcomes_prompt(observation: PublicObservation, max_new_tokens: int =
         public_costs=public_costs_str,
         available_actions=", ".join(observation.available_actions),
         candidate_actions=", ".join(candidate_actions),
-        public_costs=", ".join(
-            f"{key}={value}" for key, value in sorted(observation.public_costs.items())
-        ),
         max_new_tokens=max_new_tokens,
     )
 
@@ -61,6 +58,7 @@ def build_prediction_request(
     direct: bool = False,
     decoding_seed: int = 7,
     do_sample: bool = False,
+    max_new_tokens: int | None = None,
 ) -> ModelRequest:
     """Construct the same public input and cache identity for every runner."""
 
@@ -70,7 +68,11 @@ def build_prediction_request(
     candidate_hash = hashlib.sha256(
         json.dumps(descriptions, sort_keys=True).encode("utf-8")
     ).hexdigest()
-    budget = getattr(backend, "max_new_tokens", 256)
+    budget = (
+        max_new_tokens
+        if max_new_tokens is not None
+        else getattr(backend, "max_new_tokens", 256)
+    )
     if direct:
         prompt = render_prompt(
             public_history=observation.public_history or "(empty)",
