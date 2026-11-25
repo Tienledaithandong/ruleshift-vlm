@@ -84,7 +84,7 @@ def test_v4_fixes_the_traced_empty_plan_failures():
         assert episode.final_rule_estimate == "base"
 
 
-def test_v4_reads_only_one_side_when_it_is_sufficient():
+def test_v4_records_sign_side_memory_and_recovers_base():
     config = GridConfig()
     scenario = next(
         scenario
@@ -101,4 +101,4 @@ def test_v4_reads_only_one_side_when_it_is_sufficient():
     )
     assert episode.success
     assert episode.final_rule_estimate == "base"
-    assert policy.sign_sides_observed
+    assert 0 in policy.sign_sides_observed
