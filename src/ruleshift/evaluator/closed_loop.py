@@ -30,6 +30,7 @@ from ruleshift.envs.config import EnvConfig, HAZARD_BY_CONDITION, load_dev_grid
 from ruleshift.envs.gate_lock import RuleShiftEnv
 from ruleshift.evaluator.metrics_ci import PairedSummary, summarize_paired
 from ruleshift.public_api.interface import PublicObservation
+from ruleshift.public_api.schemas import MACRO_ACTIONS
 
 #: Preregistered per-episode VLM call cap (configs/preregistered_test.yaml).
 #: Extra samples and re-tries count toward it; it applies to every method.
@@ -84,7 +85,11 @@ class _RandomProbeMethod:
 
     def choose(self, observation: PublicObservation, info: dict) -> str:
         if self._policy is None:
-            self._policy = RandomProbePolicy(observation.public_history_hash)
+            # The random-probe stress method intentionally proposes the full
+            # public macro menu so the runner exercises cross-family clamping.
+            self._policy = RandomProbePolicy(
+                observation.public_history_hash, actions=MACRO_ACTIONS
+            )
         return self._policy.choose(observation)
 
     def record(self, action: str, outcome: str) -> None:

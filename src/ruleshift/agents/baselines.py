@@ -31,8 +31,17 @@ class NeverProbePolicy:
 class RandomProbePolicy:
     """Uniform macro choice seeded by the public history digest."""
 
-    def __init__(self, public_seed: str) -> None:
+    def __init__(
+        self,
+        public_seed: str,
+        *,
+        actions: tuple[str, ...] | None = None,
+    ) -> None:
         self._rng = random.Random(public_seed)
+        self._actions = tuple(actions) if actions is not None else None
 
     def choose(self, observation: PublicObservation) -> str:
-        return self._rng.choice(observation.available_actions)
+        # By default respect the advertised affordances. Callers may pass an
+        # explicit full menu to stress the environment's cross-family clamp.
+        menu = self._actions if self._actions is not None else observation.available_actions
+        return self._rng.choice(menu)
