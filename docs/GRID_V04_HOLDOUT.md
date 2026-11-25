@@ -98,13 +98,42 @@ fresh-map ceiling.
 - The literal 100% gate is still the binding blocker. v0.4 is not frozen, not
   promoted, and not used by the benchmark.
 
+## Full-grid regression check
+
+After the base holdout, v0.4 was also run on the original 10-map all-scenario
+CPU benchmark (550 episodes, all six rules and shift types). This is a
+post-hoc safety check, not a gate.
+
+| Policy | Overall | Base initial | Slippery identification | Sign-composition identification | Hazard identification |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| v0.3 | 534/550 | 296/300 | 40/50 | 49/50 | 49/50 |
+| v0.4 | 538/550 | 297/300 | 50/50 | **41/50** | 50/50 |
+
+v0.4 gains ten slippery episodes and one hazard episode, but loses eight
+sign-composition episodes (`m5-s1` through `m5-s4` and `m6-s0` through
+`m6-s3`); those eight end after 60 steps with a wrong `hazard_goal_swap`
+commit. Overall success improves, but the rule-level regression makes v0.4
+unsafe to promote.
+
+Root cause: after the first sign face, `hazard_goal_swap` and
+`sign_composition` remain at 0.5/0.5. A negligible remap tail creates a
+second-face expected gain around `3e-9`, above the candidate's `1e-9` floor.
+v0.4 spends its remaining tool unit on that face instead of inspecting blue,
+so it cannot separate the two rules. An exploratory `1e-6` floor removes the
+eight sign failures but transfers the `m5-s1` hazard case to a failure and
+leaves six failures overall; a threshold sweep is not a validated fix.
+
 ## Decision
 
 Do not start Phase 1. The next step remains a human decision about the base
-endpoint and a fully preregistered candidate evaluation. A useful next
-holdout would need maps on which v0.3 actually fails, but selecting those
-maps after seeing outcomes would invalidate the comparison; the alternative
-is a larger pre-registered sample or an explicitly powered tolerance.
+endpoint and a fully preregistered candidate evaluation. The full-grid
+regression also means v0.4 should not be promoted even if the base-endpoint
+decision is resolved; a successor needs an explicit tool-allocation rule that
+reserves budget for blue inspection, not just a higher sign-gain floor. A
+useful base holdout would need maps on which v0.3 actually fails, but
+selecting those maps after seeing outcomes would invalidate the comparison;
+the alternative is a larger pre-registered sample or an explicitly powered
+tolerance.
 
 ## Reproduce
 
