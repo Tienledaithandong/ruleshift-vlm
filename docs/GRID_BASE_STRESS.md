@@ -63,11 +63,18 @@ Paired task outcomes: 497 both succeed, 0 only diagnostic, 3 only baseline,
 0 neither; exact McNemar `p = 0.25`. This is descriptive only and is not a
 claim that the diagnostic policy is better or worse than the baseline.
 
+A post-hoc trace of the eight non-base outcomes is in
+[`GRID_BASE_FAILURE_DIAGNOSIS.md`](GRID_BASE_FAILURE_DIAGNOSIS.md). It is a
+selected-sample diagnosis, not another rate estimate.
+
 ## Interpretation
 
 1. **The original failure is reproducible, not a one-off.** `m2-s2` fails in
    the larger base-only sample as well. Two further task failures appear on
-   maps 57 and 78.
+   maps 57 and 78. The post-hoc trace shows a repeatable mechanism, not a
+   single random walk: a false posterior plus an empty-plan fallback in
+   `m2-s2` and `m57-s4`, and an unresolved `base`/`remap_rotate` ambiguity in
+   `m78-s1`.
 2. **The base task-failure rate is low but not zero.** The point estimate is
    0.6%; the 95% upper bound is 1.7% (Wilson) or 1.4% (map-cluster). A 100%
    gate therefore still fails, and this sample cannot establish a zero rate.
