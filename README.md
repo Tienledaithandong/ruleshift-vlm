@@ -1,8 +1,8 @@
 # RuleShift / Agentic VLM — prepared research harness
 
-**Status: The CPU harness includes the additive RuleShift-Grid benchmark
-(Tier A) and an RGB+text VLM scaffold (Tier B). The frozen 3B grid is closed
-after diagnostic smokes and one map-0 dry chunk.** See the
+**Status: CPU harness complete, including the additive RuleShift-Grid benchmark
+(Tier A implemented; Tier B is an RGB+text VLM scaffold). The frozen 3B grid
+is closed after diagnostic smokes and one map-0 dry chunk.** See the
 [grid feasibility note](docs/GRID_NEGATIVE_FEASIBILITY_NOTE.md).
 
 CPU-first Python 3.11 research repository for value-aware probing under hidden
