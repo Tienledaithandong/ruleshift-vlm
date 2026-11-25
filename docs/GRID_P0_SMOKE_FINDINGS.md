@@ -68,6 +68,28 @@ After the technical gate passed, the 55-episode dry chunk for map 0 was launched
 - Report: `reports/grid_chunks/grid_real_pilot.m000.md`. This remains a dry
   chunk and cannot be promoted to a result.
 
+## Run 4: `grid_v6` (smoke-13, source commit `6a8826c`)
+
+- 2 episodes, 120 public rows. The technical gate failed: 13/120 JSON-valid
+  (10.8%), 107 parser fallbacks, 0/1 base-rule success.
+- The failures were strict-schema omissions, not malformed JSON. Of 33 unique
+  responses, 23 omitted only `base` and 7 omitted `base`, `hazard_goal_swap`
+  and `sign_composition`; every omitted key is a required candidate id.
+  The model is still dropping low-probability candidate keys even though the
+  prompt says all six are required.
+- The semantic gate also failed: only 1 unique belief vector, 31/64 blocked
+  transitions repeated, 0 tool calls, 0/1 base success. The 23 guard
+  activations broke some immediate wall loops, but cannot repair an invalid
+  belief menu.
+- Report: `kaggle_outputs/smoke13/reports/grid_real_pilot.smoke.md`. This is a
+  scaffold run, not a scientific result.
+
+## Run 5: `grid_v7` (smoke-14, source commit `6dc75fe`)
+
+`grid_v7` adds an explicit candidate-id line and states that every id,
+including `base` and zero-valued ids, must be emitted. The smoke-14 run is
+the next 2-episode check. No result is recorded here until it completes.
+
 ## Measured cost
 
 The 119 cached responses from run 1 averaged 8.85 s per decision on a T4
