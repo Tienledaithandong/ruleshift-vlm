@@ -7,10 +7,9 @@ archive contains 81 decisions from 27 distinct requests. All 81 chose
 different exact labels. The pilot demonstrates inference and parsing.
 A clean Week 4 diagnostic and real Week 6 validation are still pending.
 **Status: CPU harness complete, including the additive RuleShift-Grid benchmark
-(Tier A implemented; Tier B is an RGB+text VLM scaffold). No training,
-experiment, or evaluation with a real model has been run. Generated result
-files are intentionally absent so that stub-produced numbers cannot be
-mistaken for measurements.**
+(Tier A implemented; Tier B is an RGB+text VLM scaffold). The frozen 3B grid
+is closed after diagnostic smokes and one map-0 dry chunk.** See the
+[grid feasibility note](docs/GRID_NEGATIVE_FEASIBILITY_NOTE.md).
 
 The revised P1 harness covers controlled first decisions and decisions
 following noisy public histories under a possible shift. Each default design
@@ -104,7 +103,7 @@ The only model-backend dependencies are in the optional extra:
 
 ## Remote GPU setup (Colab / Kaggle)
 
-Setup scaffolding exists but has **not been executed remotely**:
+Setup scaffolding for remote diagnostics:
 
 - `notebooks/colab_pilot.ipynb` — ready-to-run **real** offline pilot on Colab (pinned Qwen2.5-VL-3B, text-input only).
 - `notebooks/colab_setup.ipynb`, `notebooks/kaggle_gpu.ipynb` — clone/install/check notebooks.
@@ -113,12 +112,13 @@ Setup scaffolding exists but has **not been executed remotely**:
 - `scripts/run_grid_real_pilot.py`, `kaggle/kernel/run_grid.py` — remote-only grid pilot scaffold; the local guard refuses `cuda` unless `RULESHIFT_KAGGLE=1`.
 - `kaggle/kaggle.json.example` — placeholder; real credentials are git-ignored.
 
-See `docs/COLAB_KAGGLE_SETUP.md`. You must supply the GitHub URL, model revision
-and credentials. No local GPU is used and nothing has been downloaded or run.
+See `docs/COLAB_KAGGLE_SETUP.md` for runtime configuration and credentials.
 
 For the multi-week real-VLM grid (100 maps x 5 seeds, split into weekly Kaggle
 chunks), see `docs/RUNBOOK_GRID_MULTIWEEK.md` and the plan at
-`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`.
+`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`. That grid
+is **closed for the frozen 3B model**; see `docs/GRID_FEASIBILITY_DECISION.md`
+before scheduling anything.
 
 ## Later: real experiment and evaluation
 
