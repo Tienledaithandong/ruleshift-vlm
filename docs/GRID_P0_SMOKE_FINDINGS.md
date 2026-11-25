@@ -52,7 +52,7 @@ is a debugging log, not a scientific result.
 
 ## Chunk 0
 
-After the gate passed, the 55-episode dry chunk for map 0 was launched as
+After the technical gate passed, the 55-episode dry chunk for map 0 was launched as
 `tiennamlee/ruleshift-grid-chunk-m000` (the title-derived slug, not the
 `...-000` id written by the first helper revision). It completed successfully:
 
@@ -62,7 +62,9 @@ After the gate passed, the 55-episode dry chunk for map 0 was launched as
 - Actions: `DOWN` 2,586, `LEFT` 486, `UP` 14; 372 actual moving steps.
 - 6/55 episodes succeeded; mean total return -5.93. The low success rate is not
   evidence at this scale, but it does show the policy is still weak.
-- Behavioural gate: **PASS**. Wall time 22,996 s (6.39 GPU-hours).
+- Technical gate: **PASS** (JSON/fallback/action diversity). Semantic analysis:
+  **FAIL** (see `docs/GRID_CHUNK0_ANALYSIS.md`). Wall time 22,996 s
+  (6.39 GPU-hours).
 - Report: `reports/grid_chunks/grid_real_pilot.m000.md`. This remains a dry
   chunk and cannot be promoted to a result.
 
@@ -78,8 +80,14 @@ behavioural gate.
 
 ## Status
 
-Gate A (two-episode smoke) and Gate B (55-episode dry chunk) both pass. The
-full grid is still not authorized: `preregistered_test.yaml` remains
-`DRAFT_NOT_FROZEN`, and the measured 640 GPU-hour cost exceeds the remaining
-quota. The next decision is a resized design or a faster inference path, not a
-larger run.
+Gate A (two-episode smoke) and Gate B (55-episode dry chunk) pass their current
+**technical** checks. Gate B is not a behavioural pass: the follow-up analysis
+found a constant uniform belief vector, a fixed `LEFT`/`DOWN` action prefix,
+97.4% immediate repetition of blocked actions, zero use of `RIGHT` or tools,
+and 0/10 success on base-rule episodes. See `docs/GRID_CHUNK0_ANALYSIS.md`.
+
+This chunk must not feed a larger run and is not evidence. The full grid is
+still not authorized: `preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`, and
+the measured 640 GPU-hour cost exceeds the remaining quota. The next step is to
+repair the observation/action contract and add semantic gates, then re-run only
+a 2–3 episode smoke. Design resizing comes after that, not before.
