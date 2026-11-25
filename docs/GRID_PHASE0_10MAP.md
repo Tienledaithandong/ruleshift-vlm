@@ -297,6 +297,16 @@ These are decisions for a new preregistration, not changes made here:
 5. Report raw and opportunity-conditioned metrics, but label post-hoc
    subsets as such.
 
+### Follow-up: base-stress estimate
+
+A descriptive 100-map x 5-seed CPU study was run after this report. It found
+3/500 diagnostic task failures (0.6%; Wilson 95% [0.2%, 1.7%]) and 8/500
+base misdiagnoses (1.6%; Wilson 95% [0.8%, 3.1%]). The original `m2-s2`
+failure reproduced, and two further task failures appeared. Five of the eight
+misdiagnoses still reached the goal, so success alone understates the
+identification problem. This does not pass or change the gate and does not
+authorize Phase 1; see [`GRID_BASE_STRESS.md`](GRID_BASE_STRESS.md).
+
 ## 12. Bottom line
 
 The benchmark repair worked: v0.3 has unique maps, readable side-0 faces, zero
