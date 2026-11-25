@@ -393,6 +393,33 @@ def write_base_stress_report(payload: Mapping[str, Any], out_dir: Path) -> None:
             f"- neither succeeds: {paired['neither']}",
             f"- exact McNemar p: {paired['mcnemar_exact_p']:.6g}",
             "",
+        ]
+    )
+    paired_candidate = payload.get("paired_vs_v3")
+    if isinstance(paired_candidate, Mapping):
+        lines.extend(
+            [
+                "## Paired candidate vs v0.3",
+                "",
+                f"- both succeed: {paired_candidate['both_success']}",
+                (
+                    "- only the candidate succeeds: "
+                    f"{paired_candidate['only_left_success']}"
+                ),
+                (
+                    "- only v0.3 succeeds: "
+                    f"{paired_candidate['only_right_success']}"
+                ),
+                f"- neither succeeds: {paired_candidate['neither_success']}",
+                (
+                    "- exact McNemar p: "
+                    f"{paired_candidate['exact_mcnemar_p']:.6g}"
+                ),
+                "",
+            ]
+        )
+    lines.extend(
+        [
             "## Diagnostic failures",
             "",
         ]
