@@ -10,12 +10,12 @@ human, and the gates below must pass in order.
 - Model revision pinned in configs/models.yaml.
 - preregistered_test.yaml status is DRAFT_NOT_FROZEN until the human freeze
   commit; do not edit that field from an automated agent.
-- Kaggle GPU quota checked before a weekly slice. The real smoke measured
-  ~8.85 s per model decision on a T4; 55 episodes x up to 60 decisions is an
-  upper bound near 8.1 GPU-hours per chunk, not 2.2. A ten-chunk weekly slice
-  is therefore ~81 GPU-hours, already about three times the ~27 h/week quota;
-  the full 5,500-episode grid is ~800 GPU-hours (about 17 weeks at 27 h/week)
-  before overhead.
+- Kaggle GPU quota checked before a weekly slice. The completed 55-episode
+  Gate B chunk measured 22,996 s = 6.39 GPU-hours; the earlier 8.1 h figure is a
+  conservative upper bound, not 2.2. A ten-chunk weekly slice is therefore
+  ~64 GPU-hours, more than two weeks of the ~27 h/week quota; the full
+  5,500-episode grid is ~640 GPU-hours (about 24 weeks at 27 h/week) before
+  overhead.
   Treat throughput as a blocking feasibility issue; do not schedule the full
   grid until inference is materially faster or the design is resized.
 - Never commit results/, reports/, outputs/, or the Kaggle token.

@@ -54,19 +54,32 @@ is a debugging log, not a scientific result.
 
 After the gate passed, the 55-episode dry chunk for map 0 was launched as
 `tiennamlee/ruleshift-grid-chunk-m000` (the title-derived slug, not the
-`...-000` id written by the first helper revision). It remains a dry chunk and
-cannot be promoted to a result.
+`...-000` id written by the first helper revision). It completed successfully:
+
+- 55 episodes, 55 unique scenarios, 3,086 public decision rows.
+- Every row full-menu JSON-valid; zero parser fallbacks; mean output tokens 100.
+- 2,143 model calls and 943 cache hits (30.6%).
+- Actions: `DOWN` 2,586, `LEFT` 486, `UP` 14; 372 actual moving steps.
+- 6/55 episodes succeeded; mean total return -5.93. The low success rate is not
+  evidence at this scale, but it does show the policy is still weak.
+- Behavioural gate: **PASS**. Wall time 22,996 s (6.39 GPU-hours).
+- Report: `reports/grid_chunks/grid_real_pilot.m000.md`. This remains a dry
+  chunk and cannot be promoted to a result.
 
 ## Measured cost
 
 The 119 cached responses from run 1 averaged 8.85 s per decision on a T4
-(median 8.89 s). At up to 60 decisions per episode, a 55-episode chunk is an
-upper bound near 8.1 GPU-hours, not the 2.2 h stated in the earlier runbook.
-A 5,500-episode grid is therefore roughly 800 GPU-hours before overhead. This
-is a feasibility blocker for the full run, independent of the smoke gate.
+(median 8.89 s). The completed 55-episode chunk took 6.39 GPU-hours, so the
+earlier 8.1 h upper bound was conservative but the order of magnitude held.
+A 5,500-episode grid is therefore roughly 640 GPU-hours before overhead, about
+24 weeks at 27 h/week. Even one ten-chunk weekly slice is ~64 GPU-hours, more
+than two weeks of quota. This is a feasibility blocker independent of the
+behavioural gate.
 
 ## Status
 
-The `grid_v5` smoke must pass the behavioral gate before any 55-episode chunk.
-As of this note, `preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`; the full
-grid is not authorized.
+Gate A (two-episode smoke) and Gate B (55-episode dry chunk) both pass. The
+full grid is still not authorized: `preregistered_test.yaml` remains
+`DRAFT_NOT_FROZEN`, and the measured 640 GPU-hour cost exceeds the remaining
+quota. The next decision is a resized design or a faster inference path, not a
+larger run.
