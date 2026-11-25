@@ -452,6 +452,8 @@ def _aggregate(
     ties = sum(record.terminal_tie for record in records)
     posterior_valid = sum(record.posterior_valid for record in records)
     availability = sum(record.declaration_available for record in records)
+    declaration_episodes = sum(record.declared_rule is not None for record in records)
+    settled_episodes = sum(record.settled_declaration for record in records)
     statuses = {
         status: (
             sum(record.commitment_status == status for record in records)
@@ -484,7 +486,11 @@ def _aggregate(
         "posterior_coverage": _rate(posterior_valid, n),
         "terminal_ties": ties,
         "declaration_available_episodes": availability,
-        "declaration_coverage": _rate(availability, n),
+        "declaration_event_episodes": declaration_episodes,
+        "declaration_coverage": _rate(declaration_episodes, n),
+        "settled_declaration_episodes": settled_episodes,
+        "settled_declaration_coverage": _rate(settled_episodes, n),
+        "declaration_available_coverage": _rate(availability, n),
         "commitment_scope": "static_identification" if score_commitment else "not_scored",
         "commitment_accuracy": commitment_accuracy,
         "commitment_correct": statuses["correct_commit"],

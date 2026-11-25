@@ -143,10 +143,20 @@ def _record(
         successful_misdiagnosis=bool(task_success and not map_correct),
         task_failure_map_correct=bool(not task_success and map_correct),
         declaration_available=declaration_available,
-        declared_rule=None,
-        declared_step=None,
-        declared_confidence=None,
-        declared_margin=None,
+        declared_rule=(
+            initial_rule
+            if commitment_status == "correct_commit"
+            else "remap_swap"
+            if commitment_status == "wrong_commit"
+            else None
+        ),
+        declared_step=3 if commitment_status in ("correct_commit", "wrong_commit") else None,
+        declared_confidence=(
+            0.95 if commitment_status in ("correct_commit", "wrong_commit") else None
+        ),
+        declared_margin=(
+            0.9 if commitment_status in ("correct_commit", "wrong_commit") else None
+        ),
         commitment_status=commitment_status,
         settled_declaration=commitment_status in ("correct_commit", "wrong_commit"),
         commitment_correct=commitment_status == "correct_commit",
@@ -389,6 +399,10 @@ def test_summary_keeps_all_static_episodes_in_denominators_and_does_not_score_ab
     assert declared_summary["commitment_wrong"] == 1
     assert declared_summary["commitment_unresolved"] == 2
     assert declared_summary["selective_error"] == 0.5
+    assert declared_summary["declaration_event_episodes"] == 2
+    assert declared_summary["declaration_coverage"] == 0.5
+    assert declared_summary["settled_declaration_coverage"] == 0.5
+    assert declared_summary["declaration_available_coverage"] == 1.0
 
 
 def test_base_preservation_is_static_only_and_100_percent_is_observed_not_assumed():
