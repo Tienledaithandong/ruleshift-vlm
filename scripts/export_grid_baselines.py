@@ -10,14 +10,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Callable, Sequence
 
 _SRC = str(Path(__file__).resolve().parents[1] / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
 from ruleshift.agents.grid_baselines import (
+    DiagnosticBeliefPolicy,
     InfoGainPolicy,
     NoAdaptationPolicy,
     PublicAdvisorPolicy,
@@ -27,12 +28,19 @@ from ruleshift.envs.grid.config import GridConfig, load_grid_config
 from ruleshift.evaluator.grid_runner import build_grid_scenarios, run_grid_benchmark
 
 ROOT = Path(__file__).resolve().parents[1]
-METHODS = ("no_adaptation", "public_advisor", "random_probe", "info_gain")
+METHODS = (
+    "no_adaptation",
+    "public_advisor",
+    "random_probe",
+    "info_gain",
+    "diagnostic_belief",
+)
 _ALIASES = {
     "NoAdaptationPolicy": "no_adaptation",
     "PublicAdvisorPolicy": "public_advisor",
     "RandomProbePolicy": "random_probe",
     "InfoGainPolicy": "info_gain",
+    "DiagnosticBeliefPolicy": "diagnostic_belief",
 }
 
 
@@ -42,6 +50,7 @@ def _factories() -> dict[str, Callable[[GridConfig, object], object]]:
         "public_advisor": lambda config, env: PublicAdvisorPolicy(config),
         "random_probe": lambda config, env: RandomProbePolicy(config, seed=0),
         "info_gain": lambda config, env: InfoGainPolicy(config),
+        "diagnostic_belief": lambda config, env: DiagnosticBeliefPolicy(config),
     }
 
 
@@ -118,6 +127,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=",".join(METHODS),
         help="comma-separated public baseline names",
     )
+    parser.add_argument(
+        "--maps",
+        type=int,
+        default=100,
+        help="number of maps (default: the full 100-map grid)",
+    )
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        default=5,
+        help="paired run seeds per map (default: 5)",
+    )
     return parser.parse_args(argv)
 
 
@@ -125,7 +146,10 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     config = load_grid_config(ROOT / args.config)
     methods = tuple(part.strip() for part in args.methods.split(",") if part.strip())
-    out = export_grid_baselines(config, methods, ROOT / args.out)
+    scenarios = tuple(build_grid_scenarios(args.maps, args.seeds, config))
+    out = export_grid_baselines(
+        config, methods, ROOT / args.out, scenarios=scenarios
+    )
     print(out)
 
 

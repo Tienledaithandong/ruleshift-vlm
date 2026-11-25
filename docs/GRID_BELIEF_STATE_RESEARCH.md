@@ -97,23 +97,73 @@ conclusion yet.
 
 Build a CPU reference first; do not spend GPU quota on another prompt variant.
 
-**Phase 0 — `DiagnosticBeliefPolicy` (CPU).** Use the existing `GridBelief`,
-the public planner and a fixed decision tree:
+### Phase 0 — implemented and evaluated (CPU dev)
+
+`DiagnosticBeliefPolicy` now lives in `agents/grid_baselines.py` and is wired
+into `scripts/export_grid_baselines.py` as `diagnostic_belief`. It uses the
+existing `GridBelief`, the public A* planner and a fixed decision tree:
 
 1. Update the filter from every public transition.
-2. If the movement-equivalent ambiguity is already resolved, plan to the MAP
-   goal with A*.
-3. Otherwise navigate to sign side 0 and `READ_SIGN`.
+2. If the posterior has a decisive gap, plan to the MAP goal with A*.
+3. Otherwise navigate to an informative sign face and `READ_SIGN` (side 0
+   preferred; side 1 when side 0 is walled off).
 4. If the sign is “not the goal”, navigate within two cells of blue and
    `INSPECT` it.
 5. Plan to the MAP goal and commit.
 
-Evaluate on the same 55 map-0 scenarios as the existing baselines. The
-comparison is paired and CPU-only: `no_adaptation` 38/55, `info_gain` 25/55,
-`public_advisor` 38/55. Report success, final rule accuracy, tool units,
-false-alarm rate and steps. A useful result is not “beats 38/55 by one”; it is
-“identifies the 10 movement-equivalent hazard/sign episodes without losing the
-base episodes or exceeding the 3-unit tool budget.”
+While walking to a tool, every marker is treated as a wall: any marker can be
+the goal under some hypothesis, so crossing one can end the episode before
+the evidence is collected.
+
+It does not probe after movement has already identified a rule. On the same
+55 map-0 scenarios (5 seeds x 11 types) the paired CPU result is:
+
+| Method | Success | Env steps | Tool units |
+| --- | ---: | ---: | ---: |
+| `diagnostic_belief` | **54/55** | 473 | 60 |
+| `no_adaptation` | 38/55 | 1,365 | 0 |
+| `public_advisor` | 38/55 | 1,365 | 0 |
+| `random_probe` | 38/55 | 1,365 | 0 |
+| `info_gain` | 25/55 | 2,685 | 120 |
+
+The paired counts against `no_adaptation` are 38 both, **16 only
+diagnostic**, 0 only baseline, and 1 neither. The one shared failure is the
+same noisy inspect episode. By initial rule: `base` 5/5 (1 tool each),
+`remap_swap` 5/5 (0), `remap_rotate` 5/5 (0), `slippery` 5/5 (0),
+`hazard_goal_swap` 5/5 (3), `sign_composition` 4/5 (3). There were no false
+alarms, and tool spend was only 0, 1 or 3 units.
+
+The single failure, `m0-s3-identification-sign_composition`, is a 5%
+`INSPECT` error: blue was truly `safe`, the tool returned `goal`, and the
+filter correctly followed that public observation to `hazard_goal_swap`. The
+policy then navigated to blue (the wrong goal under the true rule) and timed
+out. This is irreducible with one noisy inspect and a 3-unit budget; it is not
+a protocol or belief-update bug.
+
+Caveat: this is one map and a development set. The 20/20 change-detection
+episodes are not evidence of post-shift adaptation: `no_adaptation` also scores
+20/20, because those episodes finish before the shift window. The gain is in
+identification, especially the ten movement-equivalent `hazard_goal_swap` and
+`sign_composition` scenarios.
+
+**Exploratory five-map check (maps 0-4, 275 episodes).** The same policy scores
+**268/275** versus **200/275** for `no_adaptation`; identification is **147/150**
+versus **75/150**. The paired counts are 194 both, 74 only diagnostic, 6 only
+baseline, and 1 neither. The three identification failures are inspect noise
+(one map-0 sign, one map-3 hazard, one map-3 sign). The six baseline-only wins
+are two identification episodes where the baseline happened to choose the true
+goal and four post-shift change episodes; the policy does not re-probe after a
+shift and often has already spent its budget. Change detection is therefore
+96/100 versus 100/100, a scoped adaptation limitation, not an identification
+failure. No-shift is 25/25 for both.
+
+The five-map check exposed two bugs that map 0 did not: a signpost can have both
+side-0 faces walled off (the policy now uses informative side 1), and a shortest
+tool route can cross a candidate goal and terminate before the probe (tool
+routing now treats every marker as blocked). After both fixes, map 4
+`hazard_goal_swap` and `sign_composition` collect the sign and blue evidence
+instead of succeeding by accident. The primary map-0 numbers were unchanged.
+This is still a development check, not a preregistered result.
 
 **Phase 1 — VLM on a compact belief (GPU, only if Phase 0 works).** Replace the
 six-key probability menu with a small high-level action interface: `COMMIT`,
