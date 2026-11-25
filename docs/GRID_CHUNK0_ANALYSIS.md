@@ -205,7 +205,7 @@ criteria. They should be agreed before the next smoke.
    Even after the policy is fixed, the design needs resizing or faster
    inference; a 10-map dev slice would be ~64 GPU-hours.
 
-## 7. Implementation status of the repair (commit `6a8826c`)
+## 7. Implementation status of the repair (commit `a5d011c`)
 
 The observation/action contract, prompt and semantic gate have been repaired;
 the full test suite is green. These changes are not evidence that the policy
@@ -225,9 +225,11 @@ now adapts, and they do not authorize any run beyond a 2-episode smoke.
 - `semantic_gate()` rejects constant beliefs, blocked-action repeat rates above
   5%, zero tool use when a tool is available, and zero success on final
   base-rule episodes. `main()` requires both the technical and semantic gates.
-- A 2-episode Kaggle smoke (`ruleshift-grid-smoke-13`, source commit
-  `6a8826c`) is the only run permitted by this change. The 55-episode chunk
-  and the 5,500-episode grid remain blocked.
+- Only 2-episode smokes are permitted. Smoke-13 (v6) failed strict schema
+  because the model omitted `base`; smoke-14 (v7) emitted all six ids but
+  summed them to 1.50; smoke-15 (v8) tests an explicit arithmetic rule. None
+  of these smokes is evidence. The 55-episode chunk and the 5,500-episode grid
+  remain blocked.
 
 ## 8. Reproduction notes
 

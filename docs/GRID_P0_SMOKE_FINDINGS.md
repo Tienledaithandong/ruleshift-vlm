@@ -77,18 +77,37 @@ After the technical gate passed, the 55-episode dry chunk for map 0 was launched
   and `sign_composition`; every omitted key is a required candidate id.
   The model is still dropping low-probability candidate keys even though the
   prompt says all six are required.
-- The semantic gate also failed: only 1 unique belief vector, 31/64 blocked
-  transitions repeated, 0 tool calls, 0/1 base success. The 23 guard
-  activations broke some immediate wall loops, but cannot repair an invalid
+- The semantic gate also failed: only 1 unique belief vector, 0 tool calls,
+  0/1 base success. The kernel report said 31/64 blocked repeats because the
+  old gate inferred blocked from position; corrected with the recorded public
+  outcome it is 0 repeats across 27 blocked transitions. The 23 guard
+  activations broke the immediate wall loops, but cannot repair an invalid
   belief menu.
 - Report: `kaggle_outputs/smoke13/reports/grid_real_pilot.smoke.md`. This is a
   scaffold run, not a scientific result.
 
 ## Run 5: `grid_v7` (smoke-14, source commit `6dc75fe`)
 
-`grid_v7` adds an explicit candidate-id line and states that every id,
-including `base` and zero-valued ids, must be emitted. The smoke-14 run is
-the next 2-episode check. No result is recorded here until it completes.
+- 2 episodes, 120 public rows; 91/120 JSON-valid (75.8%), 29 fallbacks. The
+  all-ids instruction worked: every invalid response now contained all six
+  candidate ids. All 28 invalid unique responses summed to 1.50, typically
+  `0.33,0.33,0.33,0.17,0.17,0.17`; the model changed three values without
+  rebalancing the rest.
+- The technical gate still failed. The semantic gate also failed, but its
+  kernel report over-counted blocked repeats (30/54): the gate then inferred
+  `blocked` from a same-cell transition, which also counts `hazard` and
+  `recovering`. Corrected offline with the recorded public outcome, the run
+  has 17 blocked transitions and **0 repeats**; the guard is working. The
+  remaining semantic failures were 29 missing belief rows, zero tool calls
+  and 0/1 base success.
+- Report: `kaggle_outputs/smoke14/reports/grid_real_pilot.smoke.md`. The
+  committed gate now uses the recorded outcome, not position.
+
+## Run 6: `grid_v8` (smoke-15, source commit `3232076`)
+
+`grid_v8` adds the arithmetic check that names the exact 1.50 failure. The
+smoke-15 run is the final 2-episode check. No result is recorded here until
+it completes.
 
 ## Measured cost
 
