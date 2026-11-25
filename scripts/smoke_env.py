@@ -14,10 +14,8 @@ import json
 import sys
 from pathlib import Path
 
-try:  # allow running straight from a source checkout without installation
-    import ruleshift  # noqa: F401
-except ModuleNotFoundError:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Always run the code in this checkout, including when another copy is installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from ruleshift.envs.config import EnvConfig
 from ruleshift.envs.gate_lock import RuleShiftEnv

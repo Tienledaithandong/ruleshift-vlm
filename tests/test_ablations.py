@@ -56,3 +56,19 @@ def test_no_selector_ablation_uses_raw_vlm_choice() -> None:
 def test_unknown_ablation_is_rejected() -> None:
     with pytest.raises(ValueError):
         ablation_choose("M1_minus_magic", prediction(), BELIEF, cost())
+
+
+def test_no_consistency_keeps_lookahead_and_uses_uncorrected_model_belief(monkeypatch):
+    from ruleshift.agents.value_selector import ValueAwareSelector
+
+    raw = prediction()
+    corrected = {"red": 1.0, "blue": 0.0, "green": 0.0}
+    model_cost = cost()
+
+    def verify(self, payload, belief, supplied_cost):
+        assert belief == raw["candidate_probabilities"]
+        assert supplied_cost == model_cost
+        return "COMMIT_RED"
+
+    monkeypatch.setattr(ValueAwareSelector, "choose", verify)
+    assert ablation_choose("M1_minus_consistency", raw, corrected, model_cost) == "COMMIT_RED"

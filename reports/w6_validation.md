@@ -1,9 +1,8 @@
 # Week 6 — Validation plan and status (no validation data)
 
-**Status: PLANNED, NOT RUN.** This environment has no CUDA device and no cached
-frozen-VLM checkpoint, so no method was compared on validation with real model
-output. No validation returns, confidence intervals or effect sizes are
-reported here. Placeholders are marked `PENDING`; nothing is a result.
+**Status: validation pending.** The archived Week 4 Kaggle P1 pilot exercised
+offline inference. A paired real-model validation comparison of M1, direct
+and adapted DIVA has still to be run. See the [research checkpoint](../docs/RESEARCH_STATUS.md).
 
 ## What is implemented and ready
 
@@ -12,8 +11,9 @@ reported here. Placeholders are marked `PENDING`; nothing is a result.
   DIVA-style baseline, not an exact reproduction.
 - `agents/diva_style.py` — decision-informed check valuation with physical
   probe cost, using only public costs and VLM predictions.
-- `agents/self_consistency.py` — N samples, each sample counted toward the
-  shared call cap; deterministic first-occurrence tie-break.
+- `agents/self_consistency.py` samples N structured responses with a
+  deterministic first-occurrence tie-break. Its closed-loop integration and
+  per-episode accounting are still pending.
 - `agents/value_selector.py` — `ablation_choose` for the five M1 ablations.
 - `evaluator/metrics_ci.py` — paired bootstrap CI with the **scenario** as the
   resampling unit, never the frame or decision.
@@ -33,10 +33,10 @@ behaviour.
 | H2 ablation | M1 | Immediate-only selector (`ImmediateOnlySelector`) | offline decision regret |
 | H1 diagnostic | all methods | exact Q* on microtasks | probe error vs Delta_probe bins |
 
-Every method receives the same public action menu, environment step budget and
-per-episode VLM-call cap (6). B4 self-consistency spends N calls per decision;
-the remaining methods spend one. Privileged rows (B5, B6c–e) are segmented and
-never enter a primary comparison.
+The validation design gives each model method the same public action menu,
+primitive-step budget and per-episode call cap (6). B4 must spend N calls for
+N samples. Direct, M1 and adapted DIVA spend one per model decision. Symbolic
+methods use zero model calls. Report privileged methods separately.
 
 Statistics: for paired scenario differences `d_i = return_method - return_base`,
 report `mean(d)` and a 95% percentile bootstrap CI resampling scenarios. Do not
@@ -57,9 +57,6 @@ validation run on a real model; doing it from stub output would be invalid.
 
 ## Gate W6
 
-**Not met.** The gate requires promising validation return or reduced decision
-regret for M1 over both direct VLM and the DIVA-style adapted baseline. With no
-real VLM run, the only defensible outcome is the pivot clause: continue as a
-rigorous benchmark/diagnostic study and make no method claim. If a checkpoint
-becomes available, run the validation comparison, fill the placeholders, then
-freeze the test configuration and re-evaluate the gate.
+**Pending evidence.** Evaluate M1 against both direct VLM and adapted DIVA on
+validation. Apply the preregistered pivot rule if that comparison fails. The
+earlier offline pilot did not measure the validation endpoint.

@@ -1,5 +1,7 @@
 # Handoff prompt for the next agent
 
+> **Archived handoff.** These instructions describe an earlier attempt. The current task order and pilot evidence are in [research progress](RESEARCH_STATUS.md) and the [runbook](RUNBOOK.md). Remote execution is disabled in the current configuration.
+
 Copy the prompt below verbatim into a fresh agent session. It is self-contained.
 
 ---
@@ -38,7 +40,7 @@ Copy the prompt below verbatim into a fresh agent session. It is self-contained.
 > 2. **Rebuild the Kaggle source dataset.** Repackage the repo with the `kaggle/kaggle_dataset_build` helper or the same staging approach (`kaggle/kernel/run.py` copies from `/kaggle/input/datasets/tiennamlee/ruleshift-source`), create a new dataset version with `python -m kaggle datasets version -p <stage> -r zip -m "fix prompt example"`. Confirm `python -m kaggle datasets status tiennamlee/ruleshift-source` says `ready`.
 > 3. **Re-run the pilot on Kaggle.** `python -m kaggle kernels push -p kaggle/kernel`, wait for `COMPLETE` via `python -m kaggle kernels status tiennamlee/ruleshift-offline-pilot`, then `python -m kaggle kernels output ... -p kaggle_outputs/`. Verify: (a) outputs differ across public inputs, (b) no response equals the template example, (c) action distribution is not a single constant, (d) JSON validity remains high.
 > 4. **Report honestly.** Record JSON validity, valid-action rate, over/under-probe, regret, tokens, latency, and any remaining pathologies. If outputs are still degenerate, diagnose and iterate, reporting every attempt. Never substitute the stub backend.
-> 5. **Only after a clean pilot:** add an RGB image path (`ModelRequest.image` -> backend `processor(images=...)`) so the primary P0 mode can run instead of text-only P1. Then consider validation/closed-loop with paired scenario-level CIs.
+> 5. **Only after a clean pilot:** run the primary P0 RGB mode. The RGB plumbing now exists (`ModelRequest.image`, `PublicObservation.image`, `TransformersVLMBackend(input_mode="rgb")`); it still needs a real pixel-dependent run. Then consider validation/closed-loop with paired scenario-level CIs.
 >
 > ## 5. Guardrails (non-negotiable)
 >

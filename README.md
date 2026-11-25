@@ -1,13 +1,21 @@
-# RuleShift / Agentic VLM — prepared research harness
+# RuleShift / Agentic VLM
 
+**Research checkpoint (2026-11-24) — Week 4, revised pilot verified on CPU.**
+The frozen Qwen anchor has run on Kaggle in public-text mode (P1). The v12
+archive contains 81 decisions from 27 distinct requests. All 81 chose
+`PROBE_RED`. Several noise conditions received the same input despite
+different exact labels. The pilot demonstrates inference and parsing.
+A clean Week 4 diagnostic and real Week 6 validation are still pending.
 **Status: CPU harness complete, including the additive RuleShift-Grid benchmark
 (Tier A implemented; Tier B is an RGB+text VLM scaffold). The frozen 3B grid
 is closed after diagnostic smokes and one map-0 dry chunk.** See the
 [grid feasibility note](docs/GRID_NEGATIVE_FEASIBILITY_NOTE.md).
 
-CPU-first Python 3.11 research repository for value-aware probing under hidden
-dynamics shifts. This is a 12-week research prototype, not a claim of a paper
-or of a novel method. See `docs/RUNBOOK.md` for the later experiment sequence.
+The revised P1 harness covers controlled first decisions and decisions
+following noisy public histories under a possible shift. Each default design
+contains 81 distinct inputs with exact microtask labels.
+
+[Progress and evidence](docs/RESEARCH_STATUS.md) · [CPU and experiment runbook](docs/RUNBOOK.md)
 
 ## Research question (frozen)
 
@@ -22,7 +30,7 @@ menu and textual descriptions of candidate mechanics. The evaluator alone holds
 the hidden mechanic, shift time, transition kernel, belief and exact action
 values. Probes cost real primitive steps in the same reward stream.
 
-## What is implemented
+## Implementation map
 
 | Area | Files | State |
 |---|---|---|
@@ -38,9 +46,11 @@ values. Probes cost real primitive steps in the same reward stream.
 | Freeze scaffolding | `configs/preregistered_test.yaml` | `DRAFT_NOT_FROZEN` — intentionally unfrozen |
 | Literature | `research/literature_matrix.csv`, `research/reading_notes.md` | canonical URLs verified; abstracts/READMEs only, full texts not read |
 | Reproducibility | `requirements.lock`, `scripts/preflight.py`, `scripts/check_reproducibility.py`, `scripts/reproduce_all.py`, `docs/RUNBOOK.md` | implemented |
+| Optional shift detection | `src/ruleshift/agents/change_detection.py`, `docs/world_model_trigger.md` | CPU-only CUSUM/residual utility; not yet wired to a learned model or closed-loop runner |
+| Gemini prototype | `prototypes/gemini_ruleshift_grid/` | Original four-script prototype, kept separate from the main implementation |
 
-## Repository tree (clean setup)
 
+## Verify on CPU
 ```
 project_0/
 ├── README.md                      docs/RUNBOOK.md
@@ -62,13 +72,16 @@ project_0/
 └── tests/                         # 385 tests, all passing
 ```
 
-## Verify the setup
-
-```bash
+```sh
 python -m pip install -e '.[dev]'
 python -m pytest -q
-python scripts/preflight.py
 python scripts/check_reproducibility.py
+python scripts/reproduce_all.py --skip-tests
+```
+
+The reproduction command exercises the synthetic reports using deterministic
+stubs and the CPU references. Archived Kaggle runs live separately under the
+git-ignored `kaggle_outputs/` directory in the original workspace.
 python scripts/run_grid_audit.py --maps 10 --out reports
 python scripts/run_grid_smoke.py --quick --maps 5 --seeds 2 --out reports
 ```
@@ -109,19 +122,17 @@ before scheduling anything.
 
 ## Later: real experiment and evaluation
 
-1. Obtain a frozen VLM checkpoint and pin its revision in `configs/models.yaml`.
-2. `python scripts/preflight.py --strict` must print GO.
-3. `python scripts/run_real_pilot.py` runs the offline pilot with the real
-   backend and never falls back to the stub.
-4. Use the injected-backend example in `docs/RUNBOOK.md` for closed-loop and
-   held-out runs, compute paired scenario-level CIs, then freeze the test
-   configuration with a commit hash.
-5. Only then write up results. No empirical result exists yet.
+## Current scope
 
-## Non-goals
+The default model path still consumes public text. The P0 plumbing now attaches
+the rendered public RGB frame to the observation and forwards it to the
+processor when `TransformersVLMBackend(input_mode="rgb")` is selected; a
+pixel-dependence test covers request identity and forwarding. A real
+pixel-dependent VLM run has not been executed, so P0 remains unvalidated. The
+primary endpoint is paired closed-loop return after real validation and a test
+freeze. Prompt changes, the P0 path and agent comparisons belong on development
+or validation inputs. The locked configuration remains `DRAFT_NOT_FROZEN`.
 
-- No VLM fine-tuning, RL training, multi-agent debate or open-set rule discovery.
-- No privileged information in agent inputs, prompts, caches or logs.
-- No "Bayes-optimal" wording where a reference is approximate.
-- No fabricated results, plots or method/novelty claims.
-- No test-set freeze before a real validation run.
+The optional [CUSUM detector](docs/world_model_trigger.md) and the
+[Gemini grid prototype](prototypes/gemini_ruleshift_grid/README.md) remain
+separate experiments. The canonical benchmark lives in `src/ruleshift/`.

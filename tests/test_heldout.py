@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import csv
 import json
+from types import SimpleNamespace
+
+import pytest
+import yaml
 
 from ruleshift.evaluator.heldout import (
     build_heldout_family_a,
@@ -12,6 +16,30 @@ from ruleshift.evaluator.heldout import (
 )
 
 METHODS = ("direct_stub", "diva_stub", "m1_stub", "immediate_stub")
+
+
+def test_locked_evaluation_rejects_a_changed_implementation_before_any_call(tmp_path):
+    from dataclasses import asdict
+    from ruleshift.evaluator.provenance import implementation_digest
+
+    scenarios = build_heldout_family_a()[:1]
+    scenario_id, config = scenarios[0]
+    backend = SimpleNamespace(model_id="anchor", revision="a" * 40)
+    spec = {
+        "scenarios": [{"id": scenario_id, "config": asdict(config)}],
+        "methods": ["never_probe"], "seeds": [1], "model_id": backend.model_id,
+        "revision": backend.revision, "implementation_sha256": implementation_digest(),
+    }
+    frozen = {"status": "READY", "frozen_commit": "b" * 40, "locked_run": spec,
+              "call_and_step_budget": {"max_vlm_calls_per_episode": 6, "max_env_steps": 60}}
+    path = tmp_path / "test.yaml"
+    path.write_text(yaml.safe_dump(frozen))
+    result = run_heldout_evaluation(scenarios, ("never_probe",), (1,), backend, preregistration=path)
+    assert len(result.episodes) == 1
+    spec["implementation_sha256"] = "0" * 64
+    path.write_text(yaml.safe_dump(frozen))
+    with pytest.raises(ValueError, match="frozen run"):
+        run_heldout_evaluation(scenarios, ("never_probe",), (1,), backend, preregistration=path)
 
 
 def dev_parameter_values() -> dict[str, set[float]]:

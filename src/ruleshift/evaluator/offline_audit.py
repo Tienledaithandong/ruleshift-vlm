@@ -7,10 +7,9 @@ artifacts are a SYNTHETIC DRY RUN and must never be reported as VLM evidence.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import math
-from dataclasses import dataclass
+import hashlib
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Protocol
 
@@ -19,9 +18,14 @@ from ruleshift.agents.vlm_backend import (
     ModelRequest,
     ModelResponse,
     parse_structured_output,
-    render_prompt,
 )
-from ruleshift.envs.config import EnvConfig
+from ruleshift.agents.structured_vlm import build_prediction_request
+from ruleshift.agents.value_selector import (
+    PublicCostModel,
+    ValueAwareSelector,
+    public_macro_durations,
+)
+from ruleshift.envs.config import EnvConfig, load_dev_grid
 from ruleshift.envs.gate_lock import RuleShiftEnv
 from ruleshift.evaluator.exact_solver import (
     ExactSolver,
@@ -32,14 +36,14 @@ from ruleshift.evaluator.exact_solver import (
 from ruleshift.public_api.interface import PublicObservation
 from ruleshift.public_api.schemas import FAMILY_A_ACTIONS
 
-from .phase_diagram import LOCKOUT_LEVELS, NOISE_LEVELS, PROBE_DETOURS
 
 #: Long enough for a full probe, a commit and the largest lockout to fit, so
 #: both ``delta_probe`` signs are reachable with the real macro durations.
 HORIZON = 24
 #: Labels cover the complete public macro menu, not a hand-picked subset.
 ACTIONS = FAMILY_A_ACTIONS
-REFERENCE_BELIEF = {("red", False): 0.5, ("blue", True): 0.5}
+RULE_PAIRS = (("red", "blue"), ("blue", "green"), ("green", "red"))
+HORIZONS = (HORIZON, 16, 20, 12, 28)
 
 
 @dataclass(frozen=True)
@@ -52,6 +56,14 @@ class OfflineContext:
     q_values: dict[str, float]
     public_observation: PublicObservation
     horizon: int
+    #: Public prior for the first pair rule (0.5 = fair draw).
+    prior: float = 0.5
+    #: Disclosed station error rate for this context (0 = reliable).
+    feedback_noise: float = 0.0
+    #: Evaluator-only prefix evidence for history contexts.
+    prefix: tuple[tuple[str, str], ...] = ()
+    #: Evaluator-only provenance (true rule, shift time, ...).
+    evaluator_meta: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -85,9 +97,10 @@ class AuditMetrics:
     n_contexts: int
     json_valid_rate: float
     valid_action_rate: float
-    #: Fraction of decisions whose chosen macro is Q*-optimal for the cell.
     correct_argmax_rate: float
-    mean_decision_regret: float
+    over_probe_rate: float
+    under_probe_rate: float
+    mean_decision_regret: float | None
     mean_input_tokens: float
     mean_output_tokens: float
     mean_model_latency_ms: float
@@ -96,10 +109,11 @@ class AuditMetrics:
     #: Fraction of decisions whose chosen macro has an exact-solver label.
     #: Regret is only averaged over covered decisions.
     label_coverage_rate: float
-    #: Always starts with ``all``, then the ``delta_probe`` sign split and one
-    #: row per probe detour. Over-probing is the probe rate of the
-    #: ``delta_probe<0`` row; under-probing is the complement of the
-    #: ``delta_probe>=0`` row.
+    distinct_requests: int
+    invalid_json_count: int
+    invalid_action_count: int
+    fallback_count: int
+    #: Stratified diagnostics: all decisions, both delta_probe signs, and detours.
     strata: tuple[DecisionStratum, ...] = ()
 
 
@@ -113,6 +127,7 @@ def _stratum(key: str, rows: list[dict]) -> DecisionStratum:
         n_labelled=len(regrets),
         mean_decision_regret=(sum(regrets) / len(regrets)) if regrets else None,
     )
+
 
 class _Backend(Protocol):
     model_id: str
@@ -134,110 +149,119 @@ def _microtask_config(
     )
 
 
-def build_offline_contexts(count: int = 81) -> tuple[OfflineContext, ...]:
-    """Select diverse dev contexts with exact labels and public observations."""
+def build_offline_contexts(count: int = 81, config_path: Path | None = None) -> tuple[OfflineContext, ...]:
+    """Controlled, first-decision P1 microtasks with a public initial lottery.
 
-    seeds_per_cell = math.ceil(
-        count / (len(PROBE_DETOURS) * len(NOISE_LEVELS) * len(LOCKOUT_LEVELS))
-    )
+    Unlike live shift episodes, the rule here stays fixed and the station test
+    is ideal. The rule draw itself is hidden. A history-free reset supplies
+    the public geometry; its concrete latent state never supplies a label.
+    Cycle costs, card pairs and remaining budgets before repeating a cell.
+    """
+
+    dev = load_dev_grid(config_path)
+    if dev["split"] != "dev" or dev["environment"]["family"] != "gate_lock":
+        raise ValueError("offline microtask design requires the Family A dev grid")
+    environment = dev["environment"]
+    detours = dev["grid"]["probe_detour_steps"]
+    lockouts = environment["lockout_steps_options"]
+    cell_count = len(detours) * len(lockouts)
+    capacity = cell_count * len(RULE_PAIRS) * len(HORIZONS)
+    if not 1 <= count <= capacity:
+        raise ValueError(f"context count must be between 1 and {capacity}")
+
     contexts: list[OfflineContext] = []
-    for detour in PROBE_DETOURS:
-        for noise in NOISE_LEVELS:
-            for lockout in LOCKOUT_LEVELS:
-                # Public geometry is identical for the whole cell, so read the
-                # commit travel distance from a throwaway environment.
-                probe_env = RuleShiftEnv(
-                    config=EnvConfig(
-                        probe_detour_steps=detour,
-                        feedback_noise=noise,
-                        lockout_steps=lockout,
-                        disable_shift=True,
-                    )
-                )
-                probe_env.reset(seed=1)
-                commit_travel = int(
-                    probe_env.public_view().public_costs["commit_travel"]
-                )
-                microtask = _microtask_config(detour, commit_travel, noise, lockout)
-                solver = ExactSolver(microtask, ACTIONS)
-                q_values = dict(solver.q_values(freeze_belief(REFERENCE_BELIEF), HORIZON))
-                delta = solver.delta_probe(REFERENCE_BELIEF, HORIZON)
-                for seed in range(1, seeds_per_cell + 1):
-                    scenario_id = f"dev-d{detour}-n{noise}-l{lockout}-s{seed}"
-                    env_config = EnvConfig(
-                        probe_detour_steps=detour,
-                        feedback_noise=noise,
-                        lockout_steps=lockout,
-                        disable_shift=True,
-                        initial_mechanic="red",
-                        scenario_id=scenario_id,
-                    )
-                    env = RuleShiftEnv(config=env_config)
-                    env.reset(seed=seed)
-                    for _ in range(seed - 1):
-                        env.step("WAIT")
-                    contexts.append(
-                        OfflineContext(
-                            context_id=scenario_id,
-                            scenario_id=scenario_id,
-                            config=microtask,
-                            belief=dict(REFERENCE_BELIEF),
-                            delta_probe=delta,
-                            q_values=q_values,
-                            public_observation=env.public_view(),
-                            horizon=HORIZON,
-                        )
-                    )
-    return tuple(contexts[:count])
-
-
-def _make_request(
-    context: OfflineContext, prompt: str, model_id: str, max_new_tokens: int
-) -> ModelRequest:
-    observation = context.public_observation
-    descriptions = [rule.description for rule in observation.candidate_rules]
-    candidate_hash = hashlib.sha256(
-        json.dumps(descriptions, sort_keys=True).encode("utf-8")
-    ).hexdigest()
-    return ModelRequest(
-        model_id=model_id,
-        prompt=prompt,
-        image_hash=observation.public_obs_hash,
-        history_hash=observation.public_history_hash,
-        available_actions=tuple(observation.available_actions),
-        candidate_hash=candidate_hash,
-        decoding_seed=7,
-        max_new_tokens=max_new_tokens,
-    )
+    solvers: dict[tuple[int, int], ExactSolver] = {}
+    for index in range(count):
+        block, cell = divmod(index, cell_count)
+        row, column = divmod(cell, len(detours))
+        detour = detours[column]
+        lockout = lockouts[(row - column - 1) % len(lockouts)]
+        pair = RULE_PAIRS[(cell + block) % len(RULE_PAIRS)]
+        horizon = HORIZONS[(row + block // len(RULE_PAIRS)) % len(HORIZONS)]
+        scenario_id = f"ideal-d{detour}-l{lockout}-{pair[0]}-{pair[1]}-h{horizon}"
+        env = RuleShiftEnv(config=EnvConfig(
+            probe_detour_steps=detour,
+            feedback_noise=0.0,
+            lockout_steps=lockout,
+            disable_shift=True,
+            max_env_steps=horizon,
+            grid_width=environment["grid_size"][0],
+            grid_height=environment["grid_size"][1],
+            step_cost=environment["step_cost"],
+            delivery_reward=environment["delivery_reward"],
+        ))
+        env.reset(seed=0)
+        initial = env.public_view()
+        description = (
+            f"Controlled card lottery. An unseen fair draw selected either {pair[0]} "
+            f"or {pair[1]}. That card stays fixed for this task. The station reliably reports "
+            f"whether a card opens the gate. You have {horizon} primitive steps "
+            f"to maximize total delivery reward including step costs. {initial.public_text}"
+        )
+        # The text promises exactly two candidate rules. Keep the menu
+        # consistent: leaving GREEN in candidate_rules would contradict it.
+        observation = replace(
+            initial,
+            public_text=description,
+            candidate_rules=tuple(
+                rule for rule in initial.candidate_rules if rule.rule_id in pair
+            ),
+        )
+        if (detour, lockout) not in solvers:
+            config = _microtask_config(
+                detour, int(initial.public_costs["commit_travel"]), 0.0, lockout
+            )
+            config = replace(config, step_cost=environment["step_cost"],
+                             reward_success=environment["delivery_reward"])
+            solvers[detour, lockout] = ExactSolver(config, ACTIONS)
+        solver = solvers[detour, lockout]
+        belief = {(color, False): 0.5 for color in pair}
+        q_values = dict(solver.q_values(freeze_belief(belief), horizon))
+        contexts.append(OfflineContext(
+            context_id=scenario_id,
+            scenario_id=scenario_id,
+            config=solver.config,
+            belief=belief,
+            delta_probe=solver.delta_probe(belief, horizon),
+            q_values=q_values,
+            public_observation=observation,
+            horizon=horizon,
+            prior=0.5,
+            feedback_noise=0.0,
+        ))
+    return tuple(contexts)
 
 
 def run_offline_audit(
     contexts: tuple[OfflineContext, ...],
     backend: _Backend,
     cache: ResponseCache,
-    max_new_tokens: int = 768,
+    *,
+    method: str = "direct",
+    max_new_tokens: int | None = None,
 ) -> tuple[list[dict], AuditMetrics]:
-    """Run the direct prompt over contexts and score probe decisions."""
+    """Run direct or M1 over contexts and score probe decisions.
 
+    ``method="m1"`` uses the structured outcome prompt and the agent-side
+    value selector. It never reads the exact solver or the hidden rule.
+    """
+
+    if method not in ("direct", "m1"):
+        raise ValueError(f"unknown offline method: {method}")
+
+    if not contexts:
+        raise ValueError("offline audit requires at least one decision context")
     records: list[dict] = []
     labels: list[dict] = []
     scored: list[dict] = []
+    flags: list[dict] = []
     call_count = 0
 
     for context in contexts:
         observation = context.public_observation
-        description_by_rule = {
-            rule.rule_id: rule.description for rule in observation.candidate_rules
-        }
-        prompt = render_prompt(
-            public_history=observation.public_text,
-            public_text=observation.public_text,
-            candidate_rules=[f"{key}: {value}" for key, value in description_by_rule.items()],
-            available_actions=list(observation.available_actions),
-            public_costs=dict(observation.public_costs),
-        )
-        request = _make_request(
-            context, prompt, backend.model_id, max_new_tokens
+        direct = method == "direct"
+        request = build_prediction_request(
+            observation, backend, direct=direct, max_new_tokens=max_new_tokens
         )
         cached = cache.get(request)
         cache_hit = cached is not None
@@ -248,10 +272,50 @@ def run_offline_audit(
         else:
             response = cached
 
-        payload, errors = parse_structured_output(response.text, request.available_actions)
-        chosen = payload["selected_action"] if payload else "WAIT"
-        available = set(request.available_actions)
-        valid_action = payload is not None and chosen in available
+        payload, errors = parse_structured_output(
+            response.text,
+            request.available_actions,
+            request.candidate_rules,
+            direct=direct,
+        )
+        if direct:
+            chosen = payload["selected_action"] if payload else "WAIT"
+            model_selected = chosen
+        else:
+            model_selected = payload.get("selected_action") if payload else None
+            if payload is None:
+                chosen = "WAIT"
+            else:
+                probabilities = payload.get("candidate_probabilities", {})
+                belief = {
+                    str(rule): float(value)
+                    for rule, value in probabilities.items()
+                    if float(value) > 0.0
+                }
+                if not belief:
+                    fallback: dict[str, float] = {}
+                    for (rule, _shifted), mass in context.belief.items():
+                        fallback[rule] = fallback.get(rule, 0.0) + mass
+                    belief = fallback
+                total = sum(belief.values())
+                if total <= 0.0:
+                    raise ValueError(f"empty belief for context {context.context_id}")
+                belief = {rule: value / total for rule, value in belief.items()}
+                probe_duration, commit_duration = public_macro_durations(
+                    observation.public_costs
+                )
+                cost = PublicCostModel.from_public_costs(
+                    observation.public_costs,
+                    probe_duration=probe_duration,
+                    commit_duration=commit_duration,
+                    remaining_horizon=context.horizon,
+                    learning_rate=0.5,
+                )
+                chosen = ValueAwareSelector().choose(payload, belief, cost)
+        json_valid = not any(error.startswith("invalid JSON") for error in errors)
+        invalid_action = any(error.startswith("selected_action is not") for error in errors)
+        over_probe = context.delta_probe < -1e-9 and chosen.startswith("PROBE_")
+        under_probe = context.delta_probe > 1e-9 and not chosen.startswith("PROBE_")
         best_q = max(context.q_values.values())
         argmax_actions = {
             action for action, value in context.q_values.items() if value == best_q
@@ -268,9 +332,13 @@ def run_offline_audit(
                 "public_obs_hash": observation.public_obs_hash,
                 "public_history_hash": observation.public_history_hash,
                 "available_actions": list(observation.available_actions),
+                "method": method,
                 "chosen_action": chosen,
-                "json_valid": payload is not None,
-                "invalid_action": not valid_action,
+                "model_selected_action": model_selected,
+                "json_valid": json_valid,
+                "schema_valid": payload is not None,
+                "invalid_action": invalid_action,
+                "fallback": payload is None,
                 "parse_error_count": len(errors),
                 "model_id": response.model_id,
                 "backend_id": response.backend_id,
@@ -278,8 +346,14 @@ def run_offline_audit(
                 "output_tokens": response.output_tokens,
                 "latency_ms": response.latency_ms,
                 "cache_hit": cache_hit,
-                "prompt_hash": request.fingerprint(),
-                "vlm_calls_used": 0 if cache_hit else 1,
+                "public_prompt": request.prompt,
+                "prompt_version": request.prompt_version,
+                "decoding_seed": request.decoding_seed,
+                "do_sample": request.do_sample,
+                "prompt_hash": "sha256:" + hashlib.sha256(request.prompt.encode("utf-8")).hexdigest(),
+                "request_fingerprint": request.fingerprint(),
+                "vlm_calls_used": 1,
+                "fresh_model_calls": 0 if cache_hit else 1,
             }
         )
         labels.append(
@@ -290,6 +364,10 @@ def run_offline_audit(
                 "chosen_q": chosen_q,
                 "decision_regret": regret,
                 "label_covered": label_covered,
+                "prior": context.prior,
+                "feedback_noise": context.feedback_noise,
+                "prefix": [list(item) for item in context.prefix],
+                "evaluator_meta": context.evaluator_meta,
                 "belief": {f"{k[0]}:{k[1]}": v for k, v in context.belief.items()},
             }
         )
@@ -302,8 +380,9 @@ def run_offline_audit(
                 "regret": regret,
             }
         )
+        flags.append({"over_probe": over_probe, "under_probe": under_probe})
 
-    n = max(len(records), 1)
+    n = len(records)
     covered_regrets = [
         label["decision_regret"]
         for label in labels
@@ -326,10 +405,12 @@ def run_offline_audit(
     metrics = AuditMetrics(
         n_contexts=len(records),
         json_valid_rate=sum(r["json_valid"] for r in records) / n,
-        valid_action_rate=sum(not r["invalid_action"] for r in records) / n,
-        correct_argmax_rate=sum(row["correct_argmax"] for row in scored) / n,
+        valid_action_rate=sum(r["schema_valid"] for r in records) / n,
+        correct_argmax_rate=sum(r["correct_argmax"] for r in scored) / n,
+        over_probe_rate=sum(f["over_probe"] for f in flags) / n,
+        under_probe_rate=sum(f["under_probe"] for f in flags) / n,
         mean_decision_regret=(
-            sum(covered_regrets) / len(covered_regrets) if covered_regrets else 0.0
+            sum(covered_regrets) / len(covered_regrets) if covered_regrets else None
         ),
         mean_input_tokens=(
             sum(record["input_tokens"] for record in model_calls) / call_denominator
@@ -343,6 +424,10 @@ def run_offline_audit(
         call_count=call_count,
         cache_hit_rate=sum(r["cache_hit"] for r in records) / n,
         label_coverage_rate=covered / n,
+        distinct_requests=len({r["prompt_hash"] for r in records}),
+        invalid_json_count=sum(not r["json_valid"] for r in records),
+        invalid_action_count=sum(r["invalid_action"] for r in records),
+        fallback_count=sum(r["fallback"] for r in records),
         strata=tuple(strata),
     )
     return records, metrics
@@ -371,6 +456,13 @@ def write_taxonomy_report(
 ) -> None:
     """Write public manifest, separate evaluator labels, and a labelled report."""
 
+    if len(records) != len(contexts):
+        raise ValueError(
+            f"manifest has {len(records)} rows but {len(contexts)} contexts were built"
+        )
+    if metrics.n_contexts != len(records):
+        raise ValueError("metrics.n_contexts does not match the manifest row count")
+
     for path, rows in ((Path(manifest_path), records),):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -385,6 +477,10 @@ def write_taxonomy_report(
             "context_id": context.context_id,
             "delta_probe": context.delta_probe,
             "q_values": context.q_values,
+            "prior": context.prior,
+            "feedback_noise": context.feedback_noise,
+            "prefix": [list(item) for item in context.prefix],
+            "evaluator_meta": context.evaluator_meta,
         }
         for context in contexts
     ]
@@ -393,22 +489,30 @@ def write_taxonomy_report(
         encoding="utf-8",
     )
 
+    regret_text = f"{metrics.mean_decision_regret:.3f}" if metrics.mean_decision_regret is not None else "unavailable"
     text = f"""# Week 4 — Offline pilot dry run (SYNTHETIC)
 
 **SYNTHETIC DRY RUN. No VLM was run.** The backend used here is a deterministic
 stub (`STUB_SYNTHETIC`). These numbers exercise the harness only; they are NOT
 evidence about any vision-language model and must not appear in a paper.
 
-Contexts: {metrics.n_contexts}. Model calls: {metrics.call_count}.
+Public-text (P1) microtask decisions: {metrics.n_contexts}.
+Methods: {', '.join(sorted({str(r.get('method', 'direct')) for r in records}))}.
+Distinct public requests: {metrics.distinct_requests}. Model calls: {metrics.call_count}.
+Exact reference labels use the specified context design and remaining budget.
+Decision regret includes the executed WAIT fallback on invalid responses.
 Public manifest: `{Path(manifest_path).name}` (public fields only).
 Privileged labels: `{Path(evaluator_path).name}` (never joined into model input).
 
 | Diagnostic | Value |
 |---|---:|
 | JSON valid rate | {metrics.json_valid_rate:.3f} |
-| Valid action rate | {metrics.valid_action_rate:.3f} |
-| Correct-argmax rate vs exact Q* | {metrics.correct_argmax_rate:.3f} |
-| Mean decision regret vs exact Q* (covered decisions only) | {metrics.mean_decision_regret:.3f} |
+| Schema-valid action rate | {metrics.valid_action_rate:.3f} |
+| Correct-argmax rate (chosen macro is exact Q* optimal) | {metrics.correct_argmax_rate:.3f} |
+| Invalid JSON / invalid action / WAIT fallbacks | {metrics.invalid_json_count} / {metrics.invalid_action_count} / {metrics.fallback_count} |
+| Over-probe rate (probed when exact label says do not) | {metrics.over_probe_rate:.3f} |
+| Under-probe rate (did not probe when label says probe) | {metrics.under_probe_rate:.3f} |
+| Mean decision regret vs exact Q* (covered decisions only) | {regret_text} |
 | Decisions with an exact label (full macro menu) | {metrics.label_coverage_rate:.3f} |
 | Mean output tokens | {metrics.mean_output_tokens:.1f} |
 | Cache hit rate | {metrics.cache_hit_rate:.3f} |
@@ -427,9 +531,9 @@ is the complement of under-probing. Regret is averaged over covered decisions.
 
 1. Invalid JSON / parse failures — counted, deterministic fallback to `WAIT`.
 2. Invalid macro ids — counted separately from parse failures.
-3. Over-probing — probe rate of the `delta_probe < 0` stratum.
-4. Under-probing — complement of the probe rate in the `delta_probe >= 0` stratum.
-5. Outcome-prediction error — schema is captured, accuracy scoring is Week 5.
+3. Over-probing — probe chosen with a negative label outside the 1e-9 tie band.
+4. Under-probing — non-probe chosen with a positive label outside the tie band.
+5. This direct-action pilot records the chosen macro.
 6. Cost accounting — tokens, calls, latency and cache hits per decision.
 
 A real frozen-VLM pilot requires an available checkpoint. When one exists,

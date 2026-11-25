@@ -7,12 +7,10 @@ import csv
 import sys
 from pathlib import Path
 
-try:
-    import ruleshift  # noqa: F401
-except ModuleNotFoundError:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Always run the code in this checkout, including when another copy is installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ruleshift.evaluator.heldout import build_heldout_family_a
+from ruleshift.evaluator.closed_loop import build_family_a_scenarios
 from ruleshift.evaluator.stress import (
     paired_ci_across_boot_seeds,
     seed_return_variance,
@@ -31,7 +29,7 @@ def main() -> None:
 
     prior_rows = sweep_shift_prior((0.0, 0.05, 0.2), METHODS, seeds=(1,))
     noise_rows = sweep_calibration((0.0, 0.1, 0.25), METHODS, seeds=(1,))
-    scenarios = build_heldout_family_a()[:4]
+    scenarios = tuple(item for item in build_family_a_scenarios() if not item[1].disable_shift)[:4]
     variances = seed_return_variance(scenarios, METHODS, seeds=(1, 2))
     intervals = paired_ci_across_boot_seeds(
         scenarios, "m1_stub", "never_probe", seeds=(1,), boot_seeds=(0, 1, 2)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import Counter
 from typing import Sequence
 
 from ruleshift.public_api.interface import PublicObservation
@@ -17,13 +18,7 @@ def majority_vote(actions: Sequence[str]) -> str:
 
     if not actions:
         return "WAIT"
-    counts: dict[str, int] = {}
-    best, best_count = actions[0], 0
-    for action in actions:
-        counts[action] = counts.get(action, 0) + 1
-        if counts[action] > best_count:
-            best, best_count = action, counts[action]
-    return best
+    return Counter(actions).most_common(1)[0][0]
 
 
 @dataclass(frozen=True)
@@ -50,6 +45,7 @@ class SelfConsistencySelector:
                 self.backend,
                 self.cache,
                 decoding_seed=100 + sample,
+                do_sample=True,
             )
             if payload is None or errors:
                 continue

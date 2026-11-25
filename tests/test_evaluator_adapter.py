@@ -9,11 +9,13 @@ from ruleshift.evaluator.adapter import trace_from_env
 
 def test_trace_mirrors_privileged_state_without_inventing_solver_values() -> None:
     env = RuleShiftEnv(config=EnvConfig(initial_mechanic="blue", disable_shift=True))
-    env.reset(seed=1)
+    env.reset(seed=1, options={"scenario_id": "dev-blue"})
     env.step("WAIT")
 
     trace = trace_from_env(env)
     state = env.evaluator_state()
+    assert trace.true_rule_before == "blue"
+    assert trace.scenario_id == "dev-blue"
     assert trace.true_rule_after == state["mechanic_id"] == "blue"
     assert trace.shift_time == state["shift_time"] is None
     assert trace.bayes_belief is None

@@ -1,92 +1,31 @@
-# Remote GPU setup — Google Colab and Kaggle (setup only)
+# Hosted runtime preparation
 
-**Nothing in this setup has been executed remotely.** No model was downloaded,
-no kernel was started, and no experiment was run. This document prepares the
-repository so that a later run can happen on Colab or Kaggle instead of your
-local machine.
+The [research checkpoint](RESEARCH_STATUS.md) describes the archived Kaggle
+public-text pilot. The CPU suite and artifact review work on a local machine.
+Remote execution is disabled in the checked-in runtime configuration.
 
-## 0. What I need from you (placeholders)
+## Kaggle source and execution
 
-Edit `configs/runtime.yaml`:
+The script kernel copies a private source **dataset**, independent of the
+GitHub clone path. Model weights come from the pinned Hugging Face revision in
+`configs/models.yaml`. A GitHub token is unnecessary for the dataset kernel.
+Keep Kaggle credentials outside this repository.
 
-- `repo_url`: already set to `https://github.com/Tienledaithandong/ruleshift-vlm.git`.
-- `checkpoint.source`: `hf` or `kaggle_dataset`.
-- `checkpoint.dataset_slug`: required only if using a Kaggle dataset.
+For a future approved pilot:
 
-`configs/models.yaml` is now pinned for the pilot:
-`Qwen/Qwen2.5-VL-3B-Instruct` at revision
-`66285546d2b821cf421d4f5eb2576359d3770cd3`, with `device: cuda`.
+1. Set `execution.allow_remote_run` in `configs/runtime.yaml` for the run snapshot. On the submitting machine, check `python scripts/kaggle_preflight.py --strict`. It checks local CLI/credential presence and the opt-in setting. The accelerator belongs to the target runtime.
+2. Run `python scripts/stage_kaggle_dataset.py` to recreate the local `kaggle_stage/ruleshift-source` snapshot. Review it and version that dataset before submitting the kernel.
+3. `kaggle/kernel/kernel-metadata.json` specifies the source dataset and enables the accelerator. Submitting this kernel starts a remote job. The kernel installs the pilot dependencies and requests the pinned checkpoint download explicitly.
+4. Save artifacts in a new attempt directory. Check output provenance and the Week 4 diagnostics listed in the [runbook](RUNBOOK.md).
 
-## 1. GitHub
+## Colab
 
-The project is already a Git repository with a remote and a commit history, so
-there is nothing to initialise. Clone it where you want to run:
+`notebooks/colab_setup.ipynb` checks a source checkout and the CPU suite.
+`notebooks/colab_pilot.ipynb` is the real P1 experiment. For a future approved
+run, use an accessible checkout, set the runtime opt-in in that checkout and
+install the VLM extra. The pilot cell uses the pinned revision and explicitly
+allows a checkpoint download. The primary P0 input still requires a validated
+RGB path.
 
-```bash
-git clone https://github.com/Tienledaithandong/ruleshift-vlm.git
-cd ruleshift-vlm
-```
-
-If you want results tied to an exact source snapshot, check out the commit you
-intend to cite (`git checkout <commit>`) and record it in
-`reports/experiment_manifest.json` (`scripts/check_reproducibility.py` writes
-the file hashes for you).
-
-Never commit `kaggle.json`, API tokens, credentials, or generated result files.
-They are git-ignored, and CI fails if `scripts/reproduce_all.py` leaves the
-working tree dirty.
-
-## 2. Google Colab — offline pilot
-
-Open `notebooks/colab_pilot.ipynb` for the ready-to-run pilot. It clones this
-repo, installs `.[dev,vlm]` (the real backend needs `torch`/`transformers`,
-which the CPU `dev` extra deliberately omits), checks the GPU and runs
-`scripts/run_real_pilot.py --model-key qwen2.5-vl-3b --contexts 81`.
-The pilot is **text-input only** (P1 diagnostic mode): the backend sends the
-public prompt but no RGB tensor yet. No training, closed loop or evaluation
-happens in this step.
-
-The general setup notebook (no run) is `notebooks/colab_setup.ipynb`, described
-below.
-
-1. Open `notebooks/colab_setup.ipynb` in Colab.
-2. Runtime → Change runtime type → GPU (T4 is enough for a 3B model at 4-bit;
-   for BF16 prefer L4/A100 if available).
-3. Set `RULESHIFT_REPO_URL` in Colab secrets or a setup cell.
-4. Run all cells. They clone the repo, install `.[dev]`, check `nvidia-smi`,
-   run `pytest -q`, and run `scripts/preflight.py`. The setup notebook stays on
-   the CPU `dev` extra; only the pilot notebook installs `.[dev,vlm]`.
-5. `preflight.py` will still say NO-GO until a checkpoint exists and the test
-   config is frozen. That is intentional.
-
-## 3. Kaggle
-
-1. Create an API token at `https://www.kaggle.com/account` → Create New API Token.
-2. Place `kaggle.json` at `~/.kaggle/kaggle.json` (or set `KAGGLE_USERNAME` and
-   `KAGGLE_KEY`). The file is git-ignored; `kaggle/kaggle.json.example` is a
-   placeholder only.
-3. Open `notebooks/kaggle_gpu.ipynb` as a new Kaggle notebook, enable
-   Settings → Accelerator → GPU T4 x2 or P100, and set `RULESHIFT_REPO_URL`.
-4. Run all cells. They clone, install, check GPU, run tests and call
-   `scripts/kaggle_preflight.py --strict` (local checks only — no Kaggle API
-   calls are made by that script).
-5. To use a model hosted as a Kaggle dataset, set its slug in
-   `configs/runtime.yaml` and download it yourself in the notebook when ready.
-
-## 4. What the preflight scripts check
-
-- `scripts/preflight.py` — model revision pinned, local checkpoint found,
-  CUDA availability, and freeze state of `configs/preregistered_test.yaml`.
-- `scripts/kaggle_preflight.py` — `kaggle` package installed, credentials
-  present as a file or env vars, GPU visible, repo URL not a placeholder, and
-  `execution.allow_remote_run` enabled. It makes **no network calls**.
-
-Both print GO/NO-GO. `--strict` exits non-zero on NO-GO so it can gate a run.
-
-## 5. Guardrails
-
-- Local GPU is not used; no local training/evaluation happens in this setup.
-- The stub remains the only backend that has actually run. `run_real_pilot.py`
-  never falls back to the stub.
-- `configs/preregistered_test.yaml` stays `DRAFT_NOT_FROZEN`.
-- No result files are committed; `reports/`, `results/`, `data/` are empty.
+Both platforms use `scripts/run_real_pilot.py`. A pilot uses development inputs
+and the draft test configuration. Locked evaluation is a later stage.

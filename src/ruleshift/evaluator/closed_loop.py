@@ -1,6 +1,6 @@
 """Closed-loop Family A runner with one shared macro executor for all methods.
 
-The VLM-side methods use the deterministic stub, so all outputs are SYNTHETIC.
+The default VLM-side backend is a deterministic stub.
 What this runner verifies is the loop itself: identical action affordances and
 step accounting, no privileged data in public traces, and paired scenario-level
 confidence intervals.
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol, Sequence
 
@@ -18,7 +18,7 @@ from ruleshift.agents.baselines import NeverProbePolicy, RandomProbePolicy
 from ruleshift.agents.cache import ResponseCache
 from ruleshift.agents.consistency import HistoryConsistencyUpdater
 from ruleshift.agents.diva_style import DivaStyleSelector
-from ruleshift.agents.structured_vlm import run_structured_prediction
+from ruleshift.agents.structured_vlm import run_direct_prediction, run_structured_prediction
 from ruleshift.agents.value_selector import (
     ImmediateOnlySelector,
     PublicCostModel,
@@ -26,12 +26,14 @@ from ruleshift.agents.value_selector import (
     public_macro_durations,
 )
 from ruleshift.agents.vlm_backend import StubVLMBackend
-from ruleshift.envs.config import EnvConfig
+from ruleshift.envs.config import EnvConfig, HAZARD_BY_CONDITION, load_dev_grid
 from ruleshift.envs.gate_lock import RuleShiftEnv
 from ruleshift.evaluator.metrics_ci import PairedSummary, summarize_paired
 from ruleshift.public_api.interface import PublicObservation
-from ruleshift.public_api.schemas import MACRO_ACTIONS_FROZEN
+from ruleshift.public_api.schemas import MACRO_ACTIONS
 
+#: Preregistered per-episode VLM call cap (configs/preregistered_test.yaml).
+#: Extra samples and re-tries count toward it; it applies to every method.
 DEFAULT_VLM_CALL_CAP = 6
 _RULES = ("red", "blue", "green")
 
@@ -83,7 +85,11 @@ class _RandomProbeMethod:
 
     def choose(self, observation: PublicObservation, info: dict) -> str:
         if self._policy is None:
-            self._policy = RandomProbePolicy(observation.public_history_hash)
+            # The random-probe stress method intentionally proposes the full
+            # public macro menu so the runner exercises cross-family clamping.
+            self._policy = RandomProbePolicy(
+                observation.public_history_hash, actions=MACRO_ACTIONS
+            )
         return self._policy.choose(observation)
 
     def record(self, action: str, outcome: str) -> None:
@@ -104,6 +110,7 @@ class _StubMethod:
         self._cache = cache if cache is not None else ResponseCache(None)
         self._updater = HistoryConsistencyUpdater(_RULES, learning_rate=0.5)
         self._belief = {rule: 1.0 / len(_RULES) for rule in _RULES}
+        self._last_evidence: tuple[str, str] | None = None
         self.last_calls = 0
         self.last_input_tokens = 0
         self.last_output_tokens = 0
@@ -127,10 +134,18 @@ class _StubMethod:
         )
 
     def choose(self, observation: PublicObservation, info: dict) -> str:
-        payload, response, errors = run_structured_prediction(
+        predict = run_direct_prediction if self.mode == "direct" else run_structured_prediction
+        payload, response, errors = predict(
             observation, self._backend, self._cache
         )
-        self.last_calls = 0 if errors and payload is None else 1
+        # A cached or malformed response still spends one generation-equivalent
+        # call in a matched-budget comparison.
+        self.last_calls = 1
+        self.last_json_valid = not any(error.startswith("invalid JSON") for error in errors)
+        self.last_invalid_action = any(error.startswith("selected_action is not") for error in errors)
+        self.last_schema_valid = payload is not None
+        self.last_backend_id = response.backend_id
+        self.last_model_id = response.model_id
         self.last_input_tokens = response.input_tokens
         self.last_output_tokens = response.output_tokens
         self.last_latency_ms = response.latency_ms
@@ -139,6 +154,11 @@ class _StubMethod:
         cost = self._cost(observation, info)
         if self.mode == "direct":
             return payload["selected_action"]
+        # Anchor each model estimate to the most recent executed public feedback.
+        # The model has the public history too; this is a consistency heuristic.
+        self._belief = dict(payload["candidate_probabilities"])
+        if self.mode != "diva" and self._last_evidence is not None:
+            self._belief = self._updater.update(self._belief, *self._last_evidence)
         if self.mode == "diva":
             return DivaStyleSelector().choose(payload, self._belief, cost)
         if self.mode == "immediate":
@@ -152,6 +172,7 @@ class _StubMethod:
         return dict(self._belief)
 
     def record(self, action: str, outcome: str) -> None:
+        self._last_evidence = (action, outcome)
         self._belief = self._updater.update(self._belief, action, outcome)
 
 
@@ -202,30 +223,39 @@ def _last_outcome(public_text: str) -> str:
     return match.group(1) if match else "none"
 
 
-def build_family_a_scenarios() -> tuple[tuple[str, EnvConfig], ...]:
-    """A small paired dev grid covering both probe regimes and shift/no-shift."""
+def build_family_a_scenarios(config_path: Path | None = None) -> tuple[tuple[str, EnvConfig], ...]:
+    """Expand the configured development grid into paired Family A scenarios."""
 
-    scenarios: list[tuple[str, EnvConfig]] = []
-    for detour in (0, 5):
-        for noise in (0.0, 0.25):
-            for lockout in (0, 8):
-                for disable_shift, hazard in ((True, 0.0), (False, 0.1)):
-                    scenario_id = f"famA-d{detour}-n{noise}-k{lockout}-s{int(not disable_shift)}"
-                    scenarios.append(
-                        (
-                            scenario_id,
-                            EnvConfig(
-                                probe_detour_steps=detour,
-                                feedback_noise=noise,
-                                lockout_steps=lockout,
-                                disable_shift=disable_shift,
-                                shift_hazard=hazard,
-                                initial_mechanic="red",
-                                scenario_id=scenario_id,
-                            ),
-                        )
-                    )
-    return tuple(scenarios)
+    dev = load_dev_grid(config_path)
+    if dev["split"] not in ("dev", "validation") or dev["environment"]["family"] != "gate_lock":
+        raise ValueError("the runner requires a Family A dev or validation configuration")
+    environment = dev["environment"]
+    grid = dev["grid"]
+    configs = []
+    for detour in grid["probe_detour_steps"]:
+        for noise in grid["feedback_noise_rate"]:
+            for lockout in environment["lockout_steps_options"]:
+                for condition in grid["shift_condition"]:
+                    scenario_id = f"famA-d{detour}-n{noise}-k{lockout}-{condition}"
+                    configs.append((scenario_id, EnvConfig(
+                        grid_width=environment["grid_size"][0],
+                        grid_height=environment["grid_size"][1],
+                        max_env_steps=environment["max_env_steps"],
+                        step_cost=environment["step_cost"],
+                        delivery_reward=environment["delivery_reward"],
+                        candidate_rules=tuple(environment["candidate_rules"]),
+                        initial_mechanic=environment["seed_rule"],
+                        seed_rule=environment["seed_rule"],
+                        shift_targets=tuple(rule for rule in environment["candidate_rules"]
+                                            if rule != environment["seed_rule"]),
+                        probe_detour_steps=detour,
+                        feedback_noise=noise,
+                        lockout_steps=lockout,
+                        shift_hazard=HAZARD_BY_CONDITION[condition],
+                        disable_shift=condition == "no_shift",
+                        scenario_id=scenario_id,
+                    )))
+    return tuple(configs)
 
 
 def _clamp_action(action: str, available_actions: Sequence[str]) -> tuple[str, bool]:
@@ -258,8 +288,11 @@ def run_episode(
     calling the model, so every method stays inside the preregistered budget.
     """
 
+    if max_vlm_calls_per_episode < 0:
+        raise ValueError("max_vlm_calls_per_episode must be non-negative")
     env = RuleShiftEnv(config=config)
-    obs, info = env.reset(seed=seed)
+    episode_id = f"{scenario_id}-s{seed}"
+    _, info = env.reset(seed=seed, options={"scenario_id": episode_id})
     method = _make_method(method_name, backend=backend, cache=cache)
     if hasattr(method, "attach_env"):
         method.attach_env(env)
@@ -275,9 +308,17 @@ def run_episode(
     latency = 0.0
     cap_hits = 0
 
+    # Every macro consumes at least one primitive step, including WAIT.
     for decision in range(config.max_env_steps):
         observation = env.public_view()
-        if calls >= max_vlm_calls_per_episode:
+        steps_left = config.max_env_steps - info["physical_steps_elapsed"]
+        observation = replace(observation, public_text=(
+            f"The old default card was {config.seed_rule}. The rule may change once. "
+            f"Maximize total reward over the remaining {steps_left} primitive steps. "
+            f"{observation.public_text}"
+        ))
+        cap_fallback = isinstance(method, _StubMethod) and calls >= max_vlm_calls_per_episode
+        if cap_fallback:
             action = "WAIT"
             used_call = 0
             used_input = 0
@@ -290,22 +331,19 @@ def run_episode(
             used_input = int(getattr(method, "last_input_tokens", 0))
             used_output = int(getattr(method, "last_output_tokens", 0))
             used_latency = float(getattr(method, "last_latency_ms", 0.0))
-        # A method may emit an action that is valid on some families but not on
-        # the family the environment advertises. Clamp to the public menu and
-        # count the miss as an invalid (neutral) action rather than letting it
-        # land as a silent WAIT with no decision credit.
-        clamped_action, action_invalid = _clamp_action(action, observation.available_actions)
-        if action_invalid:
-            invalid += 1
-        action = clamped_action
-        obs, reward, terminated, truncated, info = env.step(action)
+        outside_menu = action not in observation.available_actions
+        invalid_action = outside_menu or (used_call > 0 and method.last_invalid_action)
+        if outside_menu:
+            action = "WAIT"
+        invalid += int(invalid_action)
+        _, reward, terminated, truncated, info = env.step(action)
         total += reward
         method.record(action, _last_outcome(env.public_view().public_text))
 
         public_rows.append(
             {
-                "run_id": f"{scenario_id}-s{seed}",
-                "episode_id": f"{scenario_id}-s{seed}",
+                "run_id": episode_id,
+                "episode_id": episode_id,
                 "scenario_id": scenario_id,
                 "seed": seed,
                 "method": method_name,
@@ -320,10 +358,20 @@ def run_episode(
                 "input_tokens": used_input,
                 "output_tokens": used_output,
                 "latency_ms": used_latency,
-                "cap_fallback": used_call == 0 and action == "WAIT" and cap_hits > 0,
+                "cap_fallback": cap_fallback,
+                "json_valid": method.last_json_valid if used_call else None,
+                "schema_valid": method.last_schema_valid if used_call else None,
+                "invalid_action": invalid_action,
+                "model_id": method.last_model_id if used_call else None,
+                "backend_id": method.last_backend_id if used_call else None,
             }
         )
-        evaluator_rows.append(dict(env.evaluator_state()))
+        evaluator_rows.append({
+            "episode_id": episode_id,
+            "method": method_name,
+            "decision_id": decision,
+            **env.evaluator_state(),
+        })
         if action.startswith("PROBE_"):
             probes += 1
         calls += used_call
@@ -354,6 +402,7 @@ def run_episode(
 class ClosedLoopOutput:
     episodes: dict[tuple[str, int, str], Episode]
     summaries: dict[tuple[str, str], PairedSummary]
+    synthetic: bool = True
 
     def __getitem__(self, key: tuple[str, str]) -> PairedSummary:
         return self.summaries[key]
@@ -400,6 +449,11 @@ def run_closed_loop(
 ) -> ClosedLoopOutput:
     """Run paired episodes and compute scenario-level paired summaries."""
 
+    if not scenarios or not methods or not seeds:
+        raise ValueError("scenarios, methods and seeds must each be non-empty")
+    if (len({scenario for scenario, _ in scenarios}) != len(scenarios)
+            or len(set(seeds)) != len(seeds) or len(set(methods)) != len(methods)):
+        raise ValueError("scenario IDs, seeds and methods must be unique")
     episodes: dict[tuple[str, int, str], Episode] = {}
     for scenario_id, config in scenarios:
         for seed in seeds:
@@ -429,7 +483,9 @@ def run_closed_loop(
             seed=0,
             n_episodes=n_episodes,
         )
-    return ClosedLoopOutput(episodes=episodes, summaries=summaries)
+    return ClosedLoopOutput(
+        episodes, summaries, synthetic=backend is None or isinstance(backend, StubVLMBackend)
+    )
 
 
 def write_episode_files(result: ClosedLoopOutput, output_dir: Path) -> tuple[Path, Path]:
@@ -451,18 +507,31 @@ def write_episode_files(result: ClosedLoopOutput, output_dir: Path) -> tuple[Pat
 
 
 def write_report(result: ClosedLoopOutput, path: Path) -> Path:
-    """Write the Week 7 report; all numbers here are synthetic."""
+    """Write the Week 7 report, synthetic or real, with explicit provenance."""
 
+    if result.synthetic:
+        title = "# Week 7 — Family A closed loop (SYNTHETIC)"
+        disclaimer = (
+            "**SYNTHETIC: the model-side methods use a deterministic stub. No VLM "
+            "was run.** This validates the loop, the cost accounting and the "
+            "separation of public/evaluator traces — not model behaviour."
+        )
+    else:
+        title = "# Week 7 — Family A closed loop (REAL BACKEND)"
+        disclaimer = (
+            "**REAL BACKEND: a frozen model produced the model-side decisions.** "
+            "This is a development-grid run unless it was separately frozen; "
+            "do not treat it as a held-out or locked evaluation."
+        )
     lines = [
-        "# Week 7 — Family A closed loop (SYNTHETIC)",
+        title,
         "",
-        "**SYNTHETIC: the model-side methods use a deterministic stub. No VLM "
-        "was run.** This validates the loop, the cost accounting and the "
-        "separation of public/evaluator traces — not model behaviour.",
+        disclaimer,
         "",
         "All methods use the same public macro menu, the same macro executor "
         "and the same primitive-step budget. Costs are charged once in the "
-        "shared reward stream.",
+        "shared reward stream. The 6-call cap and ``WAIT`` fallback apply to "
+        "model-side methods; scripted baselines make no model calls.",
         "",
         "| Comparison | Scenarios | Mean paired difference | 95% CI |",
         "|---|---:|---:|---|",

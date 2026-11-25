@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
+
 from ruleshift.agents.cache import ResponseCache
-from ruleshift.agents.structured_vlm import render_outcomes_prompt, run_structured_prediction
-from ruleshift.agents.vlm_backend import StubVLMBackend
+from ruleshift.agents.structured_vlm import (
+    build_prediction_request,
+    render_outcomes_prompt,
+    run_structured_prediction,
+)
+from ruleshift.agents.vlm_backend import StubVLMBackend, TransformersVLMBackend
 from ruleshift.permissions import PRIVILEGED_FIELDS
 from ruleshift.public_api.interface import CandidateRule, PublicObservation
 
@@ -60,3 +67,28 @@ def test_structured_prediction_is_valid_and_cacheable(tmp_path) -> None:
     assert second_payload == payload
     assert second_errors == []
     assert second_response.text == first_response.text
+
+
+def test_rgb_request_forwards_pixels_and_changes_fingerprint() -> None:
+    frame = np.zeros((80, 80, 3), dtype=np.uint8)
+    obs = replace(observation(), image=frame)
+    backend = TransformersVLMBackend(model_id="dummy", input_mode="rgb")
+
+    rgb_request = build_prediction_request(obs, backend, direct=True)
+    assert rgb_request.input_mode == "rgb"
+    assert rgb_request.image is frame
+
+    changed = replace(
+        obs,
+        image=frame.copy(),
+        public_obs_hash="sha256:different-image",
+    )
+    changed.image[0, 0, 0] = 255
+    changed_request = build_prediction_request(changed, backend, direct=True)
+    assert changed_request.fingerprint() != rgb_request.fingerprint()
+
+    text_backend = TransformersVLMBackend(model_id="dummy")
+    text_request = build_prediction_request(obs, text_backend, direct=True)
+    assert text_request.input_mode == "text"
+    assert text_request.image is None
+    assert text_request.fingerprint() != rgb_request.fingerprint()

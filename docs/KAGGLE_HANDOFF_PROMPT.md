@@ -1,5 +1,7 @@
 # Handoff prompt for another agent with Kaggle/GPU access
 
+> **Archived handoff.** These instructions describe an earlier attempt. The current task order and pilot evidence are in [research progress](RESEARCH_STATUS.md) and the [runbook](RUNBOOK.md). Remote execution is disabled in the current configuration.
+
 Give this prompt to the other agent. It is self-contained.
 
 ---

@@ -6,10 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
-try:  # allow running straight from a source checkout
-    import ruleshift  # noqa: F401
-except ModuleNotFoundError:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Always run the code in this checkout, including when another copy is installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from ruleshift.evaluator.family_b_reference import FamilyBCosts, delta_probe_family_b
 
@@ -37,7 +35,8 @@ def main() -> None:
         "",
         "Family B changes the **transition law**: the shortcut's slip probability "
         "is regime-dependent, not merely its reward label. The analytical reference "
-        "below is exact for the single-decision abstraction and uses evaluator-side "
+        "below is exact for the single-decision abstraction with a perfectly "
+        "revealing probe and uses evaluator-side "
         "probabilities. It is a transfer diagnostic, not a VLM result.",
         "",
         "| safe route steps | slippery slip probability | delta_probe | preferred |",
@@ -59,8 +58,8 @@ def main() -> None:
         "- **Transfers:** the decision is still probe-versus-task under a hidden "
         "variable, probed evidence is noisy and costs primitive steps, and a "
         "probe is worth its cost only when it can change the later action. The "
-        "same public-cost value-aware selector can consume VLM outcome "
-        "predictions in either family.",
+        "analytical reference evaluates this tradeoff independently of the "
+        "Family A agent selector. Family B agent transfer has not been implemented.",
         "- **Does not transfer automatically:** Family A's evidence is a "
         "deterministic accept/reject under a card law; Family B's evidence is a "
         "noisy regime report and the task action itself is stochastic. The "
@@ -71,9 +70,8 @@ def main() -> None:
         "labelled as an exact *single-decision* reference, and full episodes "
         "must use an approximate reference.",
         "",
-        "Held-out maps change only public geometry and decorative distractors; "
-        "the regime description, action menu, costs and transition probabilities "
-        "are unchanged across maps.",
+        "The current map variants alter decorative pixels while keeping the "
+        "geometry, action menu, costs and transition probabilities fixed.",
         "",
     ]
     path = Path(args.out)
