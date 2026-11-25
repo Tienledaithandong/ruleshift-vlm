@@ -74,4 +74,6 @@ model, one two-episode smoke passing both gates, and a resized grid that fits
 the remaining quota. Potential method changes include normalized weights,
 constrained decoding, a two-stage action and belief readout, or a larger
 frozen model. The [closure decision](GRID_FEASIBILITY_DECISION.md) records the
-gate and freeze requirements.
+gate and freeze requirements. The
+[belief-state research note](GRID_BELIEF_STATE_RESEARCH.md) records the CPU
+replay of these traces and the next experiment.
