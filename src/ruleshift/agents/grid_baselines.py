@@ -9,6 +9,7 @@ from the public observation and the already-executed outcome passed to
 
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import replace
 from typing import Any, Protocol
@@ -36,6 +37,7 @@ from ruleshift.public_api.grid_schemas import (
 
 __all__ = [
     "DiagnosticBeliefPolicy",
+    "DiagnosticBeliefPolicyV4",
     "GridPolicy",
     "InfoGainPolicy",
     "NoAdaptationPolicy",
@@ -725,3 +727,192 @@ class DiagnosticBeliefPolicy(_BasePolicy):
             and cls._manhattan((x, y), blue) <= reach
         ]
         return sorted(cells, key=lambda coord: cls._manhattan(current, coord))
+
+
+class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
+    """Diagnostic policy with safe planning and posterior-conditioned probing.
+
+    This is an exploratory v0.4 candidate, kept separate from
+    :class:`DiagnosticBeliefPolicy` so the v0.3 benchmark stays reproducible.
+    It changes three decision rules:
+
+    1. an empty MAP plan falls back to a ``base`` plan instead of the first
+       legal physical action;
+    2. sign evidence is stored per face, and an unread face is chosen by its
+       expected information gain over the current posterior;
+    3. a rule must lead on two consecutive decisions before it is eligible
+       for commitment (the probability thresholds themselves are unchanged).
+
+    The policy remains public-only: it reads no simulator state and no hidden
+    rule, and the true rule is never available to it.
+    """
+
+    def __init__(self, config: Any | None = None) -> None:
+        super().__init__(config)
+        self.sign_sides_observed: set[int] = set()
+        self.plan_fallback_count = 0
+        self._last_top_rule: str | None = None
+        self._top_rule_count = 0
+
+    def reset(self, observation: Any, info: dict[str, Any]) -> None:
+        super().reset(observation, info)
+        self.sign_sides_observed = set()
+        self.plan_fallback_count = 0
+        self._last_top_rule = None
+        self._top_rule_count = 0
+
+    def record(
+        self,
+        action: GridAction,
+        observation: Any,
+        reward: float,
+        info: dict[str, Any],
+    ) -> None:
+        payload = info or {}
+        previous = self.previous_observation
+        if (
+            action.kind == "READ_SIGN"
+            and payload.get("last_tool_value") is not None
+            and previous is not None
+        ):
+            signpost = previous.public_map.signpost
+            if signpost is not None:
+                try:
+                    side = sign_side(
+                        tuple(previous.agent_position), tuple(signpost)
+                    )
+                except ValueError:
+                    side = None
+                if side is not None:
+                    self.sign_sides_observed.add(int(side))
+                    self.sign_observed = True
+        super().record(action, observation, reward, info)
+
+    def choose(self, observation: Any, info: dict[str, Any]) -> GridAction:
+        self._observe_top_rule()
+        observation = as_observation(observation)
+        if self._commit_is_safe():
+            return self._commit(observation)
+        action = self._diagnostic_action(observation)
+        if action is not None:
+            return action
+        return self._commit(observation)
+
+    def _observe_top_rule(self) -> None:
+        rule = self.belief.most_likely() if self.belief is not None else "base"
+        if rule == self._last_top_rule:
+            self._top_rule_count += 1
+        else:
+            self._last_top_rule = rule
+            self._top_rule_count = 1
+
+    def _commit_is_safe(self) -> bool:
+        if self._top_rule_count < 2:
+            return False
+        return super()._commit_is_safe()
+
+    def _diagnostic_action(self, observation: Any) -> GridAction | None:
+        if self.tool_attempts >= 4:
+            return None
+        marginal = self._marginal()
+        budget = int(observation.tool_budget_remaining)
+        sign_cost = int(getattr(self.config, "read_sign_cost", 1))
+        inspect_cost = int(getattr(self.config, "inspect_cost", 2))
+
+        if budget >= sign_cost:
+            action = self._go_read_sign(observation)
+            if action is not None:
+                return action
+
+        if (
+            self.sign_observed
+            and not self.blue_observed
+            and budget >= inspect_cost
+            and (
+                marginal.get("hazard_goal_swap", 0.0)
+                + marginal.get("sign_composition", 0.0)
+            )
+            >= 0.05
+        ):
+            action = self._go_inspect_blue(observation)
+            if action is not None:
+                return action
+        return None
+
+    def _go_read_sign(self, observation: Any) -> GridAction | None:
+        signpost = observation.public_map.signpost
+        if signpost is None:
+            return None
+        signpost = tuple(signpost)
+        current = tuple(observation.agent_position)
+        sign_cost = int(getattr(self.config, "read_sign_cost", 1))
+        candidates: list[tuple[float, int, int, GridAction]] = []
+        for side in self._informative_sides():
+            if side in self.sign_sides_observed:
+                continue
+            gain = self._sign_side_gain(side)
+            if gain <= 1e-9:
+                continue
+            cells = self._sign_cells(observation.public_map, signpost, side)
+            if not cells:
+                continue
+            if current in cells:
+                if (
+                    "READ_SIGN" in observation.action_mask
+                    and int(observation.tool_budget_remaining) >= sign_cost
+                ):
+                    candidates.append((gain, 0, side, GridAction("READ_SIGN")))
+                continue
+            plan = self._shortest_plan(observation, cells)
+            if plan is not None:
+                candidates.append(
+                    (gain, len(plan), side, self._first_legal(plan, observation))
+                )
+        if not candidates:
+            return None
+        _, _, _, action = min(
+            candidates, key=lambda item: (-item[0], item[1], item[2])
+        )
+        if action.kind == "READ_SIGN":
+            self.tool_attempts += 1
+        return action
+
+    def _sign_side_gain(self, side: int) -> float:
+        """Expected entropy reduction from reading one sign face."""
+
+        marginal = self._marginal()
+        if not marginal:
+            return 0.0
+        by_clause: dict[str, list[float]] = {}
+        for rule, probability in marginal.items():
+            if probability <= 0.0:
+                continue
+            clause = sign_clause(RULE_BY_ID[rule], side)
+            by_clause.setdefault(clause, []).append(float(probability))
+        if len(by_clause) <= 1:
+            return 0.0
+        before = -sum(
+            float(probability) * math.log2(float(probability))
+            for probability in marginal.values()
+            if probability > 0.0
+        )
+        after = 0.0
+        for weights in by_clause.values():
+            mass = sum(weights)
+            if mass <= 0.0:
+                continue
+            after += mass * -sum(
+                (weight / mass) * math.log2(weight / mass)
+                for weight in weights
+            )
+        return max(0.0, before - after)
+
+    def _commit(self, observation: Any) -> GridAction:
+        rule_id = self.belief.most_likely() if self.belief is not None else "base"
+        plan = self.base_plan(rule_id, observation)
+        if not plan and rule_id != "base":
+            fallback = self.base_plan("base", observation)
+            if fallback:
+                self.plan_fallback_count += 1
+            plan = fallback
+        return self._first_plan_action(plan, observation)

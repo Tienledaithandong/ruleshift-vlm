@@ -145,3 +145,14 @@ The diagnosis narrows the next protocol decision:
 Either way, the next run must be a new benchmark version with a frozen
 protocol. This replay is a hypothesis generator, not a license to tune the
 current maps or start Phase 1.
+
+### Follow-up: v0.4 candidate
+
+A v0.4 candidate now implements the plan fallback, per-side sign probing, and
+a stable-commit condition. On the fresh-map exploratory holdout (maps 100-199,
+500 true-base episodes), both v0.3 and v0.4 have 0 task failures, so the
+holdout cannot demonstrate a task-level improvement; v0.4 has 4/500
+misdiagnoses versus 5/500 for v0.3. On the original maps, v0.4 removes the
+three observed task failures but is post-hoc. The literal gate is still failed
+and Phase 1 remains blocked; see
+[`GRID_V04_HOLDOUT.md`](GRID_V04_HOLDOUT.md).
