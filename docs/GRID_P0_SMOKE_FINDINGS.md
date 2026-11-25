@@ -105,9 +105,19 @@ After the technical gate passed, the 55-episode dry chunk for map 0 was launched
 
 ## Run 6: `grid_v8` (smoke-15, source commit `3232076`)
 
-`grid_v8` adds the arithmetic check that names the exact 1.50 failure. The
-smoke-15 run is the final 2-episode check. No result is recorded here until
-it completes.
+- 2 episodes, 120 rows; 32/120 JSON-valid (26.7%), 88 fallbacks. Every
+  invalid response had all six ids but failed the sum check; the dominant
+  vector was `0.33,0.33,0.17,0.17,0.17,0.17` (sum 1.34). The explicit 1.50
+  example did not teach the arithmetic and made validity worse than v7.
+- Semantic gate failed: 1 distinct belief vector, 0 tool decisions, 0/1 base
+  success; blocked repeats 0/30. Guard activations 20.
+- This prompt is rejected. `grid_v9` keeps the all-ids line and restores the
+  v5 arithmetic example, which had produced 100% valid full menus.
+
+## Run 7: `grid_v9` (smoke-16, source commit pending)
+
+The combined prompt is the next 2-episode check. No result is recorded here
+until it completes.
 
 ## Measured cost
 

@@ -34,8 +34,8 @@ from ruleshift.public_api.grid_schemas import (
 from .cache import ResponseCache
 from .vlm_backend import ModelRequest, ModelResponse
 
-GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v8.txt"
-GRID_PROMPT_VERSION = "grid_v8"
+GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v9.txt"
+GRID_PROMPT_VERSION = "grid_v9"
 
 __all__ = [
     "GRID_PROMPT_PATH",

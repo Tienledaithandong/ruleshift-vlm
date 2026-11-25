@@ -44,7 +44,7 @@ def test_prompt_requires_every_candidate_id():
     ):
         assert rule in text
     assert "every id is required" in text
-    assert "If they total 1.50" in text
+    assert "If they total 1.05 or 1.15" in text
 
 
 def test_merged_prompt_uses_the_public_image():
@@ -242,7 +242,7 @@ def test_record_works_without_explicit_reset():
 
 
 def test_prompt_version_is_pinned():
-    assert GRID_PROMPT_VERSION == "grid_v8"
+    assert GRID_PROMPT_VERSION == "grid_v9"
 
 
 def test_guard_uses_only_the_latest_outcome():
