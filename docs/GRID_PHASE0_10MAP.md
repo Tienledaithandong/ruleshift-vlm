@@ -217,14 +217,13 @@ under the stated rule.
 
 `m2-s2-identification-base-None` uses zero tools and reaches the 60-step cap
 with final estimate `slippery`. The true rule is `base`; the base policy has a
-0.1 slip probability. The observed slips move the filter toward `slippery`, and
-the policy commits before reading the sign. Both rules have the red goal, but
-the planner follows the estimated rule's movement model; committing to
-`slippery` changes the plan and expects two-cell slides. The baseline, which
-always plans for `base`, wins this episode.
+0.1 slip probability. The observed slips move the filter toward `slippery`; the
+policy spends no tool and ends on that estimate. The planner uses the current
+estimate's movement model, so the plan differs from a base plan and expects
+two-cell slides. The baseline, which always plans for `base`, wins this episode.
 
 Map 2 has a reachable side-0 face, so this is not the old unreadable-signpost
-defect. It is a posterior/commit decision under stochastic movement. Changing
+defect. It is a posterior/decision weakness under stochastic movement. Changing
 the commit threshold, forcing a base plan, or adding a retry after seeing this
 one failure would be post-hoc tuning; none was done.
 
