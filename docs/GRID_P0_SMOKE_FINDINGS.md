@@ -114,10 +114,18 @@ After the technical gate passed, the 55-episode dry chunk for map 0 was launched
 - This prompt is rejected. `grid_v9` keeps the all-ids line and restores the
   v5 arithmetic example, which had produced 100% valid full menus.
 
-## Run 7: `grid_v9` (smoke-16, source commit pending)
+## Run 7: `grid_v9` (smoke-16, source commit `a4fc488`)
 
-The combined prompt is the next 2-episode check. No result is recorded here
-until it completes.
+- 2 episodes, 120 rows; 27/120 JSON-valid (22.5%), 93 fallbacks. The
+  all-ids invariant held, but 88 responses used the repeated
+  `0.33,0.33,0.17,0.17,0.17,0.17` vector (sum 1.34); a further five summed to
+  1.10. The v5 arithmetic example did not overcome the model’s two-rule
+  update pattern.
+- Semantic gate failed: 2 distinct belief vectors, 0 tool decisions, 0/1 base
+  success; blocked repeats 0/25.
+- Prompt iteration is stopped. The active prompt is `grid_v7`, which had the
+  best observed full-menu rate (75.8%) but also failed the sum check. v8 and
+  v9 remain in the tree only as rejected experiment records.
 
 ## Measured cost
 
@@ -131,11 +139,20 @@ behavioural gate.
 
 ## Status
 
-Gate A (two-episode smoke) and Gate B (55-episode dry chunk) pass their current
-**technical** checks. Gate B is not a behavioural pass: the follow-up analysis
-found a constant uniform belief vector, a fixed `LEFT`/`DOWN` action prefix,
-97.4% immediate repetition of blocked actions, zero use of `RIGHT` or tools,
-and 0/10 success on base-rule episodes. See `docs/GRID_CHUNK0_ANALYSIS.md`.
+No Gate A run has passed both gates. The four schema attempts had full-menu
+rates of 10.8% (v6), 75.8% (v7), 26.7% (v8) and 22.5% (v9); every attempt had
+parser fallbacks, so the technical gate failed each time. The blocked-action
+guard works (0 repeats under the corrected outcome check), but it cannot fix
+schema-invalid belief rows. Gate B (55-episode dry chunk) is not a behavioural
+pass either: the follow-up analysis found a constant uniform belief vector, a
+fixed `LEFT`/`DOWN` action prefix, zero tool use, and 0/10 success on base-rule
+episodes. See `docs/GRID_CHUNK0_ANALYSIS.md`.
+
+The binding blocker is the 3B model’s probability arithmetic under a strict
+six-key full-menu contract, not the observation text or the guard. Do **not**
+run the 55-episode chunk or the 5,500-episode grid. The next step is an
+interface decision (integer weights, constrained decoding, or best-of-N with a
+protocol change), not another prompt-only smoke.
 
 This chunk must not feed a larger run and is not evidence. The full grid is
 still not authorized: `preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`, and

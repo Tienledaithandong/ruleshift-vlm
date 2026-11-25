@@ -205,16 +205,17 @@ criteria. They should be agreed before the next smoke.
    Even after the policy is fixed, the design needs resizing or faster
    inference; a 10-map dev slice would be ~64 GPU-hours.
 
-## 7. Implementation status of the repair (commit `a5d011c`)
+## 7. Implementation status of the repair
 
-The observation/action contract, prompt and semantic gate have been repaired;
-the full test suite is green. These changes are not evidence that the policy
-now adapts, and they do not authorize any run beyond a 2-episode smoke.
+The observation/action contract and semantic gate have been repaired; the full
+test suite is green. The prompt repair did not work: no two-episode smoke
+passed the strict full-menu contract. These changes are not evidence that the
+policy now adapts, and they do not authorize any run beyond a 2-episode smoke.
 
 - `build_public_text()` now emits `adjacent=[UP=...,DOWN=...,LEFT=...,RIGHT=...]`
   and the complete public `walls=[...]` set, both read from `PublicGridMap`.
   These are public map data; no hidden rule or evaluator value is exposed.
-- `grid_v9.txt` gives the wall/adjacent contract, makes the latest blocked
+- `grid_v7.txt` gives the wall/adjacent contract, makes the latest blocked
   outcome operational, repeats the full-menu prior only at step 0, and states
   the strict JSON schema.
 - `GridVLMPolicy` applies a deterministic public guard when the chosen action
@@ -225,11 +226,16 @@ now adapts, and they do not authorize any run beyond a 2-episode smoke.
 - `semantic_gate()` rejects constant beliefs, blocked-action repeat rates above
   5%, zero tool use when a tool is available, and zero success on final
   base-rule episodes. `main()` requires both the technical and semantic gates.
-- Only 2-episode smokes are permitted. Smoke-13 (v6) failed strict schema
-  because the model omitted `base`; smoke-14 (v7) emitted all six ids but
-  summed them to 1.50; smoke-15 (v8) tests an explicit arithmetic rule. None
-  of these smokes is evidence. The 55-episode chunk and the 5,500-episode grid
-  remain blocked.
+- Only 2-episode smokes are permitted. Smoke-13 (v6) omitted `base`
+  (10.8% valid); smoke-14 (v7) emitted all six ids but many summed to 1.50
+  (75.8% valid); smoke-15 (v8) added an arithmetic example and fell to 26.7%;
+  smoke-16 (v9) combined the all-ids and v5 arithmetic text and reached only
+  22.5%. All four had parser fallbacks, so Gate A failed. None is evidence. The
+  55-episode chunk and the 5,500-episode grid remain blocked.
+- The active prompt is back at `grid_v7`, the best observed full-menu rate.
+  v8 and v9 are retained as rejected experiment records. The binding blocker
+  is the 3B model’s probability arithmetic under the strict six-key contract;
+  the next step is an interface decision, not another prompt-only smoke.
 
 ## 8. Reproduction notes
 
