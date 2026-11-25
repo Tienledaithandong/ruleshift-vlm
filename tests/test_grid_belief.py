@@ -5,6 +5,7 @@ from ruleshift.public_api.grid_rules import (
     BASE_RULE,
     RULE_BY_ID,
     PublicGridMap,
+    cell_role,
     effective_map,
     movement_outcomes,
 )
@@ -41,6 +42,17 @@ def test_belief_updates_on_sign():
     belief = GridBelief()
     belief.update_sign(0, "The red tile is not the goal.", step=0)
     assert belief.marginal()["hazard_goal_swap"] > belief.marginal()["base"]
+
+
+def test_sign_then_blue_inspect_identifies_movement_equivalent_rules():
+    hypotheses = ("base", "hazard_goal_swap", "sign_composition")
+    for true_rule in hypotheses:
+        belief = GridBelief(hypotheses=hypotheses)
+        belief.update_sign(0, RULE_BY_ID[true_rule].sign_clauses[0], step=0)
+        belief.update_inspect(
+            "blue", cell_role(RULE_BY_ID[true_rule], "blue"), step=1
+        )
+        assert belief.most_likely() == true_rule
 
 
 def test_no_shift_false_alarm_rate_is_bounded():
