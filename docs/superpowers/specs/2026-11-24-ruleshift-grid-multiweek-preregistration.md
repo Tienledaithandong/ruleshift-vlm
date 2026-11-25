@@ -11,7 +11,8 @@ instrumentation, not a confirmatory result.
 - Model: Qwen/Qwen2.5-VL-3B-Instruct, revision
   66285546d2b821cf421d4f5eb2576359d3770cd3, bfloat16, image + text,
   max_new_tokens=2048.
-- Prompt: ruleshift/prompts/grid_v5.txt, version grid_v5.
+- Prompt: ruleshift/prompts/grid_v7.txt, version grid_v7 (draft; the status
+  remains DRAFT_NOT_FROZEN).
 - Candidate menu: base, remap_swap, remap_rotate, slippery,
   hazard_goal_swap, sign_composition.
 - Grid: 100 maps x 5 run seeds x 11 scenario types = 5,500 episodes.

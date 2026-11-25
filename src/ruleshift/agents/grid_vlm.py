@@ -34,8 +34,8 @@ from ruleshift.public_api.grid_schemas import (
 from .cache import ResponseCache
 from .vlm_backend import ModelRequest, ModelResponse
 
-GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v6.txt"
-GRID_PROMPT_VERSION = "grid_v6"
+GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v7.txt"
+GRID_PROMPT_VERSION = "grid_v7"
 
 __all__ = [
     "GRID_PROMPT_PATH",
@@ -240,10 +240,11 @@ def render_grid_prompt(observation: Any) -> str:
     """
 
     template = GRID_PROMPT_PATH.read_text(encoding="utf-8")
+    candidate_rows = _candidate_pairs(_field(observation, "candidate_rules", ()))
     candidates = [
-        f"{row['rule_id']}: {row['description']}"
-        for row in _candidate_pairs(_field(observation, "candidate_rules", ()))
+        f"{row['rule_id']}: {row['description']}" for row in candidate_rows
     ]
+    candidate_ids = ", ".join(str(row["rule_id"]) for row in candidate_rows)
     costs = _field(observation, "public_costs", {}) or {}
     cost_text = (
         ", ".join(f"{key}={value}" for key, value in sorted(costs.items()))
@@ -258,6 +259,7 @@ def render_grid_prompt(observation: Any) -> str:
         public_history=str(_field(observation, "public_history", "")),
         public_text=str(_field(observation, "public_text", "")),
         candidate_rules=", ".join(candidates),
+        candidate_ids=candidate_ids,
         available_actions=", ".join(str(a) for a in _as_tuple(_field(observation, "available_actions", ()))),
         public_costs=cost_text,
         action_mask=", ".join(str(a) for a in _as_tuple(_field(observation, "action_mask", ()))),

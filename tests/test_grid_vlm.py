@@ -36,6 +36,16 @@ def test_prompt_lists_the_grid_actions():
         assert action in text
 
 
+def test_prompt_requires_every_candidate_id():
+    text = render_grid_prompt(observation())
+    for rule in (
+        "base", "remap_swap", "remap_rotate", "slippery",
+        "hazard_goal_swap", "sign_composition",
+    ):
+        assert rule in text
+    assert "every id is required" in text
+
+
 def test_merged_prompt_uses_the_public_image():
     text = render_grid_prompt(observation())
     assert "TEXT-ONLY" not in text
@@ -231,7 +241,7 @@ def test_record_works_without_explicit_reset():
 
 
 def test_prompt_version_is_pinned():
-    assert GRID_PROMPT_VERSION == "grid_v6"
+    assert GRID_PROMPT_VERSION == "grid_v7"
 
 
 def test_guard_uses_only_the_latest_outcome():

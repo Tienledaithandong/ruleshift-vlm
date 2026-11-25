@@ -205,7 +205,31 @@ criteria. They should be agreed before the next smoke.
    Even after the policy is fixed, the design needs resizing or faster
    inference; a 10-map dev slice would be ~64 GPU-hours.
 
-## 7. Reproduction notes
+## 7. Implementation status of the repair (commit `6a8826c`)
+
+The observation/action contract, prompt and semantic gate have been repaired;
+the full test suite is green. These changes are not evidence that the policy
+now adapts, and they do not authorize any run beyond a 2-episode smoke.
+
+- `build_public_text()` now emits `adjacent=[UP=...,DOWN=...,LEFT=...,RIGHT=...]`
+  and the complete public `walls=[...]` set, both read from `PublicGridMap`.
+  These are public map data; no hidden rule or evaluator value is exposed.
+- `grid_v7.txt` gives the wall/adjacent contract, makes the latest blocked
+  outcome operational, repeats the full-menu prior only at step 0, and states
+  the strict JSON schema.
+- `GridVLMPolicy` applies a deterministic public guard when the chosen action
+  equals the action whose latest public outcome was `blocked`. It prefers a
+  visible-free neighbour and a public key/red-goal target. The guard is
+  recorded as `last_guard_applied` and in public rows as `guard_applied`.
+- The runner copies `hypothesis_probabilities` into public rows for auditing.
+- `semantic_gate()` rejects constant beliefs, blocked-action repeat rates above
+  5%, zero tool use when a tool is available, and zero success on final
+  base-rule episodes. `main()` requires both the technical and semantic gates.
+- A 2-episode Kaggle smoke (`ruleshift-grid-smoke-13`, source commit
+  `6a8826c`) is the only run permitted by this change. The 55-episode chunk
+  and the 5,500-episode grid remain blocked.
+
+## 8. Reproduction notes
 
 - Gate B technical counts and action distributions are computed directly from
   the two JSONL files above.
