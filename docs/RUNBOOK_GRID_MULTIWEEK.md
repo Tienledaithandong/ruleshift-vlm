@@ -1,8 +1,9 @@
 # Runbook: RuleShift-Grid multi-week run
 
 This runbook is for the 100-map x 5-seed grid (5,500 episodes). It is not a
-license to start that run. The preregistration must first be marked READY by a
-human, and the gates below must pass in order.
+license to start that run. The program is currently **CLOSED** for the frozen
+3B model; see `docs/GRID_FEASIBILITY_DECISION.md`. The preregistration must
+first be marked READY by a human, and the gates below must pass in order.
 
 ## 0. Preconditions
 

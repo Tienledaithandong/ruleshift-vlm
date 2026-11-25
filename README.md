@@ -105,7 +105,9 @@ and credentials. No local GPU is used and nothing has been downloaded or run.
 
 For the multi-week real-VLM grid (100 maps x 5 seeds, split into weekly Kaggle
 chunks), see `docs/RUNBOOK_GRID_MULTIWEEK.md` and the plan at
-`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`.
+`docs/superpowers/plans/2026-11-24-ruleshift-grid-multiweek-run.md`. That grid
+is **closed for the frozen 3B model**; see `docs/GRID_FEASIBILITY_DECISION.md`
+before scheduling anything.
 
 ## Later: real experiment and evaluation
 

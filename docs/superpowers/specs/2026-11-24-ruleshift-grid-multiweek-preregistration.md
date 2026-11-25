@@ -2,6 +2,10 @@
 
 **Status: DRAFT_NOT_FROZEN. This document does not authorize the 5,500-episode run.**
 
+The program is **CLOSED** for the frozen 3B model; see
+`docs/GRID_FEASIBILITY_DECISION.md`. Reopening requires a new interface or
+model and a fresh freeze manifest.
+
 The human owner must review and change the status to READY in a separate,
 explicit commit before any locked grid run. Until then every grid artifact is
 instrumentation, not a confirmatory result.

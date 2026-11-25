@@ -3,9 +3,10 @@
 > **Scaffold, not a scientific result.** This is the 55-episode dry chunk for map 0.
 > It is useful for debugging the harness and the policy, not for a benchmark claim.
 
-Status: Gate B passes the current technical checks, but the policy fails every
-semantic check that matters. Do not launch chunk 1, a weekly slice, or the full
-grid on the basis of this run.
+Status: **CLOSED for the frozen 3B grid.** Gate B passes the current technical
+checks, but the policy fails every semantic check that matters. Do not launch
+chunk 1, a weekly slice, or the full grid. The decision record is
+`docs/GRID_FEASIBILITY_DECISION.md`.
 
 ## 1. Scope and data
 
