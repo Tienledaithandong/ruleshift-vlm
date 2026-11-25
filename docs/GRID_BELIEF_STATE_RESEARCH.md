@@ -1,8 +1,10 @@
 # Belief-state research note: from prompt repair to explicit state
 
-**Status: research memo, no GPU run and no confirmatory result.** This is the
-follow-up to the closed frozen-3B feasibility study. It records a CPU-only
-diagnostic and the next experiment worth running. It does not reopen the
+**Status: research memo, no GPU run, no confirmatory result, Phase 1 blocked.**
+This is the follow-up to the closed frozen-3B feasibility study. It records a
+CPU-only diagnostic and the next experiment worth running. The 10-map
+replication failed its acceptance gates; see
+[`GRID_PHASE0_10MAP.md`](GRID_PHASE0_10MAP.md). This memo does not reopen the
 5,500-episode grid.
 
 ## 1. What the VLM traces actually contain
@@ -164,6 +166,22 @@ routing now treats every marker as blocked). After both fixes, map 4
 `hazard_goal_swap` and `sign_composition` collect the sign and blue evidence
 instead of succeeding by accident. The primary map-0 numbers were unchanged.
 This is still a development check, not a preregistered result.
+
+**10-map replication: gates failed.** The 10-map CPU run (550 episodes x 2
+methods) scores **518/550 (94.2%)** for `diagnostic_belief` versus **382/550
+(69.5%)** for `no_adaptation`. Identification is **276/300 (92.0%)**, hazard
+**39/50 (78.0%)**, sign **38/50 (76.0%)**, and base **49/50 (98.0%)**; there are
+**20 zero-tool hazard/sign episodes**. The tool cap and paired-gain gates pass,
+but the identification, hazard, sign, base, and zero-tool gates fail. Two
+benchmark defects are material: the 10 map indices contain only 8 unique
+geometries (the 100-map audit predicts 62 unique), and maps 7/8 have no
+reachable informative sign face, producing 20 zero-tool episodes (19 failures
+and one accidental success). One base failure on map 5 is a real face-selection
+limitation: the policy prefers the nearer but less discriminative side. Excluding
+unreadable maps gives 235/240 identification and 427/440 overall, but base is
+still 39/40, so the subset is not an acceptance pass. Per the stop rule, Phase 1
+was not started; no VLM smoke and no 55-episode run were performed. Full
+evidence, commands, and limitations: [`GRID_PHASE0_10MAP.md`](GRID_PHASE0_10MAP.md).
 
 **Phase 1 — VLM on a compact belief (GPU, only if Phase 0 works).** Replace the
 six-key probability menu with a small high-level action interface: `COMMIT`,
