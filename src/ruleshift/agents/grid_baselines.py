@@ -10,15 +10,22 @@ from the public observation and the already-executed outcome passed to
 from __future__ import annotations
 
 import random
+from dataclasses import replace
 from typing import Any, Protocol
 
 from ruleshift.agents.grid_belief import GridBelief
 from ruleshift.agents.grid_selector import InfoGainSelector, PublicAdvisor
-from ruleshift.public_api.grid_planner import plan_to_goal
+from ruleshift.public_api.grid_planner import (
+    GridPlannerState,
+    HypothesisDynamics,
+    astar,
+    plan_to_goal,
+)
 from ruleshift.public_api.grid_rules import (
     BASE_RULE,
     RULE_BY_ID,
     PublicGridMap,
+    sign_clause,
     sign_side,
 )
 from ruleshift.public_api.grid_schemas import (
@@ -28,11 +35,12 @@ from ruleshift.public_api.grid_schemas import (
 )
 
 __all__ = [
+    "DiagnosticBeliefPolicy",
     "GridPolicy",
+    "InfoGainPolicy",
     "NoAdaptationPolicy",
     "PublicAdvisorPolicy",
     "RandomProbePolicy",
-    "InfoGainPolicy",
     "as_observation",
 ]
 
@@ -442,3 +450,278 @@ class InfoGainPolicy(_BasePolicy):
                     float(self.move_information_gain_bits or 0.0) + gain
                 )
         return action
+
+
+class DiagnosticBeliefPolicy(_BasePolicy):
+    """Run a fixed two-tool diagnostic, then commit to the MAP goal.
+
+    ``base``, ``hazard_goal_swap`` and ``sign_composition`` have the same
+    movement distribution, so movement alone cannot separate them.
+    ``hazard_goal_swap`` and ``sign_composition`` also share their sign
+    clauses. The protocol is therefore:
+
+    1. ``READ_SIGN`` on an informative face (side 0 preferred, side 1 when
+       side 0 is walled off). ``base`` reports that red is not the hazard;
+       the other two report that red is not the goal.
+    2. When red is not the goal, ``INSPECT`` blue. It is the goal under
+       ``hazard_goal_swap`` and safe under ``sign_composition``.
+
+    Tool navigation treats every marker as blocked: any marker can be the
+    goal under some hypothesis, so crossing one can end the episode before
+    the evidence is collected. The two tools cost 3 units in total, exactly
+    the public budget. The policy stops probing as soon as the posterior has
+    a decisive gap, so movement-identifiable rules are committed without
+    spending tools.
+    """
+
+    def __init__(self, config: Any | None = None) -> None:
+        super().__init__(config)
+        self.sign_observed = False
+        self.blue_observed = False
+        self.tool_attempts = 0
+
+    def reset(self, observation: Any, info: dict[str, Any]) -> None:
+        super().reset(observation, info)
+        self.sign_observed = False
+        self.blue_observed = False
+        self.tool_attempts = 0
+
+    def record(
+        self,
+        action: GridAction,
+        observation: Any,
+        reward: float,
+        info: dict[str, Any],
+    ) -> None:
+        super().record(action, observation, reward, info)
+        payload = info or {}
+        if action.kind == "READ_SIGN" and payload.get("last_tool_value") is not None:
+            self.sign_observed = True
+        elif action.kind == "INSPECT" and payload.get("last_tool_value") is not None:
+            self.blue_observed = True
+
+    def choose(self, observation: Any, info: dict[str, Any]) -> GridAction:
+        observation = as_observation(observation)
+        if self._commit_is_safe():
+            return self._commit(observation)
+        action = self._diagnostic_action(observation)
+        if action is not None:
+            return action
+        return self._commit(observation)
+
+    # -- posterior readout -------------------------------------------------
+
+    def _marginal(self) -> dict[str, float]:
+        if self.belief is None:
+            return {}
+        return self.belief.marginal()
+
+    def _top_two(self) -> tuple[float, float]:
+        values = sorted(self._marginal().values(), reverse=True)
+        if not values:
+            return 0.0, 0.0
+        if len(values) == 1:
+            return values[0], 0.0
+        return values[0], values[1]
+
+    def _three_mass(self) -> float:
+        marginal = self._marginal()
+        return sum(
+            marginal.get(rule, 0.0)
+            for rule in ("base", "hazard_goal_swap", "sign_composition")
+        )
+
+    def _commit_is_safe(self) -> bool:
+        top, second = self._top_two()
+        return top >= 0.90 and (top - second) >= 0.10
+
+    # -- diagnostic stages -------------------------------------------------
+
+    def _diagnostic_action(self, observation: Any) -> GridAction | None:
+        if self.tool_attempts >= 4:
+            return None
+        marginal = self._marginal()
+        budget = int(observation.tool_budget_remaining)
+        sign_cost = int(getattr(self.config, "read_sign_cost", 1))
+        inspect_cost = int(getattr(self.config, "inspect_cost", 2))
+
+        if not self.sign_observed and budget >= sign_cost:
+            # The sign is also the first navigation target: the walk there
+            # supplies movement evidence that can rule out remaps/slippery.
+            action = self._go_read_sign(observation)
+            if action is not None:
+                return action
+
+        if (
+            self.sign_observed
+            and not self.blue_observed
+            and budget >= inspect_cost
+            and (
+                marginal.get("hazard_goal_swap", 0.0)
+                + marginal.get("sign_composition", 0.0)
+            )
+            >= 0.05
+        ):
+            action = self._go_inspect_blue(observation)
+            if action is not None:
+                return action
+        return None
+
+    def _go_read_sign(self, observation: Any) -> GridAction | None:
+        signpost = observation.public_map.signpost
+        if signpost is None:
+            return None
+        signpost = tuple(signpost)
+        current = tuple(observation.agent_position)
+        # Side 0 is the only face that separates base from hazard/sign; side 1
+        # is a fallback only when side 0 is walled off, not merely nearer.
+        for side in self._informative_sides():
+            cells = self._sign_cells(observation.public_map, signpost, side)
+            if current in cells:
+                if (
+                    "READ_SIGN" in observation.action_mask
+                    and int(observation.tool_budget_remaining)
+                    >= int(getattr(self.config, "read_sign_cost", 1))
+                ):
+                    self.tool_attempts += 1
+                    return GridAction("READ_SIGN")
+                return None
+            plan = self._shortest_plan(observation, cells)
+            if plan is not None:
+                return self._first_legal(plan, observation)
+        return None
+
+    def _go_inspect_blue(self, observation: Any) -> GridAction | None:
+        blue = observation.public_map.markers.get("blue")
+        if blue is None:
+            return None
+        blue = tuple(blue)
+        current = tuple(observation.agent_position)
+        reach = max(0, int(getattr(self.config, "inspect_range", 2)))
+        if self._manhattan(current, blue) <= reach:
+            if (
+                "INSPECT" in observation.action_mask
+                and int(observation.tool_budget_remaining)
+                >= int(getattr(self.config, "inspect_cost", 2))
+            ):
+                self.tool_attempts += 1
+                return GridAction("INSPECT", blue)
+            return None
+
+        targets = self._inspect_cells(observation.public_map, blue, reach, current)
+        plan = self._shortest_plan(observation, targets)
+        if plan is None:
+            return None
+        return self._first_legal(plan, observation)
+
+    # -- navigation --------------------------------------------------------
+
+    def _navigation_rule(self) -> str:
+        if self._three_mass() >= 0.50:
+            return "base"
+        return self.belief.most_likely() if self.belief is not None else "base"
+
+    def _shortest_plan(
+        self, observation: Any, targets: list[tuple[int, int]]
+    ) -> list[GridAction] | None:
+        current = tuple(observation.agent_position)
+        candidates: list[tuple[int, int, list[GridAction]]] = []
+        for target in targets:
+            plan = self._plan_to(observation, target)
+            if plan:
+                candidates.append((len(plan), self._manhattan(current, target), plan))
+        if not candidates:
+            return None
+        return min(candidates, key=lambda item: (item[0], item[1], item[2][0].kind))[2]
+
+    def _plan_to(self, observation: Any, target: tuple[int, int]) -> list[GridAction]:
+        state = GridPlannerState(
+            tuple(observation.agent_position),
+            bool(observation.inventory),
+            bool(observation.door_open),
+        )
+        # Any marker can be the goal under some candidate rule. When walking
+        # to a tool, do not cross one: otherwise the episode can terminate as
+        # a success (or take hazard damage) before the evidence is collected.
+        planning_map = replace(
+            observation.public_map,
+            walls=observation.public_map.walls
+            | frozenset(observation.public_map.markers.values()),
+        )
+        rule_id = self._navigation_rule()
+        model = HypothesisDynamics(RULE_BY_ID[rule_id], planning_map)
+        plan = astar(state, target, model)
+        if not plan and rule_id != "base":
+            model = HypothesisDynamics(BASE_RULE, planning_map)
+            plan = astar(state, target, model)
+        return plan
+
+    def _first_legal(self, plan: list[GridAction], observation: Any) -> GridAction:
+        if plan and plan[0].kind in observation.action_mask:
+            return plan[0]
+        return self._first_plan_action([], observation)
+
+    def _commit(self, observation: Any) -> GridAction:
+        rule_id = self.belief.most_likely() if self.belief is not None else "base"
+        return self._first_plan_action(self.base_plan(rule_id, observation), observation)
+
+    # -- geometry ----------------------------------------------------------
+
+    @staticmethod
+    def _manhattan(a: tuple[int, int], b: tuple[int, int]) -> int:
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    @staticmethod
+    def _informative_sides() -> list[int]:
+        """Sign faces whose clause separates at least two hypotheses."""
+
+        sides: list[int] = []
+        for side in (0, 1, 2):
+            clauses = {sign_clause(rule, side) for rule in RULE_BY_ID.values()}
+            if len(clauses) > 1:
+                sides.append(side)
+        return sides
+
+    @staticmethod
+    def _sign_cells(
+        public_map: PublicGridMap,
+        signpost: tuple[int, int],
+        side: int,
+    ) -> list[tuple[int, int]]:
+        """Free cells from which ``READ_SIGN`` reads ``side``."""
+
+        if side == 0:
+            candidates = [
+                (signpost[0], signpost[1] + 1),
+                (signpost[0] - 1, signpost[1]),
+            ]
+        elif side == 1:
+            candidates = [(signpost[0] + 1, signpost[1])]
+        elif side == 2:
+            candidates = [(signpost[0], signpost[1] - 1)]
+        else:
+            return []
+        return [
+            coord
+            for coord in candidates
+            if 0 <= coord[0] < public_map.width
+            and 0 <= coord[1] < public_map.height
+            and coord not in public_map.walls
+        ]
+
+    @classmethod
+    def _inspect_cells(
+        cls,
+        public_map: PublicGridMap,
+        blue: tuple[int, int],
+        reach: int,
+        current: tuple[int, int],
+    ) -> list[tuple[int, int]]:
+        cells = [
+            (x, y)
+            for x in range(public_map.width)
+            for y in range(public_map.height)
+            if (x, y) not in public_map.walls
+            and cls._manhattan((x, y), blue) <= reach
+        ]
+        return sorted(cells, key=lambda coord: cls._manhattan(current, coord))
