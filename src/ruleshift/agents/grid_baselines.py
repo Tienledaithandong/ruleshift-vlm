@@ -26,6 +26,7 @@ from ruleshift.public_api.grid_rules import (
     BASE_RULE,
     RULE_BY_ID,
     PublicGridMap,
+    cell_role,
     sign_clause,
     sign_side,
 )
@@ -476,6 +477,9 @@ class DiagnosticBeliefPolicy(_BasePolicy):
     spending tools.
     """
 
+    _probe_leaders_only = False
+    _reserve_blue_budget = False
+
     def __init__(self, config: Any | None = None) -> None:
         super().__init__(config)
         self.sign_observed = False
@@ -739,13 +743,19 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
     1. an empty MAP plan falls back to a ``base`` plan instead of the first
        legal physical action;
     2. sign evidence is stored per face, and an unread face is chosen by its
-       expected information gain over the current posterior;
+       expected information gain over the current posterior; a face that
+       gives both leading rules the same clause is skipped;
     3. a rule must lead on two consecutive decisions before it is eligible
-       for commitment (the probability thresholds themselves are unchanged).
+       for commitment (the probability thresholds themselves are unchanged);
+    4. when only the two-unit inspection budget remains, a blue inspection
+       that separates the leading rules is preferred over another sign read.
 
     The policy remains public-only: it reads no simulator state and no hidden
     rule, and the true rule is never available to it.
     """
+
+    _probe_leaders_only = True
+    _reserve_blue_budget = True
 
     def __init__(self, config: Any | None = None) -> None:
         super().__init__(config)
@@ -819,6 +829,20 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
         sign_cost = int(getattr(self.config, "read_sign_cost", 1))
         inspect_cost = int(getattr(self.config, "inspect_cost", 2))
 
+        # At exactly the inspection cost, a sign read would strand the
+        # remaining budget and make the blue face impossible to inspect.
+        # Prefer the blue face when it separates the two leading rules.
+        if (
+            self._reserve_blue_budget
+            and budget == inspect_cost
+            and self.sign_observed
+            and not self.blue_observed
+            and self._blue_separates_leaders()
+        ):
+            action = self._go_inspect_blue(observation)
+            if action is not None:
+                return action
+
         if budget >= sign_cost:
             action = self._go_read_sign(observation)
             if action is not None:
@@ -847,8 +871,21 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
         current = tuple(observation.agent_position)
         sign_cost = int(getattr(self.config, "read_sign_cost", 1))
         candidates: list[tuple[float, int, int, GridAction]] = []
+        leaders = sorted(
+            self._marginal().items(), key=lambda item: (-item[1], item[0])
+        )[:2]
         for side in self._informative_sides():
             if side in self.sign_sides_observed:
+                continue
+            # A face that gives both leading rules the same clause cannot
+            # change which one is on top.  Reading it would spend a tool
+            # unit that may be needed for a blue inspection.
+            if (
+                self._probe_leaders_only
+                and len(leaders) == 2
+                and sign_clause(RULE_BY_ID[leaders[0][0]], side)
+                == sign_clause(RULE_BY_ID[leaders[1][0]], side)
+            ):
                 continue
             gain = self._sign_side_gain(side)
             if gain <= 1e-9:
@@ -876,6 +913,17 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
         if action.kind == "READ_SIGN":
             self.tool_attempts += 1
         return action
+
+    def _blue_separates_leaders(self) -> bool:
+        """Whether a blue inspection could distinguish the leading rules."""
+
+        leaders = sorted(
+            self._marginal().items(), key=lambda item: (-item[1], item[0])
+        )[:2]
+        if len(leaders) < 2:
+            return False
+        roles = {cell_role(RULE_BY_ID[rule], "blue") for rule, _ in leaders}
+        return len(roles) > 1
 
     def _sign_side_gain(self, side: int) -> float:
         """Expected entropy reduction from reading one sign face."""
@@ -909,6 +957,13 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
 
     def _commit(self, observation: Any) -> GridAction:
         rule_id = self.belief.most_likely() if self.belief is not None else "base"
+        if rule_id == "slippery":
+            # The slippery MAP plan can cycle under its own high slip rate.
+            # Base shares the same movement support, so use its plan as a
+            # stable fallback without changing the goal geometry.
+            plan = self.base_plan("base", observation)
+            if plan:
+                return self._first_plan_action(plan, observation)
         plan = self.base_plan(rule_id, observation)
         if not plan and rule_id != "base":
             fallback = self.base_plan("base", observation)

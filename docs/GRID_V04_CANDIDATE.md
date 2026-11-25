@@ -3,6 +3,11 @@
 **Status: exploratory candidate. Not a new confirmatory benchmark, not a gate
 change, and not a Phase 1 authorization.**
 
+> **Post-hoc note.** After a full-grid regression, `DiagnosticBeliefPolicyV4`
+> was repaired outside this protocol. The repair and its descriptive rerun are
+> documented in [`GRID_V04_HOLDOUT.md`](GRID_V04_HOLDOUT.md); they are not
+> preregistered evidence and do not change the 100% base gate.
+
 ## Motivation
 
 The v0.3 base-failure trace identified three policy mechanisms:
@@ -34,8 +39,9 @@ gate, or the v0.3 policy.
   `top - second >= 0.10` thresholds. This is intended to stop one-step
   oscillation; it is not a change to the probability thresholds.
 
-All three changes live in a new `DiagnosticBeliefPolicyV4`;
-`DiagnosticBeliefPolicy` remains byte-for-byte the v0.3 policy.
+All three changes live in a new `DiagnosticBeliefPolicyV4`.
+`DiagnosticBeliefPolicy` keeps its v0.3 behavior; the later repair uses
+flags that default to false there.
 
 ## Holdout
 
