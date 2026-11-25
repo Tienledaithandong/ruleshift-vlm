@@ -23,7 +23,7 @@ class _Belief:
 
 def test_base_plan_fallback_replaces_first_legal_action():
     policy = DiagnosticBeliefPolicyV4(GridConfig())
-    policy.belief = _Belief({"slippery": 1.0}, top="slippery")  # type: ignore[assignment]
+    policy.belief = _Belief({"hazard_goal_swap": 1.0}, top="hazard_goal_swap")  # type: ignore[assignment]
     observation = SimpleNamespace(
         agent_position=(0, 0),
         action_mask=("LEFT",),
@@ -31,7 +31,7 @@ def test_base_plan_fallback_replaces_first_legal_action():
         to_payload=dict,
     )
     policy.base_plan = (  # type: ignore[method-assign]
-        lambda rule, obs: [] if rule == "slippery" else [GridAction("LEFT")]
+        lambda rule, obs: [] if rule == "hazard_goal_swap" else [GridAction("LEFT")]
     )
     assert policy._commit(observation).kind == "LEFT"
     assert policy.plan_fallback_count == 1
@@ -102,3 +102,99 @@ def test_v4_records_sign_side_memory_and_recovers_base():
     assert episode.success
     assert episode.final_rule_estimate == "base"
     assert 0 in policy.sign_sides_observed
+
+def test_blue_separation_uses_the_two_leading_rules():
+    policy = DiagnosticBeliefPolicyV4(GridConfig())
+    policy.belief = _Belief(  # type: ignore[assignment]
+        {"base": 0.5, "hazard_goal_swap": 0.5}, top="base"
+    )
+    assert policy._blue_separates_leaders()
+    policy.belief = _Belief(  # type: ignore[assignment]
+        {"base": 0.5, "slippery": 0.5}, top="base"
+    )
+    assert not policy._blue_separates_leaders()
+
+
+def test_v4_slippery_commit_uses_the_base_plan():
+    policy = DiagnosticBeliefPolicyV4(GridConfig())
+    policy.belief = _Belief({"slippery": 1.0}, top="slippery")  # type: ignore[assignment]
+    policy.base_plan = (  # type: ignore[method-assign]
+        lambda rule, obs: [GridAction("LEFT")]
+        if rule == "base"
+        else [GridAction("UP")]
+    )
+    assert policy._commit(SimpleNamespace()).kind == "LEFT"
+
+
+def test_v4_reads_only_the_informative_sign_face_for_sign_composition():
+    config = GridConfig()
+    scenario = next(
+        scenario
+        for scenario in build_grid_scenarios(10, 5, config)
+        if scenario.scenario_id == "m5-s1-identification-sign_composition-None"
+    )
+    env = GridEnv(config)
+    observation, info = env.reset(
+        seed=scenario.run_seed, options={"scenario": scenario}
+    )
+    policy = DiagnosticBeliefPolicyV4(config)
+    episode = run_grid_episode(
+        env, policy, config, scenario, observation, info
+    )
+    assert episode.success
+    assert episode.final_rule_estimate == "sign_composition"
+    assert policy.sign_sides_observed == {0}
+
+
+def test_v4_recovers_the_eight_sign_composition_identification_cases():
+    config = GridConfig()
+    expected = {
+        f"m5-s{seed}-identification-sign_composition-None"
+        for seed in range(1, 5)
+    } | {
+        f"m6-s{seed}-identification-sign_composition-None"
+        for seed in range(4)
+    }
+    scenarios = {
+        scenario.scenario_id: scenario
+        for scenario in build_grid_scenarios(10, 5, config)
+        if scenario.scenario_id in expected
+    }
+    assert set(scenarios) == expected
+    for scenario in scenarios.values():
+        env = GridEnv(config)
+        observation, info = env.reset(
+            seed=scenario.run_seed, options={"scenario": scenario}
+        )
+        policy = DiagnosticBeliefPolicyV4(config)
+        episode = run_grid_episode(
+            env, policy, config, scenario, observation, info
+        )
+        assert episode.success, scenario.scenario_id
+        assert episode.final_rule_estimate == "sign_composition"
+
+
+def test_v4_blue_priority_recovers_m6_s0_without_cycling_on_slippery():
+    config = GridConfig()
+    cases = {
+        "m6-s0-identification-sign_composition-None": "sign_composition",
+        "m6-s3-identification-slippery-None": "slippery",
+    }
+    scenarios = {
+        scenario.scenario_id: scenario
+        for scenario in build_grid_scenarios(10, 5, config)
+        if scenario.scenario_id in cases
+    }
+    assert set(scenarios) == set(cases)
+    for scenario_id, expected_rule in cases.items():
+        scenario = scenarios[scenario_id]
+        env = GridEnv(config)
+        observation, info = env.reset(
+            seed=scenario.run_seed, options={"scenario": scenario}
+        )
+        policy = DiagnosticBeliefPolicyV4(config)
+        episode = run_grid_episode(
+            env, policy, config, scenario, observation, info
+        )
+        assert episode.success, scenario_id
+        assert episode.final_rule_estimate == expected_rule

@@ -148,11 +148,17 @@ current maps or start Phase 1.
 
 ### Follow-up: v0.4 candidate
 
-A v0.4 candidate now implements the plan fallback, per-side sign probing, and
-a stable-commit condition. On the fresh-map exploratory holdout (maps 100-199,
+A v0.4 candidate implements the plan fallback, per-side sign probing, and a
+stable-commit condition. On the fresh-map exploratory holdout (maps 100-199,
 500 true-base episodes), both v0.3 and v0.4 have 0 task failures, so the
-holdout cannot demonstrate a task-level improvement; v0.4 has 4/500
-misdiagnoses versus 5/500 for v0.3. On the original maps, v0.4 removes the
-three observed task failures but is post-hoc. The literal gate is still failed
-and Phase 1 remains blocked; see
-[`GRID_V04_HOLDOUT.md`](GRID_V04_HOLDOUT.md).
+holdout cannot demonstrate a task-level improvement; the original candidate
+has 4/500 misdiagnoses versus 5/500 for v0.3. On the original maps, v0.4
+removes the three observed task failures but is post-hoc.
+
+A later full-grid check found that the original candidate lost eight
+sign-composition identification episodes (538/550 versus 534/550 for v0.3).
+The post-hoc repair recovers all eight and reaches 546/550, with all four
+remaining failures also present in v0.3. The repair was chosen after seeing
+those failures, so it is not confirmatory and the same-map holdout rerun is
+descriptive only. The literal gate is still failed and Phase 1 remains
+blocked; see [`GRID_V04_HOLDOUT.md`](GRID_V04_HOLDOUT.md).
