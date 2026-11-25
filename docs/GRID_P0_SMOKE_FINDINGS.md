@@ -46,7 +46,7 @@ is a debugging log, not a scientific result.
   tokens 100.
 - Chosen actions were `DOWN` 55 and `LEFT` 14; 69 moving steps. The first
   episode still ran to the 60-step cap, but the policy no longer collapsed to a
-  single action after a wall hit. The behavioural gate passed.
+  single action after a wall hit. It passed the preliminary gate used then.
 - Report: `kaggle_outputs/smoke12/reports/grid_real_pilot.smoke.md`. This is a
   scaffold run, not a scientific result.
 
@@ -72,9 +72,9 @@ After the technical gate passed, the 55-episode dry chunk for map 0 was launched
 
 - 2 episodes, 120 public rows. The technical gate failed: 13/120 JSON-valid
   (10.8%), 107 parser fallbacks, 0/1 base-rule success.
-- The failures were strict-schema omissions, not malformed JSON. Of 33 unique
-  responses, 23 omitted only `base` and 7 omitted `base`, `hazard_goal_swap`
-  and `sign_composition`; every omitted key is a required candidate id.
+- The failures were strict-schema omissions. Of 119 cached responses, 85
+  omitted only `base` and 22 omitted `base`, `hazard_goal_swap` and
+  `sign_composition`; every omitted key is a required candidate ID.
   The model is still dropping low-probability candidate keys even though the
   prompt says all six are required.
 - The semantic gate also failed: only 1 unique belief vector, 0 tool calls,
@@ -89,10 +89,9 @@ After the technical gate passed, the 55-episode dry chunk for map 0 was launched
 ## Run 5: `grid_v7` (smoke-14, source commit `6dc75fe`)
 
 - 2 episodes, 120 public rows; 91/120 JSON-valid (75.8%), 29 fallbacks. The
-  all-ids instruction worked: every invalid response now contained all six
-  candidate ids. All 28 invalid unique responses summed to 1.50, typically
-  `0.33,0.33,0.33,0.17,0.17,0.17`; the model changed three values without
-  rebalancing the rest.
+  all-ids instruction worked: every invalid response contained all six
+  candidate IDs. All 28 invalid cached responses failed the sum check, with
+  1.50 the most frequent invalid total (11 of 28).
 - The technical gate still failed. The semantic gate also failed, but its
   kernel report over-counted blocked repeats (30/54): the gate then inferred
   `blocked` from a same-cell transition, which also counts `hazard` and
@@ -148,14 +147,9 @@ pass either: the follow-up analysis found a constant uniform belief vector, a
 fixed `LEFT`/`DOWN` action prefix, zero tool use, and 0/10 success on base-rule
 episodes. See `docs/GRID_CHUNK0_ANALYSIS.md`.
 
-The binding blocker is the 3B model’s probability arithmetic under a strict
-six-key full-menu contract, not the observation text or the guard. Do **not**
-run the 55-episode chunk or the 5,500-episode grid. The next step is an
-interface decision (integer weights, constrained decoding, or best-of-N with a
-protocol change), not another prompt-only smoke.
-
-This chunk must not feed a larger run and is not evidence. The full grid is
-still not authorized: `preregistered_test.yaml` remains `DRAFT_NOT_FROZEN`, and
-the measured 640 GPU-hour cost exceeds the remaining quota. The next step is to
-repair the observation/action contract and add semantic gates, then re-run only
-a 2–3 episode smoke. Design resizing comes after that, not before.
+The strict six-key contract fails on probability arithmetic even after the
+observation and guard repairs. The offline normalization audit still shows
+highly concentrated beliefs. The completed chunk and smokes serve as
+diagnostic feasibility evidence. The frozen 3B grid is **closed**. See the
+[closure decision](GRID_FEASIBILITY_DECISION.md) for the reopen criteria and
+the [feasibility note](GRID_NEGATIVE_FEASIBILITY_NOTE.md) for the audit.

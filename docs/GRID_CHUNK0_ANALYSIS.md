@@ -188,7 +188,10 @@ A semantic gate should reject a chunk when any of these holds:
 These are debugging gates for a scaffold, not preregistered scientific
 criteria. They should be agreed before the next smoke.
 
-## 6. What to do next
+## 6. Repair recommendations after map 0
+
+These were the recommendations before the follow-up smokes and the closure
+decision. The current disposition is recorded above.
 
 1. **Stop GPU work.** Do not launch chunk 1 or the full grid; this policy
    cannot produce a meaningful adaptation measurement.
@@ -208,10 +211,9 @@ criteria. They should be agreed before the next smoke.
 
 ## 7. Implementation status of the repair
 
-The observation/action contract and semantic gate have been repaired; the full
-test suite is green. The prompt repair did not work: no two-episode smoke
-passed the strict full-menu contract. These changes are not evidence that the
-policy now adapts, and they do not authorize any run beyond a 2-episode smoke.
+The observation/action contract and semantic gate were repaired. Every
+two-episode follow-up smoke still failed the strict full-menu contract. Those
+smokes were diagnostics, and the repairs authorize no further runs.
 
 - `build_public_text()` now emits `adjacent=[UP=...,DOWN=...,LEFT=...,RIGHT=...]`
   and the complete public `walls=[...]` set, both read from `PublicGridMap`.
@@ -227,12 +229,12 @@ policy now adapts, and they do not authorize any run beyond a 2-episode smoke.
 - `semantic_gate()` rejects constant beliefs, blocked-action repeat rates above
   5%, zero tool use when a tool is available, and zero success on final
   base-rule episodes. `main()` requires both the technical and semantic gates.
-- Only 2-episode smokes are permitted. Smoke-13 (v6) omitted `base`
-  (10.8% valid); smoke-14 (v7) emitted all six ids but many summed to 1.50
+- The follow-ups were limited to two-episode smokes. Smoke-13 (v6) omitted
+  `base` (10.8% valid); smoke-14 (v7) emitted all six IDs but some summed to 1.50
   (75.8% valid); smoke-15 (v8) added an arithmetic example and fell to 26.7%;
   smoke-16 (v9) combined the all-ids and v5 arithmetic text and reached only
-  22.5%. All four had parser fallbacks, so Gate A failed. None is evidence. The
-  55-episode chunk and the 5,500-episode grid remain blocked.
+  22.5%. All four had parser fallbacks, so Gate A failed. These smokes inform
+  the closure decision. The frozen 3B grid remains closed.
 - The active prompt is back at `grid_v7`, the best observed full-menu rate.
   v8 and v9 are retained as rejected experiment records. The binding blocker
   is the 3B model’s probability arithmetic under the strict six-key contract;

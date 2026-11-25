@@ -1,10 +1,9 @@
 # RuleShift / Agentic VLM — prepared research harness
 
-**Status: CPU harness complete, including the additive RuleShift-Grid benchmark
-(Tier A implemented; Tier B is an RGB+text VLM scaffold). No training,
-experiment, or evaluation with a real model has been run. Generated result
-files are intentionally absent so that stub-produced numbers cannot be
-mistaken for measurements.**
+**Status: The CPU harness includes the additive RuleShift-Grid benchmark
+(Tier A) and an RGB+text VLM scaffold (Tier B). The frozen 3B grid is closed
+after diagnostic smokes and one map-0 dry chunk.** See the
+[grid feasibility note](docs/GRID_NEGATIVE_FEASIBILITY_NOTE.md).
 
 CPU-first Python 3.11 research repository for value-aware probing under hidden
 dynamics shifts. This is a 12-week research prototype, not a claim of a paper
@@ -91,7 +90,7 @@ The only model-backend dependencies are in the optional extra:
 
 ## Remote GPU setup (Colab / Kaggle)
 
-Setup scaffolding exists but has **not been executed remotely**:
+Setup scaffolding for remote diagnostics:
 
 - `notebooks/colab_pilot.ipynb` — ready-to-run **real** offline pilot on Colab (pinned Qwen2.5-VL-3B, text-input only).
 - `notebooks/colab_setup.ipynb`, `notebooks/kaggle_gpu.ipynb` — clone/install/check notebooks.
@@ -100,8 +99,7 @@ Setup scaffolding exists but has **not been executed remotely**:
 - `scripts/run_grid_real_pilot.py`, `kaggle/kernel/run_grid.py` — remote-only grid pilot scaffold; the local guard refuses `cuda` unless `RULESHIFT_KAGGLE=1`.
 - `kaggle/kaggle.json.example` — placeholder; real credentials are git-ignored.
 
-See `docs/COLAB_KAGGLE_SETUP.md`. You must supply the GitHub URL, model revision
-and credentials. No local GPU is used and nothing has been downloaded or run.
+See `docs/COLAB_KAGGLE_SETUP.md` for runtime configuration and credentials.
 
 For the multi-week real-VLM grid (100 maps x 5 seeds, split into weekly Kaggle
 chunks), see `docs/RUNBOOK_GRID_MULTIWEEK.md` and the plan at
