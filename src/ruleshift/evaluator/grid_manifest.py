@@ -23,7 +23,9 @@ from ruleshift.public_api.grid_rules import PublicGridMap
 
 __all__ = [
     "ManifestError",
+    "SCENARIO_SCOPE_SUFFIXES",
     "SCENARIO_SUFFIXES",
+    "STATIC_SCENARIO_SUFFIXES",
     "ScenarioManifest",
     "build_manifest",
     "canonical_json",
@@ -35,20 +37,25 @@ __all__ = [
 ]
 
 MANIFEST_VERSION = "grid-manifest-v1"
-SCENARIO_SUFFIXES = (
+STATIC_SCENARIO_SUFFIXES = (
     "identification-base-None",
     "identification-remap_swap-None",
     "identification-remap_rotate-None",
     "identification-slippery-None",
     "identification-hazard_goal_swap-None",
     "identification-sign_composition-None",
+)
+SCENARIO_SUFFIXES = STATIC_SCENARIO_SUFFIXES + (
     "change_detection-base-remap_swap",
     "change_detection-base-slippery",
     "change_detection-base-hazard_goal_swap",
     "change_detection-base-sign_composition",
     "no_shift-base-None",
 )
-_EXPECTED_PER_MAP_SEED = len(SCENARIO_SUFFIXES)
+SCENARIO_SCOPE_SUFFIXES = {
+    "full": SCENARIO_SUFFIXES,
+    "static_identification": STATIC_SCENARIO_SUFFIXES,
+}
 
 
 class ManifestError(ValueError):
@@ -81,6 +88,7 @@ class ScenarioManifest:
     version: str
     entries: tuple[dict[str, Any], ...]
     sha256: str
+    scope: str = "full"
 
     @property
     def scenario_ids(self) -> tuple[str, ...]:
@@ -123,12 +131,18 @@ def build_manifest(
     config: GridConfig,
     map_ids: Sequence[int],
     run_seeds: Sequence[int],
+    *,
+    scope: str = "full",
 ) -> ScenarioManifest:
     """Build a manifest from exact integer map ids and run seeds.
 
     Only the public geometry is generated here; no episode or policy is run.
     """
 
+    try:
+        suffixes = SCENARIO_SCOPE_SUFFIXES[scope]
+    except KeyError as exc:
+        raise ManifestError(f"unknown manifest scope: {scope!r}") from exc
     maps = tuple(int(value) for value in map_ids)
     seeds = tuple(int(value) for value in run_seeds)
     if not maps or not seeds:
@@ -150,11 +164,11 @@ def build_manifest(
         scenario.scenario_id: scenario
         for scenario in build_grid_scenarios(max_map + 1, max_seed + 1, config)
     }
-    expected = len(maps) * len(seeds) * _EXPECTED_PER_MAP_SEED
+    expected = len(maps) * len(seeds) * len(suffixes)
     selected: list[GridScenario] = []
     for map_id in maps:
         for seed in seeds:
-            for suffix in SCENARIO_SUFFIXES:
+            for suffix in suffixes:
                 scenario_id = f"m{map_id}-s{seed}-{suffix}"
                 try:
                     selected.append(all_scenarios[scenario_id])
@@ -196,12 +210,14 @@ def build_manifest(
         version=MANIFEST_VERSION,
         entries=tuple(entries),
         sha256=digest,
+        scope=scope,
     )
 
 
 def manifest_to_dict(manifest: ScenarioManifest) -> dict[str, Any]:
     return {
         "version": manifest.version,
+        "scope": manifest.scope,
         "sha256": manifest.sha256,
         "entries": [dict(entry) for entry in manifest.entries],
     }
@@ -210,6 +226,9 @@ def manifest_to_dict(manifest: ScenarioManifest) -> dict[str, Any]:
 def manifest_from_dict(payload: Mapping[str, Any]) -> ScenarioManifest:
     if payload.get("version") != MANIFEST_VERSION:
         raise ManifestError("unsupported manifest version")
+    scope = str(payload.get("scope", "full"))
+    if scope not in SCENARIO_SCOPE_SUFFIXES:
+        raise ManifestError(f"unknown manifest scope: {scope!r}")
     entries = payload.get("entries")
     if not isinstance(entries, list) or not entries:
         raise ManifestError("manifest entries must be a non-empty list")
@@ -245,6 +264,7 @@ def manifest_from_dict(payload: Mapping[str, Any]) -> ScenarioManifest:
         version=MANIFEST_VERSION,
         entries=tuple(normalized),
         sha256=digest,
+        scope=scope,
     )
 
 

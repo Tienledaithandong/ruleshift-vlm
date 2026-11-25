@@ -11,7 +11,11 @@ import json
 from pathlib import Path
 
 from ruleshift.envs.grid.config import GridConfig
-from ruleshift.evaluator.grid_manifest import build_manifest, write_manifest
+from ruleshift.evaluator.grid_manifest import (
+    SCENARIO_SCOPE_SUFFIXES,
+    build_manifest,
+    write_manifest,
+)
 
 
 def _parse_ints(values: list[str]) -> list[int]:
@@ -33,15 +37,27 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--maps", nargs="+", required=True, help="ids or ranges, e.g. 0-9")
     parser.add_argument("--seeds", nargs="+", required=True, help="run seeds or ranges")
+    parser.add_argument(
+        "--scope",
+        choices=sorted(SCENARIO_SCOPE_SUFFIXES),
+        default="full",
+        help="static_identification is the approved CPU design; full is deferred",
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     config = GridConfig()
-    manifest = build_manifest(config, _parse_ints(args.maps), _parse_ints(args.seeds))
+    manifest = build_manifest(
+        config,
+        _parse_ints(args.maps),
+        _parse_ints(args.seeds),
+        scope=args.scope,
+    )
     write_manifest(manifest, args.out)
     print(
         json.dumps(
             {
                 "out": str(Path(args.out)),
+                "scope": manifest.scope,
                 "sha256": manifest.sha256,
                 "scenarios": len(manifest.entries),
                 "maps": list(manifest.map_ids),

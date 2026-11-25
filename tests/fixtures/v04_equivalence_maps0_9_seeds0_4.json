@@ -1,0 +1,4209 @@
+{
+  "methods": {
+    "diagnostic_belief_v3": {
+      "m0-s0-identification-base-None": {
+        "actions_sha256": "039ec10e9f9c2113f4d09b23823a5cce5bff64305e5a439489025717ef9744b5",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "6fbec81f43900f6c021657f5fe431a2f8b066c520097660287af16039bca54d4",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s0-identification-remap_rotate-None": {
+        "actions_sha256": "7819bec8feb61f4df06e6c7db004c8358af3b52b6c4234e900bd58fa47b68a84",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s0-identification-remap_swap-None": {
+        "actions_sha256": "3a5a6222890e98129d9832bc88d67f1cbd551fd8ed8f72739823073e2bf20420",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s0-identification-sign_composition-None": {
+        "actions_sha256": "4058673b14eda9fd44cb258ebb8c7612922471c411ab43cb7cb331d3d2634ba9",
+        "env_steps": 11,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s0-identification-slippery-None": {
+        "actions_sha256": "a4d3edb1ab4a0363e36cf3f8020e2d94277a4612bce9d15f018fccc32ae399df",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s1-identification-base-None": {
+        "actions_sha256": "039ec10e9f9c2113f4d09b23823a5cce5bff64305e5a439489025717ef9744b5",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59d10cba07f7623a2aedc4fbe59e66322f90427921ae07df5ac63799ae98f53d",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s1-identification-remap_rotate-None": {
+        "actions_sha256": "e957e4baada4011917e6d4d9f0d70f8670d7902fd9ee14371cbebf07d1e0f101",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s1-identification-remap_swap-None": {
+        "actions_sha256": "27953c19d9a65bd4ffcae862caafe72df1c365005c1288ddb95cdff1308b162f",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s1-identification-sign_composition-None": {
+        "actions_sha256": "0cb7161662c29aacc78e9ea14b6e4f845311adc3d619743a996d27cb7dd5874a",
+        "env_steps": 12,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s1-identification-slippery-None": {
+        "actions_sha256": "12e3dc32ea0e92a64afbe894024d5034dddf3f6b045f68362db97bc755450ac9",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s2-identification-base-None": {
+        "actions_sha256": "907a3aa8ecd4e7b3cc751ceb088e970f9026467cb55d6e5b00c1c512e0ef8f5d",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2e101b86d843636666bc8b2d131f84d2ec072085b85fba202319fe6648e6ff5e",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s2-identification-remap_rotate-None": {
+        "actions_sha256": "70dc8cabf9184763aa1696edd81ec55e55a13979f33020f790128a7f5077b2e6",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s2-identification-remap_swap-None": {
+        "actions_sha256": "3a5a6222890e98129d9832bc88d67f1cbd551fd8ed8f72739823073e2bf20420",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s2-identification-sign_composition-None": {
+        "actions_sha256": "cf0d3dcfce9413945b45ad371c6b889ac4a8c1b298a00d2eed1c1559bc72dbc6",
+        "env_steps": 17,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s2-identification-slippery-None": {
+        "actions_sha256": "381653fe252e1105e0d012c1d25970a7903dadeebba7fc54841b2cbbd27ed6ee",
+        "env_steps": 11,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s3-identification-base-None": {
+        "actions_sha256": "7dd5bbfb16eef5c382c17c7995cd3b2d4c8a71ae8ef1c65951d523fd839bbb12",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "6fbec81f43900f6c021657f5fe431a2f8b066c520097660287af16039bca54d4",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s3-identification-remap_rotate-None": {
+        "actions_sha256": "70dc8cabf9184763aa1696edd81ec55e55a13979f33020f790128a7f5077b2e6",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s3-identification-remap_swap-None": {
+        "actions_sha256": "ed0a5a75a8466d4af1d5588c6e8e3fae07f16dbbff4906338ad77e9f183a9a31",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s3-identification-sign_composition-None": {
+        "actions_sha256": "244e258658e98404285856237ccafc27a16d973d54ae854155b80bbe414ecf4b",
+        "env_steps": 60,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": false,
+        "tool_units": 3
+      },
+      "m0-s3-identification-slippery-None": {
+        "actions_sha256": "ce36ec45a565ed5cca9271010c798c2957d45188ee80dcc74140e50ec6d90a60",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s4-identification-base-None": {
+        "actions_sha256": "986f70d42feaf902a6787f58c7d0832095bcf5b3db88f5444ad8a0c76415f37c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "010d4410c83a60eee950c27ed0682904a361d83a89c01e02105da0b47e0cfffd",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s4-identification-remap_rotate-None": {
+        "actions_sha256": "70dc8cabf9184763aa1696edd81ec55e55a13979f33020f790128a7f5077b2e6",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s4-identification-remap_swap-None": {
+        "actions_sha256": "3a5a6222890e98129d9832bc88d67f1cbd551fd8ed8f72739823073e2bf20420",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s4-identification-sign_composition-None": {
+        "actions_sha256": "c4d07df3616864d48bca90e7fa9f744296079fd89aa3cb1754b6319ce5cbeca1",
+        "env_steps": 15,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s4-identification-slippery-None": {
+        "actions_sha256": "9c574cbd4ead6efc3b5f2996e5db2ef4810ceb39d5405a76f221d0b10c98cd2c",
+        "env_steps": 5,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s0-identification-base-None": {
+        "actions_sha256": "e1146a0e6c37fd675278fa2bc0d1ad5cde4da00f2410fe28aa27ac664b35b9ec",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s0-identification-remap_rotate-None": {
+        "actions_sha256": "3f8f1c933316692ab2b13c4d85a2bf8ce22d806e0beebf73673c5c8331c90106",
+        "env_steps": 14,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s0-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s0-identification-sign_composition-None": {
+        "actions_sha256": "fe5fe0f8cad1a8c0d5cb5374edcb14b8da52297e407ad600b8466a7fb2d371eb",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s0-identification-slippery-None": {
+        "actions_sha256": "2c80f88ae20fcd09a038e31b911382f0940a3843571dd4212e2e7fd94eb75888",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s1-identification-base-None": {
+        "actions_sha256": "105eb9fcd4ab59afcddf027a6e2211fc151569f1d30c392f7e9c51befeb3a246",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s1-identification-remap_rotate-None": {
+        "actions_sha256": "61ed63b629ce532b04fc38fbf882cb441ab13620be4e4a37124364d0046cd620",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s1-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s1-identification-sign_composition-None": {
+        "actions_sha256": "73ae93dff90226e65c52a948ad3a6ec349cd8c23e81d134a9caa8290077a5d61",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s1-identification-slippery-None": {
+        "actions_sha256": "d80aa2d76437e002300de5a4c255d93e5ccdf5795ca79acd9458a71b6aaca9c1",
+        "env_steps": 5,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s2-identification-base-None": {
+        "actions_sha256": "e1146a0e6c37fd675278fa2bc0d1ad5cde4da00f2410fe28aa27ac664b35b9ec",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "65a21891f709e5f86c55815ad90d8556a102eca5f47039d3b3b4755829990550",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s2-identification-remap_rotate-None": {
+        "actions_sha256": "1fc22767e8cd4c26397ae150b935d49d861a604378094a8c2b0d8b1b4a4851f6",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s2-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s2-identification-sign_composition-None": {
+        "actions_sha256": "f206e7cb2eea4f7021e2b736494812f368e69b066c6829144c02658a1f432e83",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s2-identification-slippery-None": {
+        "actions_sha256": "db1b4f87c91391473cb957d1621b1c6bc96b797f0fbf431ed224b534dba3c6d1",
+        "env_steps": 16,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s3-identification-base-None": {
+        "actions_sha256": "e1146a0e6c37fd675278fa2bc0d1ad5cde4da00f2410fe28aa27ac664b35b9ec",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s3-identification-remap_rotate-None": {
+        "actions_sha256": "1007d692caf86a97f24c9bc814f30bb7fc0a4e7d4e7958bb0117fcf4add5403d",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s3-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s3-identification-sign_composition-None": {
+        "actions_sha256": "526689fadcfb007e6d739ad99e19b9009dafb835fe75ca5a0cda96981b6c95af",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s3-identification-slippery-None": {
+        "actions_sha256": "983ffb7e5f213165ff9f225b8d2201893aff63646b885af0c5457967a047be34",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s4-identification-base-None": {
+        "actions_sha256": "d561f9e2795a1ad7d649e7e20106e84b6cf6c1a2b740c3d98fbe4faad88417be",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s4-identification-remap_rotate-None": {
+        "actions_sha256": "984d74edc329204d7cd0fecb8c6433afd4a6ea60e1965d686cb5b34123421db2",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s4-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s4-identification-sign_composition-None": {
+        "actions_sha256": "fe5fe0f8cad1a8c0d5cb5374edcb14b8da52297e407ad600b8466a7fb2d371eb",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s4-identification-slippery-None": {
+        "actions_sha256": "5747c80c6f9c6b32e16dcddb276fbdbbcab6d67c3b33deb90bf3ee31eb8ff6a6",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s0-identification-base-None": {
+        "actions_sha256": "bdff55babc10d3993813bc1b77f52690caa518f404209914421048867faa85e4",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "d1518f0b1e00fd7a3422b03b831b0b9b7f676a5d05d5c776b22a2ca05d0b45e3",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s0-identification-remap_rotate-None": {
+        "actions_sha256": "1335d121aed23b7ed19d41063822897bc3083c8cfa64fb316b3b89b23164f563",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s0-identification-remap_swap-None": {
+        "actions_sha256": "b9fabdd0a92ebb51ecf5d7f8d5d4930ae97fc0e1d4506a1d2c2452ed5eb6bdec",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s0-identification-sign_composition-None": {
+        "actions_sha256": "9bf5eafd9d263a32d1f1ead60efb494b7e21d6f9d194727d72f28b1af027f811",
+        "env_steps": 15,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s0-identification-slippery-None": {
+        "actions_sha256": "fde1c6de4c62c5a754ef041a9bd4f076a405aefba49445d7f15b2b6a527fe3a2",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m2-s1-identification-base-None": {
+        "actions_sha256": "49351acbeaf146ec7bde2365861c31cc278fa5a1d342582ac1180235f5de8d7a",
+        "env_steps": 9,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "30ad0f05775d24ea97d4e09771654cb125147b4807464100e545f214e921d8d7",
+        "env_steps": 15,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s1-identification-remap_rotate-None": {
+        "actions_sha256": "12ff9ffa980ad8b98a2e264364ee854b4b4a2493208d17a4aa4507bf8078913c",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s1-identification-remap_swap-None": {
+        "actions_sha256": "e22e3f8f3204034a2b0f71b1eb1da968759142e31a3849970d84f217def012d3",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s1-identification-sign_composition-None": {
+        "actions_sha256": "bd468256a89ca66fa0100f00b334c3670d9b30c4f1171d360806d3b6e690e77d",
+        "env_steps": 13,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s1-identification-slippery-None": {
+        "actions_sha256": "7ccf1e6de73378778eae4d8d9a4f087075cef595ebd75f63d8b26bc3b790b979",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m2-s2-identification-base-None": {
+        "actions_sha256": "3b154cca2348f47299c357d772f6e8c427763defffa5cc2e0dbfd88f9be1a998",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m2-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "fddd2d49399c44c30b8a86937a257804d80efeb0b977858484249dca739c49b1",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s2-identification-remap_rotate-None": {
+        "actions_sha256": "e2627938c4769afede3a707d3173698e81d057e1bee47ca33f0e781bd8da578b",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s2-identification-remap_swap-None": {
+        "actions_sha256": "c14cd21063f5a490a443acd67efb5df2955aa0dae3df3dd4adfa63ee78091f5b",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s2-identification-sign_composition-None": {
+        "actions_sha256": "3447d7e432deceb6ec895a4b9b5f043ca31b2fb394d87ea2a46e167709bd4fe7",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s2-identification-slippery-None": {
+        "actions_sha256": "763d0efbef815bd58a0957a35035fd52c52e71fec2281aa42a13381bff082826",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m2-s3-identification-base-None": {
+        "actions_sha256": "bdff55babc10d3993813bc1b77f52690caa518f404209914421048867faa85e4",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "6dbe87d76ae2f13d66e7c332e2415c5c6c17e9bc2376a4d91fa9a30dd61d3aad",
+        "env_steps": 17,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s3-identification-remap_rotate-None": {
+        "actions_sha256": "a0ba18227ed8ab6fcada8f58f79e78c0952f7232e8091cc88a0b0923967be0a0",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s3-identification-remap_swap-None": {
+        "actions_sha256": "1d661accb1ebae0b716ad3eba67fa2e106a9cae964065d5b435c472bfaccd3bd",
+        "env_steps": 14,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s3-identification-sign_composition-None": {
+        "actions_sha256": "93101304d81566314bf084d0ef231cebd5dd7e9d7868f428ddb8665c7f95b121",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s3-identification-slippery-None": {
+        "actions_sha256": "fde1c6de4c62c5a754ef041a9bd4f076a405aefba49445d7f15b2b6a527fe3a2",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m2-s4-identification-base-None": {
+        "actions_sha256": "cf24808d9170d66b618cf84fe041e581147f52a821020f3ae52f5f65e64c6035",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "d1518f0b1e00fd7a3422b03b831b0b9b7f676a5d05d5c776b22a2ca05d0b45e3",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s4-identification-remap_rotate-None": {
+        "actions_sha256": "ae843eeaf73264f478cf1c12d25404668a43305c5f6b722511023bc73ee40ad5",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s4-identification-remap_swap-None": {
+        "actions_sha256": "77fd2474368da60ba435d970ef99d8ca0318b656cd68e5fa89d7648a299e1503",
+        "env_steps": 15,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s4-identification-sign_composition-None": {
+        "actions_sha256": "3447d7e432deceb6ec895a4b9b5f043ca31b2fb394d87ea2a46e167709bd4fe7",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s4-identification-slippery-None": {
+        "actions_sha256": "51671cafeff2c7f9085ff03a62d949b99d0397c73a557a96d8e13beb0ad4540e",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m3-s0-identification-base-None": {
+        "actions_sha256": "1844b1922ff8120c340516a1371036bf92f2819991e77289d82541e2df35c93a",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s0-identification-remap_rotate-None": {
+        "actions_sha256": "8e5163306f0df53bf10ca48ad5b9e4fe0a2c927c36bc27ee9514fcf1357b9e8e",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s0-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s0-identification-sign_composition-None": {
+        "actions_sha256": "0191e23f2704b48354900ae6e63a77516cf6e7a74c8f040d4531a8e89fe84ee4",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s0-identification-slippery-None": {
+        "actions_sha256": "dd209c42d48909dc73d3fc2762334d73f8a10bf2b32100860bc8a07e008aa597",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s1-identification-base-None": {
+        "actions_sha256": "fcd83ae587262443d869b2acf91ddffbf7ca5b83f70a6364472b3efb8d1048bf",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s1-identification-remap_rotate-None": {
+        "actions_sha256": "8e5163306f0df53bf10ca48ad5b9e4fe0a2c927c36bc27ee9514fcf1357b9e8e",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s1-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s1-identification-sign_composition-None": {
+        "actions_sha256": "68b72fbe3f75e4f2fdd7905dcc5615237556161f9164794a7d2c81d8a736eb1c",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s1-identification-slippery-None": {
+        "actions_sha256": "6e7dd286ff66b1ac7aba936252d45c7cc69fa6a7075b7cecae755bf3abee118b",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s2-identification-base-None": {
+        "actions_sha256": "ee2e1ea2508d31c251b8f0fd80c7439043f9e0c2a322d581ace856f73b3c0e76",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s2-identification-remap_rotate-None": {
+        "actions_sha256": "053c985981a09c04f1e84f92d145895815a6c2c662d8725983148d838e423d1b",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s2-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s2-identification-sign_composition-None": {
+        "actions_sha256": "4de7e90aa80f07f9e1eb53792c8219ef3beb663d66ba2308e29b111773ce01bb",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s2-identification-slippery-None": {
+        "actions_sha256": "d65cd28cc1777603b531b518fc755fb602d3f80f8d16e7f2cfc452bbe959d941",
+        "env_steps": 2,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s3-identification-base-None": {
+        "actions_sha256": "fcd83ae587262443d869b2acf91ddffbf7ca5b83f70a6364472b3efb8d1048bf",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s3-identification-remap_rotate-None": {
+        "actions_sha256": "8e5163306f0df53bf10ca48ad5b9e4fe0a2c927c36bc27ee9514fcf1357b9e8e",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s3-identification-remap_swap-None": {
+        "actions_sha256": "b53ba5edde18cf57eb2e40caddc9b95ca19b82bbd783f0dc5945d5eca48e3534",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s3-identification-sign_composition-None": {
+        "actions_sha256": "68b72fbe3f75e4f2fdd7905dcc5615237556161f9164794a7d2c81d8a736eb1c",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s3-identification-slippery-None": {
+        "actions_sha256": "b842275f3d4e8dcfede0e13e935f0aa3532008155e8daa3e97ec090d2a83c595",
+        "env_steps": 5,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s4-identification-base-None": {
+        "actions_sha256": "1844b1922ff8120c340516a1371036bf92f2819991e77289d82541e2df35c93a",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s4-identification-remap_rotate-None": {
+        "actions_sha256": "8e5163306f0df53bf10ca48ad5b9e4fe0a2c927c36bc27ee9514fcf1357b9e8e",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s4-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s4-identification-sign_composition-None": {
+        "actions_sha256": "0191e23f2704b48354900ae6e63a77516cf6e7a74c8f040d4531a8e89fe84ee4",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s4-identification-slippery-None": {
+        "actions_sha256": "e2ce76abdd01e7d65bd86a2223001c1d2f78aaa99083d82e6842b05422092eea",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s0-identification-base-None": {
+        "actions_sha256": "bc57013c523df33ce7954991ca68094c4277b0c3bef6ffc0db1fd7ecd0f65538",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "c5cff232e0bcf3e7d9f19d808624b7a45428301dc1a316c0c7ae2b18ae155447",
+        "env_steps": 5,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s0-identification-remap_rotate-None": {
+        "actions_sha256": "fbe95b4f16762e8d6cfe86d872ce85e02156d82c4eceb84b5cc20d47ec273f3e",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s0-identification-remap_swap-None": {
+        "actions_sha256": "693f7ec01b42b86291edbd858d900316730b20d281020afbb3a6086930541399",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s0-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s0-identification-slippery-None": {
+        "actions_sha256": "1632f9c96ce77788cc3fdd9b4b3191458c66b5e11f1860ccac55bd2dd093b944",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m4-s1-identification-base-None": {
+        "actions_sha256": "bc57013c523df33ce7954991ca68094c4277b0c3bef6ffc0db1fd7ecd0f65538",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "a90447329e4b9874788723e465126cd126057cf031aa566e78b45cc41d431159",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s1-identification-remap_rotate-None": {
+        "actions_sha256": "89b2f9c8ff76c04b1b32d547255aab2340ecf84fdf07fde638ee96216cfe03e2",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s1-identification-remap_swap-None": {
+        "actions_sha256": "f573eed2ef6024474f1239511e6cddfc06e4dcc464b878816772f90a3c9bd431",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s1-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s1-identification-slippery-None": {
+        "actions_sha256": "28dfe57ea94c57ca748b5301b5c748ea75df0e85ed0757edd3bbfeaab5317579",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m4-s2-identification-base-None": {
+        "actions_sha256": "bc57013c523df33ce7954991ca68094c4277b0c3bef6ffc0db1fd7ecd0f65538",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "89a58885f905c111e48bad195630849bf03c7968f0f1d2a353f08e16bb486ef8",
+        "env_steps": 7,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s2-identification-remap_rotate-None": {
+        "actions_sha256": "711de19915b0614e605a137ac5ed30872e966f01622b49df284a773d37e37852",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s2-identification-remap_swap-None": {
+        "actions_sha256": "e0bd72375a9014509b90e6e37ca228c73cc128c925f80be02767ba6548826ed9",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s2-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s2-identification-slippery-None": {
+        "actions_sha256": "28dfe57ea94c57ca748b5301b5c748ea75df0e85ed0757edd3bbfeaab5317579",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m4-s3-identification-base-None": {
+        "actions_sha256": "d269bb9495d1109a885072e7f34e26d6027e3e1c6ffdd7a4effd49715b8bc678",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "41e7942275f5af567d65f0d7fee1fecb49437416fffa9d473d473930f48dc86d",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s3-identification-remap_rotate-None": {
+        "actions_sha256": "89b2f9c8ff76c04b1b32d547255aab2340ecf84fdf07fde638ee96216cfe03e2",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s3-identification-remap_swap-None": {
+        "actions_sha256": "f573eed2ef6024474f1239511e6cddfc06e4dcc464b878816772f90a3c9bd431",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s3-identification-sign_composition-None": {
+        "actions_sha256": "04064f52bcc269aee4adefdae6568d933538dbfecfc9d09ae578c3c0a43d4d17",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s3-identification-slippery-None": {
+        "actions_sha256": "28dfe57ea94c57ca748b5301b5c748ea75df0e85ed0757edd3bbfeaab5317579",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m4-s4-identification-base-None": {
+        "actions_sha256": "e4abafd9b6bb86016a306eca42eb994c4e2c4096477fbbfcf55f6d12cee03660",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "c5cff232e0bcf3e7d9f19d808624b7a45428301dc1a316c0c7ae2b18ae155447",
+        "env_steps": 5,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s4-identification-remap_rotate-None": {
+        "actions_sha256": "fa0a273b354dfa53eb31e1a8b108434e92023d5347a3a65f5409bd385fb7fc2f",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s4-identification-remap_swap-None": {
+        "actions_sha256": "e0bd72375a9014509b90e6e37ca228c73cc128c925f80be02767ba6548826ed9",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s4-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s4-identification-slippery-None": {
+        "actions_sha256": "28dfe57ea94c57ca748b5301b5c748ea75df0e85ed0757edd3bbfeaab5317579",
+        "env_steps": 60,
+        "final_rule_estimate": "slippery",
+        "success": false,
+        "tool_units": 0
+      },
+      "m5-s0-identification-base-None": {
+        "actions_sha256": "1840e9ceb08eda3dc7bc972bdc653b09a2203336798da8c411f46d6fc6c66b58",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s0-identification-remap_rotate-None": {
+        "actions_sha256": "744f1da2546ab253717633e231cd6d06b81cb31831597bca264309124aceb45b",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s0-identification-remap_swap-None": {
+        "actions_sha256": "b7e8f6cd50d8acd3ba2722de3a3533a6c81aac94be7b629119be6d629b87cfe0",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s0-identification-sign_composition-None": {
+        "actions_sha256": "6aec9eace880b5c5b5328f33f4d95631046b76ef591e7b535952e8b02cad23d4",
+        "env_steps": 4,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s0-identification-slippery-None": {
+        "actions_sha256": "37001f548cd256a657638e2c954ac08a9f335ef7bcc7dd13d40fa80387161e9d",
+        "env_steps": 4,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s1-identification-base-None": {
+        "actions_sha256": "cbcab5399e184ba879eab91dbeb082f87395b67aa5a7f716f87857425830cc49",
+        "env_steps": 15,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "a498f87bb9853526a75b326ef1dfb4f2cf87acee18df38374b8415167a20d8b6",
+        "env_steps": 60,
+        "final_rule_estimate": "sign_composition",
+        "success": false,
+        "tool_units": 3
+      },
+      "m5-s1-identification-remap_rotate-None": {
+        "actions_sha256": "9cad42f1c36193739dd1af3ccac4498a15829653df8ce70194dfb33d35577796",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s1-identification-remap_swap-None": {
+        "actions_sha256": "b7e8f6cd50d8acd3ba2722de3a3533a6c81aac94be7b629119be6d629b87cfe0",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s1-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s1-identification-slippery-None": {
+        "actions_sha256": "19a6de6bf683b0b16b78a4c0fc550c6d232269521cce257ebd6c57d66cb8fad8",
+        "env_steps": 4,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s2-identification-base-None": {
+        "actions_sha256": "30608b02cf5b370ad3bc2259d1723d130e8d7bf5d45295e62a4ab713f9142e6c",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s2-identification-remap_rotate-None": {
+        "actions_sha256": "ce80df8b8df24f5352c27bd0757eb167d24d6f0a9f8ea76415434ecdfd1ea7a0",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s2-identification-remap_swap-None": {
+        "actions_sha256": "92c9aea957a2daa1420477abcd5733c06d35dcbf3b19d9da87cd5c8644b0a6d0",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s2-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s2-identification-slippery-None": {
+        "actions_sha256": "7393748f885ba300a07530450e1612565e217d7bdce5a697a64f351579e5c7fb",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s3-identification-base-None": {
+        "actions_sha256": "d267cfb9f016ea3bde96e1eeb46f563c2fa1eb3c9d0625eef62d421e55e36c8a",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s3-identification-remap_rotate-None": {
+        "actions_sha256": "32987506cbdf905885764dbfcd2cc5f9aec89f5a6f8353e0f46b3ec144e8c1be",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s3-identification-remap_swap-None": {
+        "actions_sha256": "906fadcc17707c995c63d4637ba152a3fee338a504957083fa42a96c3e69224b",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s3-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s3-identification-slippery-None": {
+        "actions_sha256": "8efe6caeab56a93ac7562d5bc3674a8339adbc76d878f5770c9eb681e91fcc82",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s4-identification-base-None": {
+        "actions_sha256": "30608b02cf5b370ad3bc2259d1723d130e8d7bf5d45295e62a4ab713f9142e6c",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s4-identification-remap_rotate-None": {
+        "actions_sha256": "ef162bb1bbd32d0aa6c39455e717e8f8e3567fb01bb705e4ad85da87dae127b3",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s4-identification-remap_swap-None": {
+        "actions_sha256": "b7e8f6cd50d8acd3ba2722de3a3533a6c81aac94be7b629119be6d629b87cfe0",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s4-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s4-identification-slippery-None": {
+        "actions_sha256": "52674963fe533126593917999b12c0726fb5228407d11ac204f53900276044c6",
+        "env_steps": 10,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s0-identification-base-None": {
+        "actions_sha256": "6466a7ea8159c7da935c9982326190c69de6384b601c6b342570e56d2631e18b",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s0-identification-remap_rotate-None": {
+        "actions_sha256": "26cb0115a6737c248d742671c458f09692f5053bf527c3487b2ba6964f0c02f4",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s0-identification-remap_swap-None": {
+        "actions_sha256": "5aeed763e06caa21e2a4e5d5328b8f2e6b193f76b44de7d32acf104daa0ce8d2",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s0-identification-sign_composition-None": {
+        "actions_sha256": "d2875ecca04310f8dca1b587c29b72527c7ed28a2a95210c385b981ff146532b",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s0-identification-slippery-None": {
+        "actions_sha256": "b673766686f3b89196f0f5638e5a1a6f9bc1fa8bb8817ee36929f6af8d7a355d",
+        "env_steps": 12,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s1-identification-base-None": {
+        "actions_sha256": "363fe52260e7b3a3886356347691159ec1edb901ee7230666282a8ddf3bff9a1",
+        "env_steps": 2,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s1-identification-remap_rotate-None": {
+        "actions_sha256": "fe838c876b7512481b550972225d77ba3d2dc823534fd317555d36d4d9a1cebf",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s1-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s1-identification-sign_composition-None": {
+        "actions_sha256": "fb9a21222f4852afb451f95a0094fb948735e3e11b566e6a662f043a37ca9838",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s1-identification-slippery-None": {
+        "actions_sha256": "abeb45ff752502a8d40cb6aa0061870c9158c82dc5fe2ea4e2af0b36bd033945",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s2-identification-base-None": {
+        "actions_sha256": "363fe52260e7b3a3886356347691159ec1edb901ee7230666282a8ddf3bff9a1",
+        "env_steps": 2,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s2-identification-remap_rotate-None": {
+        "actions_sha256": "bd7370dd496e689cfadae429aec37ccb9142e3b0cb55ff432eba663094641634",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s2-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s2-identification-sign_composition-None": {
+        "actions_sha256": "a3f00127bcffb06acf06ab59ee3e8236512b2c0709790189883a8e775d973f63",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s2-identification-slippery-None": {
+        "actions_sha256": "797c0819beea392b1bb6d3cfeab4bb5df5dff0c0360b35af8cfda496679444a2",
+        "env_steps": 13,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s3-identification-base-None": {
+        "actions_sha256": "ffb958af2c734a2cf2fb40c9a8631e8e04b8fee63d0655b9cfaa93c7738b89ed",
+        "env_steps": 11,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s3-identification-remap_rotate-None": {
+        "actions_sha256": "bd7370dd496e689cfadae429aec37ccb9142e3b0cb55ff432eba663094641634",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s3-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s3-identification-sign_composition-None": {
+        "actions_sha256": "a3f00127bcffb06acf06ab59ee3e8236512b2c0709790189883a8e775d973f63",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s3-identification-slippery-None": {
+        "actions_sha256": "68fff94dc96c507ba5c7c456b7e6852af21179c66b1409293595d431b3ab2f73",
+        "env_steps": 15,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s4-identification-base-None": {
+        "actions_sha256": "6466a7ea8159c7da935c9982326190c69de6384b601c6b342570e56d2631e18b",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "0bf0807b6e391208f4acb61274af37dd89552efc51bd527135700985c165f4c5",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s4-identification-remap_rotate-None": {
+        "actions_sha256": "bd7370dd496e689cfadae429aec37ccb9142e3b0cb55ff432eba663094641634",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s4-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s4-identification-sign_composition-None": {
+        "actions_sha256": "6f42c32f62db8baa14c1f1c39322ee3bb85858a8eab548ef8b9356357d65ddea",
+        "env_steps": 10,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s4-identification-slippery-None": {
+        "actions_sha256": "abeb45ff752502a8d40cb6aa0061870c9158c82dc5fe2ea4e2af0b36bd033945",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s0-identification-base-None": {
+        "actions_sha256": "cef6f8f4330c00c3a490d1c1555bb21d6ebe894f732d62dbbe01cf7d0f0653f7",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "9d2b44b6b8b4ba6db95f79a98039e47d65e393e493124746afdec69b07b7b1d9",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s0-identification-remap_rotate-None": {
+        "actions_sha256": "ecec3e7cc027f0220d19cb49ed5fd12e94f0a5619709bbe0273e425d3cc47bcb",
+        "env_steps": 13,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s0-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s0-identification-sign_composition-None": {
+        "actions_sha256": "b2990a1888d667f0c9e92994d5437b6eaf244d9ecfd17e2b3bcd5cd7a11b7c32",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s0-identification-slippery-None": {
+        "actions_sha256": "6b1a7f3f52a08baab5605cd5407610d8e34fa8a81ee55eab27f178d0810d660f",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s1-identification-base-None": {
+        "actions_sha256": "2b8c8d1522d2e8aec8ff803ae8f26555ebf077e5c9a204212e674fd10c0ec861",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "9d2b44b6b8b4ba6db95f79a98039e47d65e393e493124746afdec69b07b7b1d9",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s1-identification-remap_rotate-None": {
+        "actions_sha256": "d860a0aaa1f0a802a4df476a6a0d58916614cac8981a21182e5a591a5e5d58a9",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s1-identification-remap_swap-None": {
+        "actions_sha256": "be4d4109c1de536b139a58cd3ad6feb7665433133b57a6e10b00e30222aa1d93",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s1-identification-sign_composition-None": {
+        "actions_sha256": "1542bad5f58e32682d3bfcb9f9581a1dc4d7019767a594e41414653618fcc091",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s1-identification-slippery-None": {
+        "actions_sha256": "e8c0a3587c92d874f6c30ef657ee2f8b16d0649ad7c4774070009668a3b3f491",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s2-identification-base-None": {
+        "actions_sha256": "e4805d81da61f4a968c5ee04a7aac81c580ea13c2518dd5b1316a1518393cb01",
+        "env_steps": 13,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "5dfa08bffa13b20197d78da339a9cea151f59f6df9ad6dbb21988a58b6d011e9",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s2-identification-remap_rotate-None": {
+        "actions_sha256": "d860a0aaa1f0a802a4df476a6a0d58916614cac8981a21182e5a591a5e5d58a9",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s2-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s2-identification-sign_composition-None": {
+        "actions_sha256": "1542bad5f58e32682d3bfcb9f9581a1dc4d7019767a594e41414653618fcc091",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s2-identification-slippery-None": {
+        "actions_sha256": "e7fea98abac48a2a257f8b32c16b4df56a5102574bf955eb1ccf68932d066440",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s3-identification-base-None": {
+        "actions_sha256": "cef6f8f4330c00c3a490d1c1555bb21d6ebe894f732d62dbbe01cf7d0f0653f7",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "9d2b44b6b8b4ba6db95f79a98039e47d65e393e493124746afdec69b07b7b1d9",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s3-identification-remap_rotate-None": {
+        "actions_sha256": "d860a0aaa1f0a802a4df476a6a0d58916614cac8981a21182e5a591a5e5d58a9",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s3-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s3-identification-sign_composition-None": {
+        "actions_sha256": "1542bad5f58e32682d3bfcb9f9581a1dc4d7019767a594e41414653618fcc091",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s3-identification-slippery-None": {
+        "actions_sha256": "f9a1492efd25b5f6864638dce44be1bee059a3c0ff6f67ff42ea059e8c40bec9",
+        "env_steps": 12,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s4-identification-base-None": {
+        "actions_sha256": "cef6f8f4330c00c3a490d1c1555bb21d6ebe894f732d62dbbe01cf7d0f0653f7",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "f22101b41204347604d3e158e0390a2e597e80eafc755e55b1966fd70ba7d4c6",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s4-identification-remap_rotate-None": {
+        "actions_sha256": "d860a0aaa1f0a802a4df476a6a0d58916614cac8981a21182e5a591a5e5d58a9",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s4-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s4-identification-sign_composition-None": {
+        "actions_sha256": "26a0d7f0c0a902a952baa2261afcd29f4e48eff3a1b163260c37b519b8884268",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s4-identification-slippery-None": {
+        "actions_sha256": "8a9298d3d58faec204996aa1dce02f37fe7312ba35d95cafd9e2d6ea267d437d",
+        "env_steps": 17,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s0-identification-base-None": {
+        "actions_sha256": "116f349c77f4e110bc2e52fcac179031f44e28addc57d36858172edad7dcaeed",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "bfb0435867d2a644e48ad76abccdc0c6d1f87ade5ff5c1cc681c1d9dff6f9cbe",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s0-identification-remap_rotate-None": {
+        "actions_sha256": "702a704e08b5a0e28d92f0871d9b9df20d25e7fbc42ebdf9c10cb46eac67042c",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s0-identification-remap_swap-None": {
+        "actions_sha256": "eb9aec529012b1c57e33048c601a20a9dddfa3e5b537067d83633d3fe963ee2b",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s0-identification-sign_composition-None": {
+        "actions_sha256": "0b61ea8addc0ee11b38b5f3a98d6674de6426dfb4ead4f3cbfb3f3173857d4ce",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s0-identification-slippery-None": {
+        "actions_sha256": "1ce7ca80f652cec19062366b2e08a749c4a7d8b7676875e80783467e9499a4f9",
+        "env_steps": 15,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s1-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "35257757fda656877d36739ee89a77df310c9f90e0e6ba3889667181af35141b",
+        "env_steps": 11,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s1-identification-remap_rotate-None": {
+        "actions_sha256": "b44e8ffc0935f32525e38f860c44f752a0d87a83fed5a77cf2432e9c81ac94a2",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s1-identification-remap_swap-None": {
+        "actions_sha256": "56ffecd66551abdfd2d10eb7f4532eef895cf0785302b83e8f173dfaf706c95e",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s1-identification-sign_composition-None": {
+        "actions_sha256": "1c83b2a9238cb0f15fd62c7e1da41208bcd50b53d61ee28f8ce96a20679143ca",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s1-identification-slippery-None": {
+        "actions_sha256": "e1b4cf1196c3e5992fa54cd4d9318433ccfab4f336914fb39ea598cd84e1684a",
+        "env_steps": 4,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s2-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "11521f3fd85a6768ac065fb573642bfb3ae4c202ef8dffb722cf3f026c0d712b",
+        "env_steps": 13,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s2-identification-remap_rotate-None": {
+        "actions_sha256": "e9bfd05ba0c65eb2e55c4bf827545130eff0b7e394c0eff482df85ce8db1cffe",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s2-identification-remap_swap-None": {
+        "actions_sha256": "f707508af53ca3789f14c3543ae09feab589965b834fc4b260dbff3ed6ad36e2",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s2-identification-sign_composition-None": {
+        "actions_sha256": "9b918bd465fa4d65f77c007b515dfaa5d4b585358bbf5f4f61b6824c938415f1",
+        "env_steps": 10,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s2-identification-slippery-None": {
+        "actions_sha256": "1531e5fb35663b518ce5d3f5cf19f4f14c81f73d053ae536fb12c4a5084504da",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s3-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "68c317b4fa0359d5fc78cac4d57f4aca6d84693b415a9be7ac412d7a49760945",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s3-identification-remap_rotate-None": {
+        "actions_sha256": "702a704e08b5a0e28d92f0871d9b9df20d25e7fbc42ebdf9c10cb46eac67042c",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s3-identification-remap_swap-None": {
+        "actions_sha256": "83b6e3baaa21d6409e08a7eae8702093e7b8fa45478bb2872f9951d77239f83a",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s3-identification-sign_composition-None": {
+        "actions_sha256": "1c83b2a9238cb0f15fd62c7e1da41208bcd50b53d61ee28f8ce96a20679143ca",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s3-identification-slippery-None": {
+        "actions_sha256": "b80d6b2bd2de8ae4267c8c4e4c75b9917ff30a5f65f806a8da51a8e6d6b50667",
+        "env_steps": 11,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s4-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "68c317b4fa0359d5fc78cac4d57f4aca6d84693b415a9be7ac412d7a49760945",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s4-identification-remap_rotate-None": {
+        "actions_sha256": "2210f7d1258b15b71d5e38e93091175613bcb1e07e283d58288120d89472c3fd",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s4-identification-remap_swap-None": {
+        "actions_sha256": "eda1015bc893e6d5f1b28b467b73dadf502ee92faca8f0c10600603c52170ea7",
+        "env_steps": 13,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s4-identification-sign_composition-None": {
+        "actions_sha256": "e23a48e03efdf65683bfe7101776a4adb1322d681537ec4392ba56c80bddf41c",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s4-identification-slippery-None": {
+        "actions_sha256": "bd184e443ea0d9b372b4fe5deb6827c49b890b17c0b67e49dc8c820158a9850d",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s0-identification-base-None": {
+        "actions_sha256": "2947c14d3e02489435b40bf6df909e7d6c3da2de40b43160a9eba25503b47d68",
+        "env_steps": 16,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "abbe5cbd795db0ada00503871922a09cbf5739fb9958d33c23cce2aa29e02bd1",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s0-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s0-identification-remap_swap-None": {
+        "actions_sha256": "9775842e9a59bd2b3bf75a8e3bdaee4ecf01e4a805572c740ec7977246724e68",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s0-identification-sign_composition-None": {
+        "actions_sha256": "96e798789af748cc98d48a09b5058a69d5db3f3f3a80b913cfcc2d159040be7e",
+        "env_steps": 12,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s0-identification-slippery-None": {
+        "actions_sha256": "97513011d261c18e6ac60cebaa069e9112ee0299410f2b5446f249bc2b81a491",
+        "env_steps": 11,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s1-identification-base-None": {
+        "actions_sha256": "5cc188c48751f284511ce2cff646c41d74ab4763e1013ce3d849a1589b4fe8da",
+        "env_steps": 14,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2d2545710873b32365c49df189d20eac9514d321e30726e2728b1c0f8ebe108f",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s1-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s1-identification-remap_swap-None": {
+        "actions_sha256": "9775842e9a59bd2b3bf75a8e3bdaee4ecf01e4a805572c740ec7977246724e68",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s1-identification-sign_composition-None": {
+        "actions_sha256": "1e52395221c0b63cb1a6e733498c7454ba531bd5bfc1412d748bb0c855f94b38",
+        "env_steps": 13,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s1-identification-slippery-None": {
+        "actions_sha256": "cb2e55e1a45b82120da43e3858dbd39f5b73e67eadf4f647af7d943f388bdd7c",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s2-identification-base-None": {
+        "actions_sha256": "67fd68b19b5147b14a3783ca9a519e57f042563e0e70fae28897c395abd054f5",
+        "env_steps": 13,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2d2545710873b32365c49df189d20eac9514d321e30726e2728b1c0f8ebe108f",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s2-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s2-identification-remap_swap-None": {
+        "actions_sha256": "98ee0f186ac4cc2dc8a64c74ff0b228d45a01594763471a4f808a3d50f7f9bd6",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s2-identification-sign_composition-None": {
+        "actions_sha256": "cf383f351b542cd61d36c8d79406f25b07c4093e188262caec4f6455939b76d4",
+        "env_steps": 11,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s2-identification-slippery-None": {
+        "actions_sha256": "b05c5332209f8f35c89c447927c277f8c93cb56cecae08374139fbd1b484948f",
+        "env_steps": 12,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s3-identification-base-None": {
+        "actions_sha256": "83e6e9eb5f952d63d4abefed2d63d39616687f04899df768c59915e944a87080",
+        "env_steps": 16,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2d2545710873b32365c49df189d20eac9514d321e30726e2728b1c0f8ebe108f",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s3-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s3-identification-remap_swap-None": {
+        "actions_sha256": "801b04fc952b29e02a010ae494e9025e3b4a2ccdb03e565f3c657f56838c01a4",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s3-identification-sign_composition-None": {
+        "actions_sha256": "cf383f351b542cd61d36c8d79406f25b07c4093e188262caec4f6455939b76d4",
+        "env_steps": 11,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s3-identification-slippery-None": {
+        "actions_sha256": "3712e4e2b77f6355fd6a421892d511c3e7598ae16b350b16c32e07e4b3852e63",
+        "env_steps": 13,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s4-identification-base-None": {
+        "actions_sha256": "50b8a0121b972ff60d6b398cde40c454c696c93f560e500823b1f492d442dbfa",
+        "env_steps": 19,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "089e14e77e823de9053b187daf38f9209ec26a242d33f2a199ebc0db359e1f72",
+        "env_steps": 11,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s4-identification-remap_rotate-None": {
+        "actions_sha256": "b1ad9e10e7cc788964355e5ea90783bdd0aae9ed2259ac8d9ae3b2db49636b61",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s4-identification-remap_swap-None": {
+        "actions_sha256": "9775842e9a59bd2b3bf75a8e3bdaee4ecf01e4a805572c740ec7977246724e68",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s4-identification-sign_composition-None": {
+        "actions_sha256": "fb9e077f9b72269ef6826f977618fd59b66b494b2be55497df234fa0e6cfa9b0",
+        "env_steps": 16,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s4-identification-slippery-None": {
+        "actions_sha256": "fde6291d4ebd9e46fe10b5ccf135d4bcab716568f13c56fc277e575be45a71ab",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      }
+    },
+    "diagnostic_belief_v4": {
+      "m0-s0-identification-base-None": {
+        "actions_sha256": "039ec10e9f9c2113f4d09b23823a5cce5bff64305e5a439489025717ef9744b5",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "6fbec81f43900f6c021657f5fe431a2f8b066c520097660287af16039bca54d4",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s0-identification-remap_rotate-None": {
+        "actions_sha256": "2f1d2e2edb8464439f0c3c0fd2a6c073e4fd743c3cd8640c12eefa2bf0358939",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s0-identification-remap_swap-None": {
+        "actions_sha256": "3a5a6222890e98129d9832bc88d67f1cbd551fd8ed8f72739823073e2bf20420",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s0-identification-sign_composition-None": {
+        "actions_sha256": "4058673b14eda9fd44cb258ebb8c7612922471c411ab43cb7cb331d3d2634ba9",
+        "env_steps": 11,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s0-identification-slippery-None": {
+        "actions_sha256": "10b8fff433b2674ce9d1fe8e198ce9f881c8f063738fd1c8ba301d5ccfe028eb",
+        "env_steps": 14,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s1-identification-base-None": {
+        "actions_sha256": "039ec10e9f9c2113f4d09b23823a5cce5bff64305e5a439489025717ef9744b5",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "c69cdb99b3549b5c2d10a80dcf9e9685e6cf87504ee255f71f09d754f2d6a826",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s1-identification-remap_rotate-None": {
+        "actions_sha256": "96b43bdffb014f996518bf85e0f6cb8b56270ee599cd2fdbef834beb11e3e7c2",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s1-identification-remap_swap-None": {
+        "actions_sha256": "27953c19d9a65bd4ffcae862caafe72df1c365005c1288ddb95cdff1308b162f",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s1-identification-sign_composition-None": {
+        "actions_sha256": "0cb7161662c29aacc78e9ea14b6e4f845311adc3d619743a996d27cb7dd5874a",
+        "env_steps": 12,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s1-identification-slippery-None": {
+        "actions_sha256": "c20b4612038c3e12b1bcb6c448db022625ebda7fb3f69814521b6a194fc70235",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s2-identification-base-None": {
+        "actions_sha256": "907a3aa8ecd4e7b3cc751ceb088e970f9026467cb55d6e5b00c1c512e0ef8f5d",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2e101b86d843636666bc8b2d131f84d2ec072085b85fba202319fe6648e6ff5e",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s2-identification-remap_rotate-None": {
+        "actions_sha256": "d27e397f8a94ab3eb0d0cbbaa74aed41b1de69f4b77293fe9c70ab8574e73f5e",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s2-identification-remap_swap-None": {
+        "actions_sha256": "3a5a6222890e98129d9832bc88d67f1cbd551fd8ed8f72739823073e2bf20420",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s2-identification-sign_composition-None": {
+        "actions_sha256": "cf0d3dcfce9413945b45ad371c6b889ac4a8c1b298a00d2eed1c1559bc72dbc6",
+        "env_steps": 17,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s2-identification-slippery-None": {
+        "actions_sha256": "62fed57090a3af32f1878499e1984e45218a5ce6555372bf808f23032db9a90a",
+        "env_steps": 23,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s3-identification-base-None": {
+        "actions_sha256": "7dd5bbfb16eef5c382c17c7995cd3b2d4c8a71ae8ef1c65951d523fd839bbb12",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "6fbec81f43900f6c021657f5fe431a2f8b066c520097660287af16039bca54d4",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s3-identification-remap_rotate-None": {
+        "actions_sha256": "96b43bdffb014f996518bf85e0f6cb8b56270ee599cd2fdbef834beb11e3e7c2",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s3-identification-remap_swap-None": {
+        "actions_sha256": "ed0a5a75a8466d4af1d5588c6e8e3fae07f16dbbff4906338ad77e9f183a9a31",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s3-identification-sign_composition-None": {
+        "actions_sha256": "244e258658e98404285856237ccafc27a16d973d54ae854155b80bbe414ecf4b",
+        "env_steps": 60,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": false,
+        "tool_units": 3
+      },
+      "m0-s3-identification-slippery-None": {
+        "actions_sha256": "ce36ec45a565ed5cca9271010c798c2957d45188ee80dcc74140e50ec6d90a60",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s4-identification-base-None": {
+        "actions_sha256": "118351f52e57937277fcb6ed0c78c42df1437b345a1c15132c88af15d0fc217e",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m0-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "010d4410c83a60eee950c27ed0682904a361d83a89c01e02105da0b47e0cfffd",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s4-identification-remap_rotate-None": {
+        "actions_sha256": "96b43bdffb014f996518bf85e0f6cb8b56270ee599cd2fdbef834beb11e3e7c2",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s4-identification-remap_swap-None": {
+        "actions_sha256": "3a5a6222890e98129d9832bc88d67f1cbd551fd8ed8f72739823073e2bf20420",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m0-s4-identification-sign_composition-None": {
+        "actions_sha256": "c4d07df3616864d48bca90e7fa9f744296079fd89aa3cb1754b6319ce5cbeca1",
+        "env_steps": 15,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m0-s4-identification-slippery-None": {
+        "actions_sha256": "2d179a0362e31939f1c80458823a0c795afa9e4c20e510c254b3ecc9649808c9",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s0-identification-base-None": {
+        "actions_sha256": "e1146a0e6c37fd675278fa2bc0d1ad5cde4da00f2410fe28aa27ac664b35b9ec",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s0-identification-remap_rotate-None": {
+        "actions_sha256": "04585c49ad392ed90ce887a17705fca03cc01d933f3f41732afff867455e9519",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s0-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s0-identification-sign_composition-None": {
+        "actions_sha256": "fe5fe0f8cad1a8c0d5cb5374edcb14b8da52297e407ad600b8466a7fb2d371eb",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s0-identification-slippery-None": {
+        "actions_sha256": "a4fe5c614315df36af2cbe28c5fe0df7f4b07f77572ec2108d664ad519a938a9",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s1-identification-base-None": {
+        "actions_sha256": "105eb9fcd4ab59afcddf027a6e2211fc151569f1d30c392f7e9c51befeb3a246",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s1-identification-remap_rotate-None": {
+        "actions_sha256": "a622ad4b3104ee2a0db5530d13b630194e129ccca82b244e68d30eb2a1008b3e",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s1-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s1-identification-sign_composition-None": {
+        "actions_sha256": "113509b58d93b7705505f88aae3feb63d44f35f5d98d1a23695b850a1151ab22",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s1-identification-slippery-None": {
+        "actions_sha256": "baca7a0a13b8fa79d42f67720a090fdf17d09d1f659178b9742ee7bdf433d957",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s2-identification-base-None": {
+        "actions_sha256": "e1146a0e6c37fd675278fa2bc0d1ad5cde4da00f2410fe28aa27ac664b35b9ec",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "07514adcd5053866b412e5a2efddeab34a702a6a19e6193dded736345f838d23",
+        "env_steps": 24,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s2-identification-remap_rotate-None": {
+        "actions_sha256": "d28e10b01170383d9cac16b1ed02baf2f9a21d68da89def103e1e66f8a477840",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s2-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s2-identification-sign_composition-None": {
+        "actions_sha256": "f206e7cb2eea4f7021e2b736494812f368e69b066c6829144c02658a1f432e83",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s2-identification-slippery-None": {
+        "actions_sha256": "c52f72a69a52a565115a8256f73192bbe676b4ca86c3aa2e2afae617437bf933",
+        "env_steps": 17,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s3-identification-base-None": {
+        "actions_sha256": "e1146a0e6c37fd675278fa2bc0d1ad5cde4da00f2410fe28aa27ac664b35b9ec",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s3-identification-remap_rotate-None": {
+        "actions_sha256": "3d27320fa04728c7c8eb7ea072c639285344a5cd1a97d95aaaf80397183f0660",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s3-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s3-identification-sign_composition-None": {
+        "actions_sha256": "526689fadcfb007e6d739ad99e19b9009dafb835fe75ca5a0cda96981b6c95af",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s3-identification-slippery-None": {
+        "actions_sha256": "9d4cb565767d1b4f86c8d487424082d8b264455630c02034416e83f6912c8116",
+        "env_steps": 15,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s4-identification-base-None": {
+        "actions_sha256": "d561f9e2795a1ad7d649e7e20106e84b6cf6c1a2b740c3d98fbe4faad88417be",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m1-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "59658b71d413ccff13d3ce4426c3f4eda5c15f78f925776444dda69990019f4b",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s4-identification-remap_rotate-None": {
+        "actions_sha256": "cc0cc2413ff86103dc2359ff6298415cc00ae90716e6066c1d54fe00623789bc",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s4-identification-remap_swap-None": {
+        "actions_sha256": "f9d279a462a8700637ce6acaa80071d99cacc7af06a670a5afd83c5377f39ab7",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m1-s4-identification-sign_composition-None": {
+        "actions_sha256": "fe5fe0f8cad1a8c0d5cb5374edcb14b8da52297e407ad600b8466a7fb2d371eb",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m1-s4-identification-slippery-None": {
+        "actions_sha256": "e7ac7282b4e04daa358f6e953866e68b993df63523e38d41195ad32cb17df05f",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s0-identification-base-None": {
+        "actions_sha256": "bdff55babc10d3993813bc1b77f52690caa518f404209914421048867faa85e4",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "d1518f0b1e00fd7a3422b03b831b0b9b7f676a5d05d5c776b22a2ca05d0b45e3",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s0-identification-remap_rotate-None": {
+        "actions_sha256": "1335d121aed23b7ed19d41063822897bc3083c8cfa64fb316b3b89b23164f563",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s0-identification-remap_swap-None": {
+        "actions_sha256": "b9fabdd0a92ebb51ecf5d7f8d5d4930ae97fc0e1d4506a1d2c2452ed5eb6bdec",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s0-identification-sign_composition-None": {
+        "actions_sha256": "9bf5eafd9d263a32d1f1ead60efb494b7e21d6f9d194727d72f28b1af027f811",
+        "env_steps": 15,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s0-identification-slippery-None": {
+        "actions_sha256": "7972996b0010e281ed8581323bfa9a206f52ad746a436f16e1080bfcb456f069",
+        "env_steps": 24,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s1-identification-base-None": {
+        "actions_sha256": "49351acbeaf146ec7bde2365861c31cc278fa5a1d342582ac1180235f5de8d7a",
+        "env_steps": 9,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "30ad0f05775d24ea97d4e09771654cb125147b4807464100e545f214e921d8d7",
+        "env_steps": 15,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s1-identification-remap_rotate-None": {
+        "actions_sha256": "12ff9ffa980ad8b98a2e264364ee854b4b4a2493208d17a4aa4507bf8078913c",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s1-identification-remap_swap-None": {
+        "actions_sha256": "e22e3f8f3204034a2b0f71b1eb1da968759142e31a3849970d84f217def012d3",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s1-identification-sign_composition-None": {
+        "actions_sha256": "bd468256a89ca66fa0100f00b334c3670d9b30c4f1171d360806d3b6e690e77d",
+        "env_steps": 13,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s1-identification-slippery-None": {
+        "actions_sha256": "423edd3f1e8d98d7a84b6ffbce612569e85ab62961a67e52b87023fccb68910f",
+        "env_steps": 18,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s2-identification-base-None": {
+        "actions_sha256": "e4f12eaac938367e3305558cff229a658b743eb86ab8f2e1cc4b9ab0a820daee",
+        "env_steps": 12,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "fddd2d49399c44c30b8a86937a257804d80efeb0b977858484249dca739c49b1",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s2-identification-remap_rotate-None": {
+        "actions_sha256": "e2627938c4769afede3a707d3173698e81d057e1bee47ca33f0e781bd8da578b",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s2-identification-remap_swap-None": {
+        "actions_sha256": "c14cd21063f5a490a443acd67efb5df2955aa0dae3df3dd4adfa63ee78091f5b",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s2-identification-sign_composition-None": {
+        "actions_sha256": "3447d7e432deceb6ec895a4b9b5f043ca31b2fb394d87ea2a46e167709bd4fe7",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s2-identification-slippery-None": {
+        "actions_sha256": "d50d8704cd8b9b7de177c232ffedbfacfa9efecef8946e31f7bfefd1fdaa5e50",
+        "env_steps": 19,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s3-identification-base-None": {
+        "actions_sha256": "bdff55babc10d3993813bc1b77f52690caa518f404209914421048867faa85e4",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "b1d817627391efff0d9a409c9e53fd844c69d9d9fb2a3b3be25f1ed3e2fcd09d",
+        "env_steps": 30,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s3-identification-remap_rotate-None": {
+        "actions_sha256": "a0ba18227ed8ab6fcada8f58f79e78c0952f7232e8091cc88a0b0923967be0a0",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s3-identification-remap_swap-None": {
+        "actions_sha256": "1d661accb1ebae0b716ad3eba67fa2e106a9cae964065d5b435c472bfaccd3bd",
+        "env_steps": 14,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s3-identification-sign_composition-None": {
+        "actions_sha256": "93101304d81566314bf084d0ef231cebd5dd7e9d7868f428ddb8665c7f95b121",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s3-identification-slippery-None": {
+        "actions_sha256": "cf80926693b22dc124aa730c0274992ef382e5380bc4b30aad81960b47bce4ce",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s4-identification-base-None": {
+        "actions_sha256": "cf24808d9170d66b618cf84fe041e581147f52a821020f3ae52f5f65e64c6035",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m2-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "d1518f0b1e00fd7a3422b03b831b0b9b7f676a5d05d5c776b22a2ca05d0b45e3",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s4-identification-remap_rotate-None": {
+        "actions_sha256": "ae843eeaf73264f478cf1c12d25404668a43305c5f6b722511023bc73ee40ad5",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s4-identification-remap_swap-None": {
+        "actions_sha256": "77fd2474368da60ba435d970ef99d8ca0318b656cd68e5fa89d7648a299e1503",
+        "env_steps": 15,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m2-s4-identification-sign_composition-None": {
+        "actions_sha256": "3447d7e432deceb6ec895a4b9b5f043ca31b2fb394d87ea2a46e167709bd4fe7",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m2-s4-identification-slippery-None": {
+        "actions_sha256": "cfe3ffb346b26321d6211c445a159aeec8772356dd69dd42f86b18ff60231c06",
+        "env_steps": 23,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s0-identification-base-None": {
+        "actions_sha256": "1844b1922ff8120c340516a1371036bf92f2819991e77289d82541e2df35c93a",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s0-identification-remap_rotate-None": {
+        "actions_sha256": "617c2f9bbddcc856f3dc694c9922d8fb19fbf57e12c2f53f2ab365804dcd3964",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s0-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s0-identification-sign_composition-None": {
+        "actions_sha256": "0191e23f2704b48354900ae6e63a77516cf6e7a74c8f040d4531a8e89fe84ee4",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s0-identification-slippery-None": {
+        "actions_sha256": "857aef382590dd66fab7abe6614b4d439a0c56cdf732eb8fa616226b847bd7d5",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s1-identification-base-None": {
+        "actions_sha256": "fcd83ae587262443d869b2acf91ddffbf7ca5b83f70a6364472b3efb8d1048bf",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s1-identification-remap_rotate-None": {
+        "actions_sha256": "617c2f9bbddcc856f3dc694c9922d8fb19fbf57e12c2f53f2ab365804dcd3964",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s1-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s1-identification-sign_composition-None": {
+        "actions_sha256": "68b72fbe3f75e4f2fdd7905dcc5615237556161f9164794a7d2c81d8a736eb1c",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s1-identification-slippery-None": {
+        "actions_sha256": "6e7dd286ff66b1ac7aba936252d45c7cc69fa6a7075b7cecae755bf3abee118b",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s2-identification-base-None": {
+        "actions_sha256": "ee2e1ea2508d31c251b8f0fd80c7439043f9e0c2a322d581ace856f73b3c0e76",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s2-identification-remap_rotate-None": {
+        "actions_sha256": "617c2f9bbddcc856f3dc694c9922d8fb19fbf57e12c2f53f2ab365804dcd3964",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s2-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s2-identification-sign_composition-None": {
+        "actions_sha256": "4de7e90aa80f07f9e1eb53792c8219ef3beb663d66ba2308e29b111773ce01bb",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s2-identification-slippery-None": {
+        "actions_sha256": "617c2f9bbddcc856f3dc694c9922d8fb19fbf57e12c2f53f2ab365804dcd3964",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s3-identification-base-None": {
+        "actions_sha256": "fcd83ae587262443d869b2acf91ddffbf7ca5b83f70a6364472b3efb8d1048bf",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s3-identification-remap_rotate-None": {
+        "actions_sha256": "617c2f9bbddcc856f3dc694c9922d8fb19fbf57e12c2f53f2ab365804dcd3964",
+        "env_steps": 2,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s3-identification-remap_swap-None": {
+        "actions_sha256": "b53ba5edde18cf57eb2e40caddc9b95ca19b82bbd783f0dc5945d5eca48e3534",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s3-identification-sign_composition-None": {
+        "actions_sha256": "68b72fbe3f75e4f2fdd7905dcc5615237556161f9164794a7d2c81d8a736eb1c",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s3-identification-slippery-None": {
+        "actions_sha256": "79bfe7c67fb8a99f64ba6b3bb32bdbbb40fed7540f9712450c42cb0a608b0cb0",
+        "env_steps": 11,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s4-identification-base-None": {
+        "actions_sha256": "1844b1922ff8120c340516a1371036bf92f2819991e77289d82541e2df35c93a",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m3-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "7dda01294a5727cf61f2e53bb6d52ac9ea046a2f1a050e31503928ec651a8bbe",
+        "env_steps": 2,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s4-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s4-identification-remap_swap-None": {
+        "actions_sha256": "98d0a91ec2f1431a15c7bf41dd0c0d5d31ac13ff155c9a25911731da4a1d79ef",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m3-s4-identification-sign_composition-None": {
+        "actions_sha256": "0191e23f2704b48354900ae6e63a77516cf6e7a74c8f040d4531a8e89fe84ee4",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m3-s4-identification-slippery-None": {
+        "actions_sha256": "7e3a30be4a9974037d3d0ae6d806638b6dbe8c167498cc61fc33561ab14843fb",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s0-identification-base-None": {
+        "actions_sha256": "bc57013c523df33ce7954991ca68094c4277b0c3bef6ffc0db1fd7ecd0f65538",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "c5cff232e0bcf3e7d9f19d808624b7a45428301dc1a316c0c7ae2b18ae155447",
+        "env_steps": 5,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s0-identification-remap_rotate-None": {
+        "actions_sha256": "fbe95b4f16762e8d6cfe86d872ce85e02156d82c4eceb84b5cc20d47ec273f3e",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s0-identification-remap_swap-None": {
+        "actions_sha256": "693f7ec01b42b86291edbd858d900316730b20d281020afbb3a6086930541399",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s0-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s0-identification-slippery-None": {
+        "actions_sha256": "a4b0046f2002684dcc66a946a64ee91dfbafa1c1c488f0786ef623acb125b8e3",
+        "env_steps": 14,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s1-identification-base-None": {
+        "actions_sha256": "bc57013c523df33ce7954991ca68094c4277b0c3bef6ffc0db1fd7ecd0f65538",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "a90447329e4b9874788723e465126cd126057cf031aa566e78b45cc41d431159",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s1-identification-remap_rotate-None": {
+        "actions_sha256": "89b2f9c8ff76c04b1b32d547255aab2340ecf84fdf07fde638ee96216cfe03e2",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s1-identification-remap_swap-None": {
+        "actions_sha256": "f573eed2ef6024474f1239511e6cddfc06e4dcc464b878816772f90a3c9bd431",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s1-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s1-identification-slippery-None": {
+        "actions_sha256": "604855a2415612e1e9988c29fcbe2865a5e6cde2ca301d44a7c0d9dd561d348d",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s2-identification-base-None": {
+        "actions_sha256": "bc57013c523df33ce7954991ca68094c4277b0c3bef6ffc0db1fd7ecd0f65538",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "89a58885f905c111e48bad195630849bf03c7968f0f1d2a353f08e16bb486ef8",
+        "env_steps": 7,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s2-identification-remap_rotate-None": {
+        "actions_sha256": "711de19915b0614e605a137ac5ed30872e966f01622b49df284a773d37e37852",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s2-identification-remap_swap-None": {
+        "actions_sha256": "e0bd72375a9014509b90e6e37ca228c73cc128c925f80be02767ba6548826ed9",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s2-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s2-identification-slippery-None": {
+        "actions_sha256": "97ecc49d05c014f54d3c401328e3af83484a93359c0c69f2507119296d75cdcf",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s3-identification-base-None": {
+        "actions_sha256": "d269bb9495d1109a885072e7f34e26d6027e3e1c6ffdd7a4effd49715b8bc678",
+        "env_steps": 8,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "41e7942275f5af567d65f0d7fee1fecb49437416fffa9d473d473930f48dc86d",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s3-identification-remap_rotate-None": {
+        "actions_sha256": "89b2f9c8ff76c04b1b32d547255aab2340ecf84fdf07fde638ee96216cfe03e2",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s3-identification-remap_swap-None": {
+        "actions_sha256": "f573eed2ef6024474f1239511e6cddfc06e4dcc464b878816772f90a3c9bd431",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s3-identification-sign_composition-None": {
+        "actions_sha256": "04064f52bcc269aee4adefdae6568d933538dbfecfc9d09ae578c3c0a43d4d17",
+        "env_steps": 9,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s3-identification-slippery-None": {
+        "actions_sha256": "8b04150af54f6592da89051ce55dd12b80429366e4a5efaf528e0febc899703c",
+        "env_steps": 10,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s4-identification-base-None": {
+        "actions_sha256": "e4abafd9b6bb86016a306eca42eb994c4e2c4096477fbbfcf55f6d12cee03660",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m4-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "c5cff232e0bcf3e7d9f19d808624b7a45428301dc1a316c0c7ae2b18ae155447",
+        "env_steps": 5,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s4-identification-remap_rotate-None": {
+        "actions_sha256": "93a1e4666ee14a9610f499ce131676fdba6d044205afed97018f148550584de7",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s4-identification-remap_swap-None": {
+        "actions_sha256": "e0bd72375a9014509b90e6e37ca228c73cc128c925f80be02767ba6548826ed9",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m4-s4-identification-sign_composition-None": {
+        "actions_sha256": "c0a477814cb79879a2d71f093e836a5af5ff93f249c87d2ac40ff1c9f6f035ee",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m4-s4-identification-slippery-None": {
+        "actions_sha256": "058aa1021f59b69d8f98bc516e42871856d664fc039318cf16a4046fff1652d0",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s0-identification-base-None": {
+        "actions_sha256": "1840e9ceb08eda3dc7bc972bdc653b09a2203336798da8c411f46d6fc6c66b58",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s0-identification-remap_rotate-None": {
+        "actions_sha256": "5dd8bc0fbe45f402dcc5984c6c012f7bbb09b6f6b298f574851ea5a5d0217c65",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s0-identification-remap_swap-None": {
+        "actions_sha256": "b7e8f6cd50d8acd3ba2722de3a3533a6c81aac94be7b629119be6d629b87cfe0",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s0-identification-sign_composition-None": {
+        "actions_sha256": "6aec9eace880b5c5b5328f33f4d95631046b76ef591e7b535952e8b02cad23d4",
+        "env_steps": 4,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s0-identification-slippery-None": {
+        "actions_sha256": "829707a31ce6cfbd0947879846390f118e838936a7cd50fab354a9129677a6b5",
+        "env_steps": 4,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s1-identification-base-None": {
+        "actions_sha256": "ce912ef3b6b69cfdc7994bee5b1e078193786f325ed640fa5c236800e3d0ec92",
+        "env_steps": 14,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "a498f87bb9853526a75b326ef1dfb4f2cf87acee18df38374b8415167a20d8b6",
+        "env_steps": 60,
+        "final_rule_estimate": "sign_composition",
+        "success": false,
+        "tool_units": 3
+      },
+      "m5-s1-identification-remap_rotate-None": {
+        "actions_sha256": "235d52a58eeb0b2ba962c709a695824acb48a60924925f887e8011efd2480b62",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s1-identification-remap_swap-None": {
+        "actions_sha256": "b7e8f6cd50d8acd3ba2722de3a3533a6c81aac94be7b629119be6d629b87cfe0",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s1-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s1-identification-slippery-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s2-identification-base-None": {
+        "actions_sha256": "30608b02cf5b370ad3bc2259d1723d130e8d7bf5d45295e62a4ab713f9142e6c",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s2-identification-remap_rotate-None": {
+        "actions_sha256": "65ced3fc2dac9ed8532c4d76b032e0ddd514c6e46c27d7cecb47f29b38450b7e",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s2-identification-remap_swap-None": {
+        "actions_sha256": "92c9aea957a2daa1420477abcd5733c06d35dcbf3b19d9da87cd5c8644b0a6d0",
+        "env_steps": 5,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s2-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s2-identification-slippery-None": {
+        "actions_sha256": "c864902e9f30e2b9359425bc902312b4a99d8de6ce7725dcee289b258f937837",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s3-identification-base-None": {
+        "actions_sha256": "d267cfb9f016ea3bde96e1eeb46f563c2fa1eb3c9d0625eef62d421e55e36c8a",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s3-identification-remap_rotate-None": {
+        "actions_sha256": "5dd8bc0fbe45f402dcc5984c6c012f7bbb09b6f6b298f574851ea5a5d0217c65",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s3-identification-remap_swap-None": {
+        "actions_sha256": "2fae1f3d3950fea39b1f7ac12e7b88992eba9eb81bd7b7770e660097f728865e",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s3-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s3-identification-slippery-None": {
+        "actions_sha256": "91a34b35e34a316a95dc6b5325ecba03d08b004df0929b4604712491fb567b30",
+        "env_steps": 10,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s4-identification-base-None": {
+        "actions_sha256": "30608b02cf5b370ad3bc2259d1723d130e8d7bf5d45295e62a4ab713f9142e6c",
+        "env_steps": 5,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "1f17da726656cd7454141ce514a5d3dbd54ac81ba0dd7b14f1c3bc15ea53f1fa",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s4-identification-remap_rotate-None": {
+        "actions_sha256": "032a8c2df4018b23655072db58f74034d5f0f3101d607f7f18acab926c5badfa",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m5-s4-identification-remap_swap-None": {
+        "actions_sha256": "b7e8f6cd50d8acd3ba2722de3a3533a6c81aac94be7b629119be6d629b87cfe0",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m5-s4-identification-sign_composition-None": {
+        "actions_sha256": "7e64479b107ee69517e0be7a08dd9051cccc59ea68232510f322b7e947693588",
+        "env_steps": 3,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m5-s4-identification-slippery-None": {
+        "actions_sha256": "b309beb0598c387cd1961012bf15a0173d54ffef781d595bbd474ec4afe2450c",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s0-identification-base-None": {
+        "actions_sha256": "65d959ab40e811dfdc63ee735d3867a08cc82295cbc0598c9757a028545beca8",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s0-identification-remap_rotate-None": {
+        "actions_sha256": "ab912c0b50cc6e6377b6c6aa167b12f130ce95f881fbf410f9f15c748f8db77c",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s0-identification-remap_swap-None": {
+        "actions_sha256": "5aeed763e06caa21e2a4e5d5328b8f2e6b193f76b44de7d32acf104daa0ce8d2",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s0-identification-sign_composition-None": {
+        "actions_sha256": "ec410459385652e0c17394e13cc0042eeb85bab315bd01efab923eb500a66089",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s0-identification-slippery-None": {
+        "actions_sha256": "b751b1b29f51edb8a672cd41f009def57ec9067e2289bfca03441cd39ff98bc3",
+        "env_steps": 3,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s1-identification-base-None": {
+        "actions_sha256": "363fe52260e7b3a3886356347691159ec1edb901ee7230666282a8ddf3bff9a1",
+        "env_steps": 2,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s1-identification-remap_rotate-None": {
+        "actions_sha256": "f9f2706bd8440201c70ad646873472591f8708ba9e4c3cf4ef87383a556ff119",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s1-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s1-identification-sign_composition-None": {
+        "actions_sha256": "fb9a21222f4852afb451f95a0094fb948735e3e11b566e6a662f043a37ca9838",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s1-identification-slippery-None": {
+        "actions_sha256": "72467b91a27885571decebdf27b778e56bdce6d9f358ab117e261fefac238e99",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s2-identification-base-None": {
+        "actions_sha256": "363fe52260e7b3a3886356347691159ec1edb901ee7230666282a8ddf3bff9a1",
+        "env_steps": 2,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s2-identification-remap_rotate-None": {
+        "actions_sha256": "01c2f9d649003de95e80f5d06d1e8deb187f6e0cebf01f02fae5c17a88b2738f",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s2-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s2-identification-sign_composition-None": {
+        "actions_sha256": "a3f00127bcffb06acf06ab59ee3e8236512b2c0709790189883a8e775d973f63",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s2-identification-slippery-None": {
+        "actions_sha256": "f9d036df3f3586e99f324d368e749b0a05983fd8fd56a9c28ec7c52fe72ad6e3",
+        "env_steps": 26,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s3-identification-base-None": {
+        "actions_sha256": "f9bf2a7afbf1cd328ddd3130e5559023ebdbc19ad71b6b58456ec70133cee644",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "e481732412b97ae660d4458c3149f64e4904586060db316e9c5d210c8429becc",
+        "env_steps": 4,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s3-identification-remap_rotate-None": {
+        "actions_sha256": "01c2f9d649003de95e80f5d06d1e8deb187f6e0cebf01f02fae5c17a88b2738f",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s3-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s3-identification-sign_composition-None": {
+        "actions_sha256": "a3f00127bcffb06acf06ab59ee3e8236512b2c0709790189883a8e775d973f63",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s3-identification-slippery-None": {
+        "actions_sha256": "0a7b0449e3ce65976dce5d9e96c14c130483c811d2075fcf6fc0d05f117f5af1",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s4-identification-base-None": {
+        "actions_sha256": "65d959ab40e811dfdc63ee735d3867a08cc82295cbc0598c9757a028545beca8",
+        "env_steps": 4,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "0bf0807b6e391208f4acb61274af37dd89552efc51bd527135700985c165f4c5",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s4-identification-remap_rotate-None": {
+        "actions_sha256": "01c2f9d649003de95e80f5d06d1e8deb187f6e0cebf01f02fae5c17a88b2738f",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m6-s4-identification-remap_swap-None": {
+        "actions_sha256": "e27f602a56552638c8fa75d0793fbecef210c6acac740d7814ee40557f1a914c",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m6-s4-identification-sign_composition-None": {
+        "actions_sha256": "1033db093a519fdd71ecdbad3657dd5fbb90516d20393506119368de9ee7120d",
+        "env_steps": 22,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m6-s4-identification-slippery-None": {
+        "actions_sha256": "1ce1b3697e1edc2e8e51f1b0e86fbc1383cfb35a3f25d960b1e228dd60f7f982",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s0-identification-base-None": {
+        "actions_sha256": "cef6f8f4330c00c3a490d1c1555bb21d6ebe894f732d62dbbe01cf7d0f0653f7",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "9d2b44b6b8b4ba6db95f79a98039e47d65e393e493124746afdec69b07b7b1d9",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s0-identification-remap_rotate-None": {
+        "actions_sha256": "539dd6ffe2883f5fac682cbaa7b6470f50fb8f31ec136454c5ebe9f73d73ecec",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s0-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s0-identification-sign_composition-None": {
+        "actions_sha256": "b2990a1888d667f0c9e92994d5437b6eaf244d9ecfd17e2b3bcd5cd7a11b7c32",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s0-identification-slippery-None": {
+        "actions_sha256": "09f0685f87043b0446c06554fecc90b016a4a6e8aa260549221895750c0dcb63",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s1-identification-base-None": {
+        "actions_sha256": "2b8c8d1522d2e8aec8ff803ae8f26555ebf077e5c9a204212e674fd10c0ec861",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "9d2b44b6b8b4ba6db95f79a98039e47d65e393e493124746afdec69b07b7b1d9",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s1-identification-remap_rotate-None": {
+        "actions_sha256": "0bae7641a557a1c2ad5b6da0014b8be71d92d4f14713573ec30b51afb9c187aa",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s1-identification-remap_swap-None": {
+        "actions_sha256": "be4d4109c1de536b139a58cd3ad6feb7665433133b57a6e10b00e30222aa1d93",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s1-identification-sign_composition-None": {
+        "actions_sha256": "1542bad5f58e32682d3bfcb9f9581a1dc4d7019767a594e41414653618fcc091",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s1-identification-slippery-None": {
+        "actions_sha256": "e8c0a3587c92d874f6c30ef657ee2f8b16d0649ad7c4774070009668a3b3f491",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s2-identification-base-None": {
+        "actions_sha256": "c82c8ee643d22d2b9e76a789c7700c78cfbd15567268cf4140f9431401ad73fb",
+        "env_steps": 22,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "5dfa08bffa13b20197d78da339a9cea151f59f6df9ad6dbb21988a58b6d011e9",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s2-identification-remap_rotate-None": {
+        "actions_sha256": "0bae7641a557a1c2ad5b6da0014b8be71d92d4f14713573ec30b51afb9c187aa",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s2-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s2-identification-sign_composition-None": {
+        "actions_sha256": "1542bad5f58e32682d3bfcb9f9581a1dc4d7019767a594e41414653618fcc091",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s2-identification-slippery-None": {
+        "actions_sha256": "3b6964ebd5452cfa051588dd1a58dab331a70e305d39886be5bdb1e529174a7a",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s3-identification-base-None": {
+        "actions_sha256": "cef6f8f4330c00c3a490d1c1555bb21d6ebe894f732d62dbbe01cf7d0f0653f7",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "9d2b44b6b8b4ba6db95f79a98039e47d65e393e493124746afdec69b07b7b1d9",
+        "env_steps": 6,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s3-identification-remap_rotate-None": {
+        "actions_sha256": "c25ff9ddc6a86ecc46eb08fc3b1524ce9f376d1e46b85068c1281b0015cb0636",
+        "env_steps": 8,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s3-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s3-identification-sign_composition-None": {
+        "actions_sha256": "1542bad5f58e32682d3bfcb9f9581a1dc4d7019767a594e41414653618fcc091",
+        "env_steps": 6,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s3-identification-slippery-None": {
+        "actions_sha256": "d17e3f92c3d808eb6784ab6561c1c4bef2cc254b1ea1eb15796002befb7866cd",
+        "env_steps": 23,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s4-identification-base-None": {
+        "actions_sha256": "cef6f8f4330c00c3a490d1c1555bb21d6ebe894f732d62dbbe01cf7d0f0653f7",
+        "env_steps": 10,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "6b4e9dc6a0d1055fba6071418b0050f833b35e1138205505cdfbaa44ceefb4d1",
+        "env_steps": 9,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s4-identification-remap_rotate-None": {
+        "actions_sha256": "0bae7641a557a1c2ad5b6da0014b8be71d92d4f14713573ec30b51afb9c187aa",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m7-s4-identification-remap_swap-None": {
+        "actions_sha256": "4862cad860d1fa51a3741667b93a8f7be90b4b6896bc9c9f11dee66a80d16120",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m7-s4-identification-sign_composition-None": {
+        "actions_sha256": "26a0d7f0c0a902a952baa2261afcd29f4e48eff3a1b163260c37b519b8884268",
+        "env_steps": 7,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m7-s4-identification-slippery-None": {
+        "actions_sha256": "334e1368fd4c49d6f837460a5e04bcf6380636c7d269cf10d77b5cbb0d837c9f",
+        "env_steps": 18,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s0-identification-base-None": {
+        "actions_sha256": "116f349c77f4e110bc2e52fcac179031f44e28addc57d36858172edad7dcaeed",
+        "env_steps": 7,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "bfb0435867d2a644e48ad76abccdc0c6d1f87ade5ff5c1cc681c1d9dff6f9cbe",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s0-identification-remap_rotate-None": {
+        "actions_sha256": "4b3db279d3887794e854cfb0a7ad1ba54412c286dc7fc0978efc2dac493f9d5a",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s0-identification-remap_swap-None": {
+        "actions_sha256": "eb9aec529012b1c57e33048c601a20a9dddfa3e5b537067d83633d3fe963ee2b",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s0-identification-sign_composition-None": {
+        "actions_sha256": "c629c2557cb2645905365ebac0aa6c570b0eb1b115501b2bfa5e3de453cde3dd",
+        "env_steps": 14,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s0-identification-slippery-None": {
+        "actions_sha256": "327cd726c040443c13171ba7d05fef28608ea5cb87a124fa7df767fa22fd32f7",
+        "env_steps": 29,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s1-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "35257757fda656877d36739ee89a77df310c9f90e0e6ba3889667181af35141b",
+        "env_steps": 11,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s1-identification-remap_rotate-None": {
+        "actions_sha256": "d2dddceb55f596c2547f58848d656d1a2f7b2a73cc5a105e8deb0792f013ba0b",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s1-identification-remap_swap-None": {
+        "actions_sha256": "56ffecd66551abdfd2d10eb7f4532eef895cf0785302b83e8f173dfaf706c95e",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s1-identification-sign_composition-None": {
+        "actions_sha256": "1c83b2a9238cb0f15fd62c7e1da41208bcd50b53d61ee28f8ce96a20679143ca",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s1-identification-slippery-None": {
+        "actions_sha256": "e1b4cf1196c3e5992fa54cd4d9318433ccfab4f336914fb39ea598cd84e1684a",
+        "env_steps": 4,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s2-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "11521f3fd85a6768ac065fb573642bfb3ae4c202ef8dffb722cf3f026c0d712b",
+        "env_steps": 13,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s2-identification-remap_rotate-None": {
+        "actions_sha256": "18666302b0e4edff1d09bdd0f8f2856ebb67f3ec5ae381343f940dc82b64e9d2",
+        "env_steps": 9,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s2-identification-remap_swap-None": {
+        "actions_sha256": "f707508af53ca3789f14c3543ae09feab589965b834fc4b260dbff3ed6ad36e2",
+        "env_steps": 11,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s2-identification-sign_composition-None": {
+        "actions_sha256": "9b918bd465fa4d65f77c007b515dfaa5d4b585358bbf5f4f61b6824c938415f1",
+        "env_steps": 10,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s2-identification-slippery-None": {
+        "actions_sha256": "1531e5fb35663b518ce5d3f5cf19f4f14c81f73d053ae536fb12c4a5084504da",
+        "env_steps": 7,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s3-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "68c317b4fa0359d5fc78cac4d57f4aca6d84693b415a9be7ac412d7a49760945",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s3-identification-remap_rotate-None": {
+        "actions_sha256": "4b3db279d3887794e854cfb0a7ad1ba54412c286dc7fc0978efc2dac493f9d5a",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s3-identification-remap_swap-None": {
+        "actions_sha256": "83b6e3baaa21d6409e08a7eae8702093e7b8fa45478bb2872f9951d77239f83a",
+        "env_steps": 10,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s3-identification-sign_composition-None": {
+        "actions_sha256": "1c83b2a9238cb0f15fd62c7e1da41208bcd50b53d61ee28f8ce96a20679143ca",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s3-identification-slippery-None": {
+        "actions_sha256": "f4ab49a33c1e654c83b4feb1bbf522cb9b6fee18c6ae5983406eed3e5526c3b3",
+        "env_steps": 11,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s4-identification-base-None": {
+        "actions_sha256": "e38e4f0bf723bfc1a5391c8a81ac01f417c252c290246546513b239e9c6dcd0c",
+        "env_steps": 6,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "68c317b4fa0359d5fc78cac4d57f4aca6d84693b415a9be7ac412d7a49760945",
+        "env_steps": 8,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s4-identification-remap_rotate-None": {
+        "actions_sha256": "dbdfed4da9aee7dcd7dbe46166f71baaea227904eb92e51de66852cb8537c17c",
+        "env_steps": 7,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 1
+      },
+      "m8-s4-identification-remap_swap-None": {
+        "actions_sha256": "eda1015bc893e6d5f1b28b467b73dadf502ee92faca8f0c10600603c52170ea7",
+        "env_steps": 13,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m8-s4-identification-sign_composition-None": {
+        "actions_sha256": "e23a48e03efdf65683bfe7101776a4adb1322d681537ec4392ba56c80bddf41c",
+        "env_steps": 8,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m8-s4-identification-slippery-None": {
+        "actions_sha256": "bd184e443ea0d9b372b4fe5deb6827c49b890b17c0b67e49dc8c820158a9850d",
+        "env_steps": 6,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s0-identification-base-None": {
+        "actions_sha256": "2947c14d3e02489435b40bf6df909e7d6c3da2de40b43160a9eba25503b47d68",
+        "env_steps": 16,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s0-identification-hazard_goal_swap-None": {
+        "actions_sha256": "a271f5b260a2dfa6efa905054743c3ead2909308841c4cafc1a5c7bca2983a2c",
+        "env_steps": 12,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s0-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s0-identification-remap_swap-None": {
+        "actions_sha256": "50a018821a3c8fbbe3201833825355cdbcfa4a4cb5782cc10254e1b84b5fc9bd",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s0-identification-sign_composition-None": {
+        "actions_sha256": "96e798789af748cc98d48a09b5058a69d5db3f3f3a80b913cfcc2d159040be7e",
+        "env_steps": 12,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s0-identification-slippery-None": {
+        "actions_sha256": "457e62c788b6b9e16e6f3d3a707c988863855ec4e3a359977ab4519262441ba0",
+        "env_steps": 5,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s1-identification-base-None": {
+        "actions_sha256": "5cc188c48751f284511ce2cff646c41d74ab4763e1013ce3d849a1589b4fe8da",
+        "env_steps": 14,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s1-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2d2545710873b32365c49df189d20eac9514d321e30726e2728b1c0f8ebe108f",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s1-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s1-identification-remap_swap-None": {
+        "actions_sha256": "d9f687f8a76f9bf474cf0ef53ed10de757cfee639bd4bc64a517639defc1c92d",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s1-identification-sign_composition-None": {
+        "actions_sha256": "1e52395221c0b63cb1a6e733498c7454ba531bd5bfc1412d748bb0c855f94b38",
+        "env_steps": 13,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s1-identification-slippery-None": {
+        "actions_sha256": "fce704edc3db97c5b960e57237ecd598deb6a3ecf8f50e04f5b94a6db4463853",
+        "env_steps": 8,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s2-identification-base-None": {
+        "actions_sha256": "67fd68b19b5147b14a3783ca9a519e57f042563e0e70fae28897c395abd054f5",
+        "env_steps": 13,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s2-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2d2545710873b32365c49df189d20eac9514d321e30726e2728b1c0f8ebe108f",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s2-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s2-identification-remap_swap-None": {
+        "actions_sha256": "0021840fcf0e4efa847c84bd496a33596d9ced75951e361c816b0be390970e48",
+        "env_steps": 6,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s2-identification-sign_composition-None": {
+        "actions_sha256": "cf383f351b542cd61d36c8d79406f25b07c4093e188262caec4f6455939b76d4",
+        "env_steps": 11,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s2-identification-slippery-None": {
+        "actions_sha256": "1d0e34268f4dc9f65a7316e1cd93805d39739062e0c9520cd6af39fde65277bb",
+        "env_steps": 14,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s3-identification-base-None": {
+        "actions_sha256": "d66a3579b0c76bbd8536c207d0cb355c05f7309d45d41c82ba79e7a53a51c05e",
+        "env_steps": 17,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s3-identification-hazard_goal_swap-None": {
+        "actions_sha256": "2d2545710873b32365c49df189d20eac9514d321e30726e2728b1c0f8ebe108f",
+        "env_steps": 10,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s3-identification-remap_rotate-None": {
+        "actions_sha256": "31228353e90a9cc45a5e736c4caa6573c67f2359915c4bd797151da68b18411f",
+        "env_steps": 3,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s3-identification-remap_swap-None": {
+        "actions_sha256": "d9f687f8a76f9bf474cf0ef53ed10de757cfee639bd4bc64a517639defc1c92d",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s3-identification-sign_composition-None": {
+        "actions_sha256": "cf383f351b542cd61d36c8d79406f25b07c4093e188262caec4f6455939b76d4",
+        "env_steps": 11,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s3-identification-slippery-None": {
+        "actions_sha256": "b07fe1ac9644c2952b19feb5679599aac43db0bb8f5cb687a884658542d9e680",
+        "env_steps": 13,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s4-identification-base-None": {
+        "actions_sha256": "50b8a0121b972ff60d6b398cde40c454c696c93f560e500823b1f492d442dbfa",
+        "env_steps": 19,
+        "final_rule_estimate": "base",
+        "success": true,
+        "tool_units": 1
+      },
+      "m9-s4-identification-hazard_goal_swap-None": {
+        "actions_sha256": "a6ae1f74cb4ff00b5e689704f88fe6911ad1b3aefb5a3c1c1be03c2c9cf94abc",
+        "env_steps": 13,
+        "final_rule_estimate": "hazard_goal_swap",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s4-identification-remap_rotate-None": {
+        "actions_sha256": "b1ad9e10e7cc788964355e5ea90783bdd0aae9ed2259ac8d9ae3b2db49636b61",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_rotate",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s4-identification-remap_swap-None": {
+        "actions_sha256": "d9f687f8a76f9bf474cf0ef53ed10de757cfee639bd4bc64a517639defc1c92d",
+        "env_steps": 4,
+        "final_rule_estimate": "remap_swap",
+        "success": true,
+        "tool_units": 0
+      },
+      "m9-s4-identification-sign_composition-None": {
+        "actions_sha256": "fb9e077f9b72269ef6826f977618fd59b66b494b2be55497df234fa0e6cfa9b0",
+        "env_steps": 16,
+        "final_rule_estimate": "sign_composition",
+        "success": true,
+        "tool_units": 3
+      },
+      "m9-s4-identification-slippery-None": {
+        "actions_sha256": "b987924c031d8a2eff90a0603a7986cf41bcf604ea7c5f5d2369c9512d3e043e",
+        "env_steps": 9,
+        "final_rule_estimate": "slippery",
+        "success": true,
+        "tool_units": 0
+      }
+    }
+  },
+  "scope": "maps 0-9, seeds 0-4, static identification"
+}

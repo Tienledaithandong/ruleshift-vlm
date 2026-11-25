@@ -31,6 +31,32 @@ from scripts.run_grid_identification import (
 )
 
 
+def test_static_scope_manifest_roundtrip_and_membership():
+    manifest = build_manifest(
+        GridConfig(),
+        map_ids=[0],
+        run_seeds=[0],
+        scope="static_identification",
+    )
+    assert manifest.scope == "static_identification"
+    assert len(manifest.entries) == 6
+    assert {entry["scenario_type"] for entry in manifest.entries} == {
+        "identification"
+    }
+    validate_manifest(manifest, GridConfig())
+
+    payload = manifest_to_dict(manifest)
+    assert payload["scope"] == "static_identification"
+    restored = manifest_from_dict(payload)
+    assert restored.scope == manifest.scope
+    assert restored.scenario_ids == manifest.scenario_ids
+
+    # The same entries cannot be silently relabelled as the deferred full design.
+    relabelled = manifest_from_dict({**payload, "scope": "full"})
+    with pytest.raises(ManifestError):
+        validate_manifest(relabelled, GridConfig())
+
+
 def test_manifest_layout_and_content_hashes_fail_closed(tmp_path):
     manifest = build_manifest(GridConfig(), map_ids=[0], run_seeds=[0])
     validate_manifest(manifest, GridConfig())

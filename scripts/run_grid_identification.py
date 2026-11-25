@@ -33,13 +33,14 @@ from ruleshift.evaluator.grid_identification import (
     write_jsonl,
 )
 from ruleshift.evaluator.grid_manifest import (
-    SCENARIO_SUFFIXES,
+    SCENARIO_SCOPE_SUFFIXES,
     ManifestError,
     ScenarioManifest,
     canonical_json,
     layout_sha256,
     read_manifest,
 )
+from ruleshift.evaluator.grid_map_analysis import map_family_summary
 from ruleshift.evaluator.grid_runner import GridEpisode, run_grid_episode
 from ruleshift.envs.grid.mapgen import generate_solvable_map
 
@@ -72,6 +73,10 @@ def validate_manifest(
 
     if not manifest.entries:
         raise ManifestError("manifest has no entries")
+    try:
+        suffixes = SCENARIO_SCOPE_SUFFIXES[manifest.scope]
+    except KeyError as exc:
+        raise ManifestError(f"unknown manifest scope: {manifest.scope!r}") from exc
     if manifest.sha256 != canonical_manifest_hash(manifest):
         raise ManifestError("manifest content hash is inconsistent")
     layouts: dict[int, str] = {}
@@ -107,7 +112,7 @@ def validate_manifest(
         f"m{map_id}-s{seed}-{suffix}"
         for map_id in manifest.map_ids
         for seed in manifest.run_seeds
-        for suffix in SCENARIO_SUFFIXES
+        for suffix in suffixes
     }
     missing = sorted(expected_ids - seen)
     extra = sorted(seen - expected_ids)
@@ -251,9 +256,30 @@ def build_export_payload(
                 ),
             }
     summary["paired"] = paired
+    if set(methods) >= {
+        "diagnostic_belief_v4",
+        "diagnostic_belief_v3",
+        "no_adaptation",
+    }:
+        family_options: dict[str, int] = {}
+        if (
+            manifest.scope == "static_identification"
+            and len(manifest.map_ids) == 30
+            and len(manifest.entries) == 900
+        ):
+            family_options = {
+                "expected_maps": 30,
+                "expected_episodes_per_map": 30,
+            }
+        summary["map_level_family"] = map_family_summary(
+            records, **family_options
+        )
+    else:
+        summary["map_level_family"] = None
     return {
         "evaluation_version": EVALUATION_VERSION,
         "manifest_sha256": manifest.sha256,
+        "scope": manifest.scope,
         "config_sha256": config_sha256(config),
         "code_commit": code_commit,
         "methods": list(methods),
