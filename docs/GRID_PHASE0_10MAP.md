@@ -260,7 +260,8 @@ remaining failure is not caused by unreadable signposts.
 ## 9. Artifacts and checks
 
 - Analysis script: `scripts/analyze_grid_phase0.py`.
-- Full suite on the research branch: `python -m pytest -q` -> **422 passed**.
+- Full suite on the research branch: `python -m pytest -q` -> **447 passed**
+  after merging the repaired `main` (422 on the benchmark-only branch).
 - Changed-file lint: `python -m ruff check` on the modified source, script, and
   map-gen tests -> clean. The repository-wide ruff backlog is pre-existing and
   not claimed clean here.
