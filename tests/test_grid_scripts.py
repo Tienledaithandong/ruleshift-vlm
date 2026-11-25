@@ -91,6 +91,89 @@ def test_behavioral_gate_rejects_fallback_and_invalid_json():
     assert pilot.behavioral_gate(rows, 2)["passed"] is False
 
 
+def _semantic_row(scenario, action, position, steps, probs=None, history="no prior steps"):
+    return {
+        "scenario_id": scenario,
+        "chosen_action": action,
+        "agent_position": list(position),
+        "env_steps": steps,
+        "public_history": history,
+        "action_mask": ["UP", "DOWN", "LEFT", "RIGHT", "INSPECT"],
+        "hypothesis_probabilities": probs or {
+            "base": 0.2, "remap_swap": 0.2, "remap_rotate": 0.2,
+            "slippery": 0.2, "hazard_goal_swap": 0.1, "sign_composition": 0.1,
+        },
+    }
+
+
+def test_semantic_gate_accepts_belief_change_tool_use_and_base_success():
+    pilot = _load_pilot_module()
+    rows = [
+        _semantic_row("a", "RIGHT", (1, 5), 0, {
+            "base": 0.5, "remap_swap": 0.1, "remap_rotate": 0.1,
+            "slippery": 0.1, "hazard_goal_swap": 0.1, "sign_composition": 0.1,
+        }),
+        _semantic_row("a", "INSPECT", (2, 5), 1, {
+            "base": 0.7, "remap_swap": 0.1, "remap_rotate": 0.05,
+            "slippery": 0.05, "hazard_goal_swap": 0.05, "sign_composition": 0.05,
+        }),
+        _semantic_row("b", "READ_SIGN", (1, 5), 0, {
+            "base": 0.2, "remap_swap": 0.5, "remap_rotate": 0.1,
+            "slippery": 0.1, "hazard_goal_swap": 0.05, "sign_composition": 0.05,
+        }),
+    ]
+    episodes = [
+        SimpleNamespace(scenario_id="a", success=True),
+        SimpleNamespace(scenario_id="b", success=False),
+    ]
+    evaluator = [
+        {"scenario_id": "a", "true_rule": "base", "final_rule_estimate": "base"},
+        {"scenario_id": "b", "true_rule": "remap_swap", "final_rule_estimate": "remap_swap"},
+    ]
+    gate = pilot.semantic_gate(rows, episodes, evaluator)
+    assert gate["passed"] is True
+    assert gate["unique_belief_vectors"] >= 2
+    assert gate["tool_calls"] > 0
+    assert gate["base_success"] == 1
+
+
+def test_semantic_gate_rejects_constant_beliefs_and_blocked_repeat():
+    pilot = _load_pilot_module()
+    constant = {
+        "base": 0.17, "remap_swap": 0.17, "remap_rotate": 0.17,
+        "slippery": 0.17, "hazard_goal_swap": 0.16, "sign_composition": 0.16,
+    }
+    rows = [
+        _semantic_row("a", "LEFT", (1, 5), 0, constant),
+        _semantic_row(
+            "a", "LEFT", (1, 5), 1, constant,
+            history="Step 1: LEFT -> blocked",
+        ),
+        _semantic_row("b", "LEFT", (1, 5), 0, constant),
+        _semantic_row(
+            "b", "LEFT", (1, 5), 1, constant,
+            history="Step 1: LEFT -> blocked",
+        ),
+    ]
+    gate = pilot.semantic_gate(rows)
+    assert gate["passed"] is False
+    assert any("belief" in reason for reason in gate["reasons"])
+    assert any("blocked" in reason for reason in gate["reasons"])
+
+def test_semantic_gate_does_not_treat_hazard_as_blocked():
+    pilot = _load_pilot_module()
+    rows = [
+        _semantic_row("a", "LEFT", (1, 5), 0),
+        _semantic_row(
+            "a", "LEFT", (1, 5), 1,
+            history="Step 1: LEFT -> hazard",
+        ),
+        _semantic_row("b", "RIGHT", (1, 5), 0),
+    ]
+    gate = pilot.semantic_gate(rows)
+    assert gate["blocked_transitions"] == 0
+    assert gate["blocked_repeats"] == 0
+
 def test_select_chunk_scenarios_uses_map_range():
     pilot = _load_pilot_module()
     scenarios = tuple(SimpleNamespace(map_seed=map_seed) for map_seed in range(100))

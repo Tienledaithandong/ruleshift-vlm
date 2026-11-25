@@ -1,9 +1,11 @@
 """Kaggle GPU kernel: one 55-episode dry chunk of the frozen grid run.
 
-A chunk is one map x five run seeds x eleven scenarios (55 episodes, about
-2.2 GPU-hours at the measured rate). Ten such chunks form a weekly slice of
-ten maps. Set MAP_INDEX=0..99 in the kernel environment; artifacts are stamped
-with mNNN so chunks can be merged later without overwriting each other.
+A chunk is one map x five run seeds x eleven scenarios (55 episodes; the
+measured 8.85 s/decision makes the worst case near 8.1 GPU-hours, not 2.2). Ten
+such chunks form a weekly slice of ten maps. Do not set MAP_INDEX by hand:
+scripts/stage_grid_chunk.py embeds the literal index in each staged copy and
+fails loudly if the environment form is still present. Artifacts are stamped
+with mNNN so chunks can be merged without overwriting each other.
 """
 
 import json
@@ -58,7 +60,7 @@ run(["nvidia-smi"])
 
 os.environ["RULESHIFT_KAGGLE"] = "1"
 
-map_index = int(os.environ.get("MAP_INDEX", "0"))
+map_index = int(os.environ["MAP_INDEX"])
 if not 0 <= map_index < 100:
     raise SystemExit(f"MAP_INDEX must be in [0, 99], got {map_index}")
 chunk_id = f"m{map_index:03d}"

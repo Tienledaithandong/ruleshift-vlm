@@ -69,6 +69,38 @@ def test_public_rows_have_no_privileged_fields():
         assert find_forbidden_fields(row) == []
 
 
+def test_public_rows_carry_fallback_accounting():
+    class FallbackPolicy:
+        name = "fallback"
+        advisor_calls = 0
+        last_json_valid = False
+        last_valid_action = False
+        last_fallback = True
+        last_parse_errors = ("probabilities must sum to 1 within 0.02",)
+        last_output_tokens = 3
+        last_cache_hit = False
+
+        def reset(self, observation, info):
+            return None
+
+        def choose(self, observation, info):
+            return GridAction("UP")
+
+        def record(self, action, observation, reward, info):
+            return None
+
+        def most_likely_rule(self):
+            return "base"
+
+        def shift_detected(self):
+            return False
+
+    episode = run(FallbackPolicy())
+    assert episode.public_rows
+    assert all(row["fallback"] is True for row in episode.public_rows)
+    assert all(row["parse_error_count"] == 1 for row in episode.public_rows)
+
+
 def test_evaluator_trace_has_the_true_rule():
     episode = run(InfoGainPolicy(GridConfig()))
     assert episode.evaluator_rows[0]["true_rule"] in GRID_RULE_IDS

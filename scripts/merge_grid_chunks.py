@@ -20,8 +20,9 @@ _SRC = str(Path(__file__).resolve().parents[1] / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
+from ruleshift.envs.grid.config import load_grid_config
 from ruleshift.evaluator.grid_metrics import paired_grid_ci, summarize_grid
-from ruleshift.evaluator.grid_runner import GridEpisode
+from ruleshift.evaluator.grid_runner import GridEpisode, build_grid_scenarios
 
 FULL_GRID_SCENARIOS = 100 * 5 * 11
 
@@ -201,6 +202,7 @@ def merge_grid_chunks(
     baseline_path: str | Path,
     *,
     expected_scenarios: int = FULL_GRID_SCENARIOS,
+    expected_ids: set[str] | None = None,
     n_boot: int = 2000,
 ) -> dict[str, Any]:
     """Load all chunks, enforce coverage, and compute paired scenario CIs."""
@@ -221,6 +223,13 @@ def merge_grid_chunks(
         raise MergeError(
             f"expected {expected_scenarios} scenarios, found {len(episodes)} "
             f"across {len(chunks)} chunk(s)"
+        )
+    if expected_ids is not None and seen != expected_ids:
+        missing = sorted(expected_ids - seen)
+        extra = sorted(seen - expected_ids)
+        raise MergeError(
+            "chunk scenario ids do not match the frozen grid: "
+            f"missing={missing[:3]}, extra={extra[:3]}"
         )
     baselines = _baseline_episodes(baseline_path)
     expected_ids = {episode.scenario_id for episode in episodes}
@@ -254,6 +263,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--chunks", default="results/grid_chunks")
     parser.add_argument("--baselines", default="results/grid_baselines/baselines.jsonl")
     parser.add_argument("--out", default="results/grid_merged/summary.json")
+    parser.add_argument("--config", default="configs/grid_dev.yaml")
     parser.add_argument("--expected-scenarios", type=int, default=FULL_GRID_SCENARIOS)
     parser.add_argument("--n-boot", type=int, default=2000)
     return parser.parse_args(argv)
@@ -261,10 +271,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+    config = load_grid_config(Path(args.config))
+    expected_ids = {
+        scenario.scenario_id for scenario in build_grid_scenarios(100, 5, config)
+    }
     payload = merge_grid_chunks(
         args.chunks,
         args.baselines,
         expected_scenarios=args.expected_scenarios,
+        expected_ids=expected_ids,
         n_boot=args.n_boot,
     )
     out = Path(args.out)

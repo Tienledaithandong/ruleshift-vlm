@@ -178,6 +178,39 @@ def _cell_text(coord: Any) -> str:
     return "none" if coord is None else f"({coord[0]},{coord[1]})"
 
 
+_DIRECTION_DELTAS: dict[str, tuple[int, int]] = {
+    "UP": (0, -1),
+    "DOWN": (0, 1),
+    "LEFT": (-1, 0),
+    "RIGHT": (1, 0),
+}
+
+
+def _adjacent_text(
+    position: tuple[int, int],
+    walls: frozenset[tuple[int, int]] | set[tuple[int, int]],
+    width: int,
+    height: int,
+) -> str:
+    """Describe the four visible neighbours, independent of the hidden rule."""
+
+    x, y = int(position[0]), int(position[1])
+    parts: list[str] = []
+    for action, (dx, dy) in _DIRECTION_DELTAS.items():
+        nx, ny = x + dx, y + dy
+        outside = not (0 <= nx < int(width) and 0 <= ny < int(height))
+        blocked = outside or (nx, ny) in walls
+        parts.append(f"{action}={'wall' if blocked else 'free'}")
+    return ",".join(parts)
+
+
+def _walls_text(walls: Any) -> str:
+    """Serialize the complete public wall set in stable coordinate order."""
+
+    coordinates = sorted((int(cell[0]), int(cell[1])) for cell in walls)
+    return ",".join(f"({x},{y})" for x, y in coordinates) or "none"
+
+
 def build_public_text(
     state: "GridState",
     public_map: Any,
@@ -196,6 +229,13 @@ def build_public_text(
         f"{color}=({coord[0]},{coord[1]})"
         for color, coord in sorted(public_map.markers.items())
     )
+    walls = frozenset(tuple(cell) for cell in public_map.walls)
+    adjacent = _adjacent_text(
+        tuple(state.position),
+        walls,
+        int(public_map.width),
+        int(public_map.height),
+    )
     return (
         f"step={state.steps} pos=({state.position[0]},{state.position[1]}) "
         f"health={state.health} tool={tool_budget_remaining} "
@@ -204,7 +244,9 @@ def build_public_text(
         f"last={last_outcome} markers=[{markers}] "
         f"key={_cell_text(public_map.key)} "
         f"door_cell={_cell_text(public_map.door)} "
-        f"signpost={_cell_text(public_map.signpost)}"
+        f"signpost={_cell_text(public_map.signpost)} "
+        f"adjacent=[{adjacent}] "
+        f"walls=[{_walls_text(walls)}]"
     )
 
 

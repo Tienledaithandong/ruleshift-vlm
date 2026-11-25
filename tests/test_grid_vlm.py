@@ -1,7 +1,7 @@
 from ruleshift.agents.grid_baselines import as_observation
 from ruleshift.agents.grid_vlm import (
     GRID_PROMPT_VERSION, GridStubBackend, GridVLMConfig, GridVLMPolicy,
-    parse_grid_output, render_grid_prompt,
+    _last_blocked_action, parse_grid_output, render_grid_prompt,
 )
 from ruleshift.envs.grid.config import GridConfig
 from ruleshift.envs.grid.grid_env import GridEnv
@@ -34,6 +34,17 @@ def test_prompt_lists_the_grid_actions():
     text = render_grid_prompt(observation())
     for action in ("UP", "DOWN", "LEFT", "RIGHT", "INTERACT", "INSPECT", "READ_SIGN"):
         assert action in text
+
+
+def test_prompt_requires_every_candidate_id():
+    text = render_grid_prompt(observation())
+    for rule in (
+        "base", "remap_swap", "remap_rotate", "slippery",
+        "hazard_goal_swap", "sign_composition",
+    ):
+        assert rule in text
+    assert "every id is required" in text
+    assert "If they total 1.05 or 1.15" in text
 
 
 def test_merged_prompt_uses_the_public_image():
@@ -231,8 +242,48 @@ def test_record_works_without_explicit_reset():
 
 
 def test_prompt_version_is_pinned():
-    assert GRID_PROMPT_VERSION == "grid_v3"
+    assert GRID_PROMPT_VERSION == "grid_v9"
 
+
+def test_guard_uses_only_the_latest_outcome():
+    payload = observation().to_payload()
+    payload["public_history"] = "Step 1: LEFT -> blocked; Step 2: UP -> move"
+    assert _last_blocked_action(payload) is None
+    payload["public_history"] = "Step 1: LEFT -> blocked; Step 2: UP -> blocked"
+    assert _last_blocked_action(payload) == "UP"
+
+def test_policy_guard_replaces_a_blocked_action():
+    class FixedBackend:
+        def generate(self, request):
+            import json
+
+            from ruleshift.agents.vlm_backend import ModelResponse
+            from ruleshift.public_api.grid_schemas import GRID_RULE_IDS
+
+            payload = {
+                "hypothesis_probabilities": {
+                    rule: 1 / len(GRID_RULE_IDS) for rule in GRID_RULE_IDS
+                },
+                "action": "LEFT",
+                "tool_target": None,
+                "confidence": 0.5,
+            }
+            text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+            return ModelResponse(text, 0, 20, 0.0, "fixed", "GRID_FIXED")
+
+    payload = observation().to_payload()
+    payload["public_history"] = "Step 1: LEFT -> blocked"
+    payload["public_text"] = "last=blocked"
+    obs = as_observation(payload)
+    policy = GridVLMPolicy(
+        FixedBackend(), config=GridVLMConfig(model_id="fixed")
+    )
+    policy.reset(obs, {})
+    action = policy.choose(obs, {})
+
+    assert action.kind in obs.action_mask
+    assert action.kind != "LEFT"
+    assert policy.last_guard_applied is True
 
 def test_tool_result_reaches_history_text_and_prompt():
     """A READ_SIGN value is a public outcome, not just a transient info key."""
