@@ -33,6 +33,7 @@ kaggle.json
 **/.ipynb_checkpoints/
 .env
 reports/real_smoke*.md
+reports/grid_chunks/
 results/real_smoke*/
 results/real/
 reports/real_pilot.md
