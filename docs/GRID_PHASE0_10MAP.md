@@ -307,12 +307,21 @@ misdiagnoses still reached the goal, so success alone understates the
 identification problem. This does not pass or change the gate and does not
 authorize Phase 1; see [`GRID_BASE_STRESS.md`](GRID_BASE_STRESS.md).
 
+A post-hoc trace of the eight non-base outcomes identified two policy
+mechanisms: an empty-plan fallback that loops after a wrong MAP belief
+(`m2-s2`, `m57-s4`), and a static side-0 sign probe that leaves `base` versus
+`remap_rotate` unresolved (`m78-s1`). It also found that one successful
+"misdiagnosis" is an exact belief tie. The trace is diagnostic, not an
+efficacy result; see
+[`GRID_BASE_FAILURE_DIAGNOSIS.md`](GRID_BASE_FAILURE_DIAGNOSIS.md).
+
 ## 12. Bottom line
 
 The benchmark repair worked: v0.3 has unique maps, readable side-0 faces, zero
 zero-tool episodes, and a 95.7% identification rate. Six gates pass. The
-remaining base failure is one stochastic navigation episode, not the old
+remaining base failures are low-rate but reproducible, not the old
 benchmark defect and not something to tune away after inspection. The 100% base
 gate therefore still blocks Phase 1. The correct next action is a new,
-preregistered decision about stochastic base evaluation, not a VLM run or a
-prompt change.
+preregistered decision about the base endpoint and, if a policy revision is
+chosen, a fresh-map evaluation of that revision. It is not a VLM run, a prompt
+change, or a post-hoc gate relaxation.
