@@ -58,14 +58,18 @@ python scripts/analyze_grid_phase0.py `
   --maps 10 --seeds 5
 ```
 
-Raw and analyzed artifacts are generated and ignored by Git:
+Raw and analyzed artifacts are generated and ignored by Git. A post-merge CPU
+rerun (`maps10_v3_postmerge.jsonl`) is byte-identical to the original v0.3 raw
+file, so merging the repaired `main` did not change the benchmark result:
 
 - `results/grid_phase0/maps10_v3.jsonl` (SHA-256
   `A6DA6D7087D0B70BD25928EE5A463BBC2725FE29D77C336A3ED8D25E16BCC61B`)
+- `results/grid_phase0/maps10_v3_postmerge.jsonl` (same SHA-256)
 - `results/grid_phase0/maps10_v3_analysis/` (`aggregate.json`, `per_map.json`,
   `paired.json`, `failures.json`, `sign_affordance.json`,
   `map_identity.json`, `eligibility.json`,
   `zero_tool_hazard_or_sign.json`, `summary.md`)
+- `results/grid_phase0/maps10_v3_postmerge_analysis/`
 - `results/grid_phase0/map_suite_audit_100_v3.json`
 
 ## 3. Original v0.1 result (historical)
