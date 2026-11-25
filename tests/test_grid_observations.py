@@ -39,6 +39,19 @@ def test_signpost_clause_is_not_in_public_text():
     assert all(clause not in view.public_text for clause in BASE_RULE.sign_clauses)
 
 
+def test_public_text_exposes_public_walls_and_adjacent_cells():
+    public = PublicGridMap(
+        7, 7, frozenset({(2, 3), (3, 4)}), (3, 3),
+        {"red": (1, 1), "blue": (1, 5), "green": (5, 1)},
+        key=None, door=None, signpost=None,
+    )
+    env = GridEnv(GridConfig())
+    observation, _ = env.reset(seed=0, options={"map": public})
+    text = observation["public_text"]
+
+    assert "adjacent=[UP=free,DOWN=wall,LEFT=wall,RIGHT=free]" in text
+    assert "walls=[(2,3),(3,4)]" in text
+
 def test_two_tools_at_one_step_have_distinct_observation_ids():
     env = make_env()
     first, _, _, _, _ = env.step(GridAction("READ_SIGN"))

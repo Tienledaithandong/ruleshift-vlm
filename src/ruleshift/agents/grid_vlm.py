@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,8 +34,8 @@ from ruleshift.public_api.grid_schemas import (
 from .cache import ResponseCache
 from .vlm_backend import ModelRequest, ModelResponse
 
-GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v5.txt"
-GRID_PROMPT_VERSION = "grid_v5"
+GRID_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "grid_v6.txt"
+GRID_PROMPT_VERSION = "grid_v6"
 
 __all__ = [
     "GRID_PROMPT_PATH",
@@ -126,6 +127,109 @@ def _grid_size(observation: Any) -> tuple[int, int]:
 # ---------------------------------------------------------------------------
 # Prompt and candidate identity
 # ---------------------------------------------------------------------------
+
+
+_MOVE_KINDS: tuple[str, ...] = ("UP", "DOWN", "LEFT", "RIGHT")
+_DIRECTION_DELTAS: dict[str, tuple[int, int]] = {
+    "UP": (0, -1),
+    "DOWN": (0, 1),
+    "LEFT": (-1, 0),
+    "RIGHT": (1, 0),
+}
+_HISTORY_RE = re.compile(r"Step\s+\d+:\s*([A-Z_]+).*?->\s*(\S+)")
+
+
+def _coord(value: Any) -> tuple[int, int] | None:
+    """Return a public integer coordinate, or ``None`` for a malformed value."""
+
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        return None
+    try:
+        x, y = int(value[0]), int(value[1])
+    except (TypeError, ValueError):
+        return None
+    return (x, y)
+
+
+def _last_blocked_action(observation: Any) -> str | None:
+    """Return the physical action whose public outcome was ``blocked``."""
+
+    history = str(_field(observation, "public_history", "") or "")
+    segments = [segment for segment in history.split(";") if segment.strip()]
+    if not segments:
+        return None
+    match = _HISTORY_RE.search(segments[-1])
+    if match and match.group(2).lower() == "blocked":
+        action = match.group(1).upper()
+        return action if action in _MOVE_KINDS else None
+    return None
+
+
+def _public_guard_action(
+    observation: Any, blocked: str, action_mask: Sequence[str]
+) -> str | None:
+    """Pick a deterministic visible-free alternative to a blocked action.
+
+    This is a public safety fallback, not hidden rule inference. It only uses
+    the candidate action mask, the public wall set and public key/goal cells.
+    """
+
+    mask = {str(action) for action in action_mask}
+    candidates = [
+        action for action in _MOVE_KINDS if action in mask and action != blocked
+    ]
+    if not candidates:
+        return None
+
+    position = _coord(_field(observation, "agent_position"))
+    public_map = _field(observation, "public_map")
+    if position is None or public_map is None:
+        return candidates[0]
+    try:
+        width = int(_field(public_map, "width", 0))
+        height = int(_field(public_map, "height", 0))
+        walls = {
+            (int(cell[0]), int(cell[1]))
+            for cell in (_field(public_map, "walls", ()) or ())
+        }
+    except (TypeError, ValueError, IndexError):
+        return candidates[0]
+
+    x, y = position
+    free = [
+        action
+        for action in candidates
+        if (x + _DIRECTION_DELTAS[action][0], y + _DIRECTION_DELTAS[action][1])
+        not in walls
+        and 0 <= x + _DIRECTION_DELTAS[action][0] < width
+        and 0 <= y + _DIRECTION_DELTAS[action][1] < height
+    ]
+    if free:
+        candidates = free
+
+    key = _coord(_field(public_map, "key"))
+    door_open = bool(_field(observation, "door_open", False))
+    inventory = _as_tuple(_field(observation, "inventory", ()))
+    markers = _field(public_map, "markers", {}) or {}
+    target: tuple[int, int] | None = None
+    if key is not None and not door_open and not inventory:
+        target = key
+    elif isinstance(markers, Mapping):
+        for color in ("red", "blue"):
+            target = _coord(markers.get(color))
+            if target is not None:
+                break
+
+    if target is not None:
+        tx, ty = target
+        candidates.sort(
+            key=lambda action: (
+                abs(x + _DIRECTION_DELTAS[action][0] - tx)
+                + abs(y + _DIRECTION_DELTAS[action][1] - ty),
+                _MOVE_KINDS.index(action),
+            )
+        )
+    return candidates[0]
 
 
 def render_grid_prompt(observation: Any) -> str:
@@ -358,6 +462,7 @@ class GridVLMPolicy:
         self.last_probabilities: dict[str, float] = {}
         self.last_tool_calls: tuple[Any, ...] = ()
         self.last_fallback = False
+        self.last_guard_applied = False
         self.last_parse_errors: tuple[str, ...] = ()
         # The VLM policy does not compute expected information gain, so it is
         # genuinely unmeasured (reported as None rather than a false 0.0).
@@ -434,22 +539,38 @@ class GridVLMPolicy:
             self.last_probabilities = {}
             self.last_parse_errors = tuple(errors)
             self.last_fallback = True
-            fallback = next(
-                (action for action in GRID_PHYSICAL_ACTIONS if action in action_mask),
-                GRID_PHYSICAL_ACTIONS[0],
+            action = GridAction(
+                next(
+                    (
+                        kind
+                        for kind in GRID_PHYSICAL_ACTIONS
+                        if kind in action_mask
+                    ),
+                    GRID_PHYSICAL_ACTIONS[0],
+                )
             )
-            return GridAction(fallback)
+        else:
+            self.last_json_valid = True
+            self.last_valid_action = True
+            self.last_parse_errors = ()
+            self.last_fallback = False
+            self.last_probabilities = dict(
+                payload.get("hypothesis_probabilities") or {}
+            )
+            target = payload.get("tool_target")
+            action = GridAction(
+                str(payload["action"]),
+                tuple(target) if target is not None else None,
+            )
 
-        self.last_json_valid = True
-        self.last_valid_action = True
-        self.last_parse_errors = ()
-        self.last_fallback = False
-        self.last_probabilities = dict(payload.get("hypothesis_probabilities") or {})
-        target = payload.get("tool_target")
-        return GridAction(
-            str(payload["action"]),
-            tuple(target) if target is not None else None,
-        )
+        blocked = _last_blocked_action(observation)
+        self.last_guard_applied = False
+        if blocked is not None and action.kind == blocked:
+            alternate = _public_guard_action(observation, blocked, action_mask)
+            if alternate is not None:
+                action = GridAction(alternate)
+                self.last_guard_applied = True
+        return action
 
     def record(
         self,
@@ -477,6 +598,7 @@ class GridVLMPolicy:
             "json_valid": bool(self.last_json_valid),
             "valid_action": bool(self.last_valid_action),
             "fallback": bool(self.last_fallback),
+            "guard_applied": bool(self.last_guard_applied),
             "parse_error_count": len(self.last_parse_errors),
             "input_tokens": int(self.last_input_tokens),
             "output_tokens": int(self.last_output_tokens),

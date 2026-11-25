@@ -174,6 +174,12 @@ def run_grid_episode(
                 "json_valid": bool(getattr(policy, "last_json_valid", True)),
                 "valid_action": bool(getattr(policy, "last_valid_action", True)),
                 "fallback": bool(getattr(policy, "last_fallback", False)),
+                "guard_applied": bool(
+                    getattr(policy, "last_guard_applied", False)
+                ),
+                "hypothesis_probabilities": dict(
+                    getattr(policy, "last_probabilities", {}) or {}
+                ),
                 "parse_error_count": int(
                     len(getattr(policy, "last_parse_errors", ()) or ())
                 ),

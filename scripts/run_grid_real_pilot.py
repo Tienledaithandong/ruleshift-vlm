@@ -111,6 +111,155 @@ def behavioral_gate(public_rows: list[dict], episode_count: int) -> dict:
     return gate
 
 
+def _episode_groups(public_rows: list[dict]) -> list[list[dict]]:
+    """Group consecutive public rows by scenario without reordering them."""
+
+    groups: list[list[dict]] = []
+    current: list[dict] = []
+    current_id: object = object()
+    for row in public_rows:
+        scenario_id = row.get("scenario_id")
+        if current and scenario_id != current_id:
+            groups.append(current)
+            current = []
+        current.append(row)
+        current_id = scenario_id
+    if current:
+        groups.append(current)
+    return groups
+
+
+def _belief_vector(row: dict) -> tuple[tuple[str, float], ...] | None:
+    probs = row.get("hypothesis_probabilities")
+    if not isinstance(probs, dict) or not probs:
+        return None
+    try:
+        return tuple((str(key), round(float(value), 6)) for key, value in sorted(probs.items()))
+    except (TypeError, ValueError):
+        return None
+
+
+def semantic_gate(
+    public_rows: list[dict],
+    episodes: list | tuple = (),
+    evaluator_rows: list[dict] | tuple = (),
+) -> dict:
+    """Reject a schema-valid but behaviourally degenerate policy.
+
+    This gate is deliberately separate from ``behavioral_gate``: the latter
+    only checks serialization, fallbacks and action diversity. A policy can
+    pass that gate while ignoring every observation, so this gate checks
+    belief updates, blocked-action repetition, tool use and base-rule success.
+    """
+
+    groups = _episode_groups(public_rows)
+    beliefs = [_belief_vector(row) for row in public_rows]
+    belief_rows = sum(vector is not None for vector in beliefs)
+    unique_beliefs = len({vector for vector in beliefs if vector is not None})
+
+    moves = {"UP", "DOWN", "LEFT", "RIGHT"}
+    blocked_total = 0
+    blocked_repeats = 0
+    for group in groups:
+        for current, nxt in zip(group, group[1:]):
+            action = str(current.get("chosen_action", ""))
+            if action not in moves:
+                continue
+            before = current.get("agent_position")
+            after = nxt.get("agent_position")
+            if not (
+                isinstance(before, (list, tuple))
+                and len(before) == 2
+                and isinstance(after, (list, tuple))
+                and len(after) == 2
+            ):
+                continue
+            try:
+                advanced = int(nxt.get("env_steps", 0)) > int(current.get("env_steps", 0))
+            except (TypeError, ValueError):
+                continue
+            if advanced and tuple(before) == tuple(after):
+                blocked_total += 1
+                if str(nxt.get("chosen_action", "")) == action:
+                    blocked_repeats += 1
+    blocked_repeat_rate = (
+        blocked_repeats / blocked_total if blocked_total else 0.0
+    )
+
+    tool_available_rows = sum(
+        any(
+            action in ("INSPECT", "READ_SIGN")
+            for action in (row.get("action_mask") or ())
+        )
+        for row in public_rows
+    )
+    tool_calls = sum(
+        str(row.get("chosen_action", "")) in ("INSPECT", "READ_SIGN")
+        for row in public_rows
+    )
+    guard_count = sum(bool(row.get("guard_applied", False)) for row in public_rows)
+
+    truth = {
+        str(row.get("scenario_id")): str(row.get("true_rule"))
+        for row in evaluator_rows
+        if row.get("scenario_id") is not None and row.get("true_rule") is not None
+    }
+    base_ids = {scenario_id for scenario_id, rule in truth.items() if rule == "base"}
+    base_success = sum(
+        1
+        for episode in episodes
+        if str(getattr(episode, "scenario_id", "")) in base_ids
+        and bool(getattr(episode, "success", False))
+    )
+    base_episodes = sum(
+        1 for episode in episodes
+        if str(getattr(episode, "scenario_id", "")) in base_ids
+    )
+
+    prefixes = [
+        tuple(str(row.get("chosen_action", "")) for row in group[:3])
+        for group in groups
+    ]
+    unique_prefixes = len(set(prefixes))
+    final_estimates = {
+        str(row.get("final_rule_estimate"))
+        for row in evaluator_rows
+        if row.get("final_rule_estimate") is not None
+    }
+
+    reasons: list[str] = []
+    if len(groups) < 2:
+        reasons.append("fewer than two episodes")
+    if belief_rows != len(public_rows) or not public_rows:
+        reasons.append("missing hypothesis_probabilities on one or more rows")
+    if unique_beliefs <= 1:
+        reasons.append("belief vector never changed")
+    if blocked_total and blocked_repeat_rate > 0.05:
+        reasons.append("blocked action repeated more than 5% of the time")
+    if tool_available_rows and tool_calls == 0:
+        reasons.append("no INSPECT/READ_SIGN decision when a tool was available")
+    if base_episodes and base_success == 0:
+        reasons.append("zero success on base-rule episodes")
+
+    return {
+        "episodes": len(groups),
+        "belief_rows": int(belief_rows),
+        "unique_belief_vectors": int(unique_beliefs),
+        "blocked_transitions": int(blocked_total),
+        "blocked_repeats": int(blocked_repeats),
+        "blocked_repeat_rate": float(blocked_repeat_rate),
+        "tool_available_rows": int(tool_available_rows),
+        "tool_calls": int(tool_calls),
+        "guard_count": int(guard_count),
+        "base_episodes": int(base_episodes),
+        "base_success": int(base_success),
+        "unique_final_estimates": int(len(final_estimates)),
+        "unique_first_three_prefixes": int(unique_prefixes),
+        "reasons": reasons,
+        "passed": not reasons,
+    }
+
+
 def select_chunk_scenarios(
     scenarios: tuple, map_offset: int, map_count: int
 ) -> tuple:
@@ -155,8 +304,14 @@ def chunk_report_path(report_path: Path, chunk_id: str) -> Path:
 def _markdown(payload: dict) -> str:
     metrics = payload["metrics"]
     gate = payload["gate"]
-    gate_label = "PASS" if gate["passed"] else "FAIL"
+    technical_label = (
+        "PASS" if gate.get("technical_passed", gate["passed"]) else "FAIL"
+    )
+    combined_label = "PASS" if gate["passed"] else "FAIL"
     gate_actions = ", ".join(gate["distinct_actions"]) or "(none)"
+    semantic = gate.get("semantic") or {}
+    semantic_label = "PASS" if semantic.get("passed") else "FAIL"
+    semantic_reasons = "; ".join(semantic.get("reasons", ())) or "(none)"
     lines = [
         f"# {DISCLAIMER}",
         "",
@@ -205,7 +360,27 @@ def _markdown(payload: dict) -> str:
         f"| Parser fallbacks | {gate['fallback_count']} |",
         f"| Distinct actions | {gate_actions} |",
         f"| Moving steps | {gate['moved_steps']} |",
-        f"| Verdict | **{gate_label}** |",
+        f"| Technical verdict | **{technical_label}** |",
+        f"| Combined with semantic gate | **{combined_label}** |",
+        "",
+        "## Semantic gate (P0)",
+        "",
+        "The technical gate above can pass on a fixed action script. These",
+        "checks require the policy to use public evidence and to stop repeating",
+        "an action that the environment already reported as blocked.",
+        "",
+        "| Check | Value |",
+        "| --- | --- |",
+        f"| Distinct belief vectors | {semantic.get('unique_belief_vectors', 0)} |",
+        f"| Belief rows / decision rows | {semantic.get('belief_rows', 0)} / {payload['public_rows']} |",
+        f"| Blocked-action repeats / transitions | {semantic.get('blocked_repeats', 0)} / {semantic.get('blocked_transitions', 0)} |",
+        f"| Blocked-action repeat rate | {semantic.get('blocked_repeat_rate', 0.0):.4f} |",
+        f"| Tool decisions (INSPECT/READ_SIGN) | {semantic.get('tool_calls', 0)} |",
+        f"| Guard activations | {semantic.get('guard_count', 0)} |",
+        f"| Base-rule success | {semantic.get('base_success', 0)} / {semantic.get('base_episodes', 0)} |",
+        f"| Unique first-three prefixes | {semantic.get('unique_first_three_prefixes', 0)} |",
+        f"| Verdict | **{semantic_label}** |",
+        f"| Reasons | {semantic_reasons} |",
         "",
         "## Paired 95% CI (scenario-level bootstrap) — PLACEHOLDER",
         "",
@@ -363,7 +538,12 @@ def main(argv: list[str] | None = None) -> None:
         encoding="utf-8",
     )
 
-    gate = behavioral_gate(public_rows, len(episodes))
+    technical_gate = behavioral_gate(public_rows, len(episodes))
+    semantic = semantic_gate(public_rows, episodes, evaluator_rows)
+    gate = dict(technical_gate)
+    gate["semantic"] = semantic
+    gate["technical_passed"] = bool(technical_gate["passed"])
+    gate["passed"] = bool(technical_gate["passed"] and semantic["passed"])
     metrics = {
         "json_valid_rate": _mean([float(row.get("json_valid", False)) for row in public_rows]),
         "valid_action_rate": _mean([float(row.get("valid_action", False)) for row in public_rows]),
@@ -401,7 +581,9 @@ def main(argv: list[str] | None = None) -> None:
 
     print(DISCLAIMER)
     print(f"episodes={len(episodes)} public_rows={len(public_rows)}")
-    print(f"behavioral_gate={gate['passed']} details={gate}")
+    print(f"behavioral_gate={technical_gate['passed']} details={technical_gate}")
+    print(f"semantic_gate={semantic['passed']} details={semantic}")
+    print(f"combined_gate={gate['passed']}")
     for path in (report_path, artifact_paths["decisions"], artifact_paths["evaluator"]):
         print(path)
 
