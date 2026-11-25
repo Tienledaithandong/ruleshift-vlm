@@ -5,6 +5,7 @@ The rest pin the config defaults, YAML loading, determinism of ``attempts`` and
 the door-required path.
 """
 
+import json
 from collections import deque
 from pathlib import Path
 
@@ -12,6 +13,9 @@ from ruleshift.envs.grid.config import GridConfig, load_grid_config
 from ruleshift.envs.grid.mapgen import (
     all_hypotheses_solvable,
     generate_solvable_map,
+    has_readable_base_diagnostic_face,
+    has_readable_informative_face,
+    informative_sign_sides,
     is_solvable,
 )
 from ruleshift.public_api.grid_rules import (
@@ -143,6 +147,55 @@ def test_generator_is_deterministic():
     second = generate_solvable_map(7, GridConfig(), GRID_HYPOTHESES)
     assert first.map.public.to_payload() == second.map.public.to_payload()
     assert first.attempts == second.attempts
+
+
+def test_generated_maps_have_unique_geometry_for_adjacent_seeds():
+    """Regression: seed + attempt aliased seeds 1/2 and 7/8."""
+
+    payloads = [
+        generate_solvable_map(seed, GridConfig()).map.public.to_payload()
+        for seed in range(20)
+    ]
+    identities = {json.dumps(payload, sort_keys=True) for payload in payloads}
+    assert len(identities) == len(payloads)
+
+
+def test_generated_maps_have_a_reachable_informative_face():
+    assert informative_sign_sides() == (0, 1)
+    for seed in range(20):
+        public = generate_solvable_map(seed, GridConfig()).map.public
+        assert has_readable_informative_face(public), f"seed {seed}"
+        assert has_readable_base_diagnostic_face(public), f"seed {seed}"
+
+
+def test_base_diagnostic_gate_rejects_side1_only_maps():
+    public = PublicGridMap(
+        width=5,
+        height=5,
+        walls=frozenset({(2, 3), (1, 2)}),
+        start=(0, 0),
+        markers={"red": (4, 0), "blue": (0, 4), "green": (4, 4)},
+        key=(1, 1),
+        door=(3, 3),
+        signpost=(2, 2),
+    )
+    assert informative_sign_sides() == (0, 1)
+    assert has_readable_informative_face(public)
+    assert not has_readable_base_diagnostic_face(public)
+
+
+def test_affordance_gate_rejects_walled_off_informative_faces():
+    public = PublicGridMap(
+        width=5,
+        height=5,
+        walls=frozenset({(2, 3), (3, 2), (1, 2)}),
+        start=(0, 0),
+        markers={"red": (4, 0), "blue": (0, 4), "green": (4, 4)},
+        key=(1, 1),
+        door=(3, 3),
+        signpost=(2, 2),
+    )
+    assert not has_readable_informative_face(public)
 
 
 def test_grid_config_defaults_match_brief():

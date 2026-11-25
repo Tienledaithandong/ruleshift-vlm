@@ -3,11 +3,14 @@
 # (e.g. render_size, observation_mode) are informational and ignored in v1.
 schema_version: 1
 split: dev
-name: ruleshift-grid-dev-v0.1
+name: ruleshift-grid-dev-v0.3
 description: >-
-  Development defaults for the RuleShift-Grid benchmark. The generator uses
-  width/height/wall_density; the simulator applies the slip and hazard values
-  to the public rule objects at reset.
+  Development defaults for the RuleShift-Grid benchmark. The v0.3 generator
+  uses collision-free retry streams and rejects maps without a reachable side-0
+  diagnostic face; side 0 is the only face that separates base from the
+  hazard/sign hypotheses. The generator uses width/height/wall_density; the
+  simulator applies the slip and hazard values to the public rule objects at
+  reset.
 
 width: 7
 height: 7

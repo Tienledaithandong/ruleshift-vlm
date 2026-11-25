@@ -573,9 +573,11 @@ class DiagnosticBeliefPolicy(_BasePolicy):
             return None
         signpost = tuple(signpost)
         current = tuple(observation.agent_position)
-        sides = self._informative_sides()
-        for side in sides:
-            if current in self._sign_cells(observation.public_map, signpost, side):
+        # Side 0 is the only face that separates base from hazard/sign; side 1
+        # is a fallback only when side 0 is walled off, not merely nearer.
+        for side in self._informative_sides():
+            cells = self._sign_cells(observation.public_map, signpost, side)
+            if current in cells:
                 if (
                     "READ_SIGN" in observation.action_mask
                     and int(observation.tool_budget_remaining)
@@ -584,14 +586,10 @@ class DiagnosticBeliefPolicy(_BasePolicy):
                     self.tool_attempts += 1
                     return GridAction("READ_SIGN")
                 return None
-
-        targets: list[tuple[int, int]] = []
-        for side in sides:
-            targets.extend(self._sign_cells(observation.public_map, signpost, side))
-        plan = self._shortest_plan(observation, targets)
-        if plan is None:
-            return None
-        return self._first_legal(plan, observation)
+            plan = self._shortest_plan(observation, cells)
+            if plan is not None:
+                return self._first_legal(plan, observation)
+        return None
 
     def _go_inspect_blue(self, observation: Any) -> GridAction | None:
         blue = observation.public_map.markers.get("blue")

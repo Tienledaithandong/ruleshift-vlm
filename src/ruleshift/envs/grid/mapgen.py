@@ -17,6 +17,7 @@ from ruleshift.public_api.grid_rules import (
     GridRule,
     PublicGridMap,
     key_opens,
+    sign_clause,
 )
 
 from .config import GridConfig
@@ -51,6 +52,100 @@ def _reachable(public_map: PublicGridMap, start: Coord, blocked: set[Coord]) -> 
             seen.add(nxt)
             queue.append(nxt)
     return seen
+
+
+def _sign_face_cells(
+    public_map: PublicGridMap, signpost: Coord, side: int
+) -> list[Coord]:
+    """Free cells from which the public ``sign_side`` mapping reads ``side``."""
+
+    if side == 0:
+        candidates = [
+            (signpost[0], signpost[1] + 1),
+            (signpost[0] - 1, signpost[1]),
+        ]
+    elif side == 1:
+        candidates = [(signpost[0] + 1, signpost[1])]
+    elif side == 2:
+        candidates = [(signpost[0], signpost[1] - 1)]
+    else:
+        return []
+    return [
+        cell
+        for cell in candidates
+        if 0 <= cell[0] < public_map.width
+        and 0 <= cell[1] < public_map.height
+        and cell not in public_map.walls
+    ]
+
+
+def informative_sign_sides(
+    rules: tuple[GridRule, ...] = GRID_HYPOTHESES,
+) -> tuple[int, ...]:
+    """Sign faces whose clause separates at least two public hypotheses."""
+
+    return tuple(
+        side
+        for side in (0, 1, 2)
+        if len({sign_clause(rule, side) for rule in rules}) > 1
+    )
+
+
+def _readable_face_cells(public_map: PublicGridMap, side: int) -> set[Coord]:
+    """Free face cells of ``side`` reachable without crossing a marker or door."""
+
+    signpost = public_map.signpost
+    if signpost is None:
+        return set()
+    blocked = set(public_map.walls) | set(public_map.markers.values()) | {signpost}
+    if public_map.door is not None:
+        blocked.add(public_map.door)
+    reachable = _reachable(public_map, public_map.start, blocked)
+    return {
+        cell
+        for cell in _sign_face_cells(public_map, signpost, side)
+        if cell in reachable
+    }
+
+
+def has_readable_informative_face(
+    public_map: PublicGridMap,
+    rules: tuple[GridRule, ...] = GRID_HYPOTHESES,
+) -> bool:
+    """Whether a free informative sign face is reachable without crossing a marker.
+
+    This is the broad audit predicate: side 1 is informative about movement
+    remaps even though it does not separate ``base`` from the hazard/sign
+    hypotheses. The generator uses :func:`has_readable_base_diagnostic_face`
+    because identification of ``base`` specifically requires side 0.
+    """
+
+    signpost = public_map.signpost
+    if signpost is None:
+        return False
+    return any(
+        _readable_face_cells(public_map, side)
+        for side in informative_sign_sides(rules)
+    )
+
+
+def has_readable_base_diagnostic_face(
+    public_map: PublicGridMap,
+    rules: tuple[GridRule, ...] = GRID_HYPOTHESES,
+) -> bool:
+    """Whether side 0 is readable without crossing a marker or the closed door.
+
+    Side 0 separates ``base`` ("red is not the hazard") from
+    ``hazard_goal_swap`` and ``sign_composition`` ("red is not the goal"). Side
+    1 says "movement may slip" under all three of those hypotheses, so a map
+    with only side 1 cannot support the base-identification gate. Such a map
+    must not enter the benchmark even though side 1 is technically
+    informative about the remap hypotheses.
+    """
+
+    if 0 not in informative_sign_sides(rules):
+        return False
+    return bool(_readable_face_cells(public_map, 0))
 
 
 def is_solvable(
@@ -179,16 +274,24 @@ def generate_solvable_map(
 ) -> MapGenResult:
     """Generate a map solvable under every rule, deterministically per seed.
 
-    Each attempt uses its own ``random.Random(seed + attempt)`` so a given seed
-    always yields the same map and the same attempt count. A ``RuntimeError`` is
-    raised if no candidate passes the gate within ``max_attempts``.
+    Retry streams are keyed by both ``seed`` and ``attempt`` with a disjoint
+    integer encoding, so adjacent seeds cannot share an attempt stream. A
+    candidate must also expose a reachable side-0 sign face; otherwise it
+    cannot separate ``base`` from the hazard/sign hypotheses and cannot support
+    the active rule-identification protocol. A ``RuntimeError`` is raised if no
+    candidate passes both gates within ``max_attempts``.
     """
 
     for attempt in range(max_attempts):
-        public_map = _generate_candidate(random.Random(seed + attempt), config)
+        # Unique for all realistic attempt counts; unlike seed + attempt, this
+        # cannot alias seed=1/attempt=1 with seed=2/attempt=0.
+        retry_seed = seed * 1_000_003 + attempt
+        public_map = _generate_candidate(random.Random(retry_seed), config)
         if public_map is None:
             continue
         if not all_hypotheses_solvable(public_map, rules, config.door_required):
+            continue
+        if not has_readable_base_diagnostic_face(public_map, rules):
             continue
         return MapGenResult(
             map=GridMap(

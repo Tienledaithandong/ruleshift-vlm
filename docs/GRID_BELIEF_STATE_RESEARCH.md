@@ -2,8 +2,9 @@
 
 **Status: research memo, no GPU run, no confirmatory result, Phase 1 blocked.**
 This is the follow-up to the closed frozen-3B feasibility study. It records a
-CPU-only diagnostic and the next experiment worth running. The 10-map
-replication failed its acceptance gates; see
+CPU-only diagnostic and the next experiment worth running. The original 10-map
+replication failed its acceptance gates; after benchmark repair it passes six
+of seven, but the 100% base gate still fails at 49/50. See
 [`GRID_PHASE0_10MAP.md`](GRID_PHASE0_10MAP.md). This memo does not reopen the
 5,500-episode grid.
 
@@ -167,7 +168,7 @@ routing now treats every marker as blocked). After both fixes, map 4
 instead of succeeding by accident. The primary map-0 numbers were unchanged.
 This is still a development check, not a preregistered result.
 
-**10-map replication: gates failed.** The 10-map CPU run (550 episodes x 2
+**10-map replication v0.1: gates failed.** The 10-map CPU run (550 episodes x 2
 methods) scores **518/550 (94.2%)** for `diagnostic_belief` versus **382/550
 (69.5%)** for `no_adaptation`. Identification is **276/300 (92.0%)**, hazard
 **39/50 (78.0%)**, sign **38/50 (76.0%)**, and base **49/50 (98.0%)**; there are
@@ -177,11 +178,23 @@ benchmark defects are material: the 10 map indices contain only 8 unique
 geometries (the 100-map audit predicts 62 unique), and maps 7/8 have no
 reachable informative sign face, producing 20 zero-tool episodes (19 failures
 and one accidental success). One base failure on map 5 is a real face-selection
-limitation: the policy prefers the nearer but less discriminative side. Excluding
-unreadable maps gives 235/240 identification and 427/440 overall, but base is
-still 39/40, so the subset is not an acceptance pass. Per the stop rule, Phase 1
-was not started; no VLM smoke and no 55-episode run were performed. Full
-evidence, commands, and limitations: [`GRID_PHASE0_10MAP.md`](GRID_PHASE0_10MAP.md).
+limitation: the policy prefers the nearer but less discriminative side.
+
+**Repaired benchmark v0.3: six gates pass, base still fails.** Map retries are
+collision-free, the generator requires a reachable side-0 face (side 0 is the
+only face that separates `base` from the hazard/sign hypotheses), and the policy
+now implements side-0 priority instead of nearest-face selection. The 100-map
+audit is 100/100 unique with no missing side-0 face. The v0.3 CPU run scores
+**534/550 (97.1%)** versus **378/550 (68.7%)** for `no_adaptation`; identification
+is **287/300 (95.7%)**, hazard **49/50**, sign **49/50**, base **49/50**, and there
+are **zero** zero-tool hazard/sign episodes. Paired overall: 364 both, 170
+diagnostic-only, 14 baseline-only, 2 neither (`p = 3.13e-35`). The remaining base
+failure is one stochastic navigation episode on map 2, not a benchmark
+affordance defect: the policy commits to `slippery` after base slips and misses
+the 60-step cap. No gate was relaxed and no face rule was tuned after seeing
+this result. Per the stop rule, Phase 1 was not started; no VLM smoke and no
+55-episode run were performed. Full evidence, commands, and limitations:
+[`GRID_PHASE0_10MAP.md`](GRID_PHASE0_10MAP.md).
 
 **Phase 1 — VLM on a compact belief (GPU, only if Phase 0 works).** Replace the
 six-key probability menu with a small high-level action interface: `COMMIT`,

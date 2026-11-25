@@ -158,6 +158,8 @@ def _sign_audit(
                 | set(public.markers.values())
                 | {signpost}
             )
+            if public.door is not None:
+                blocked.add(public.door)
             reachable = _reachable(public, tuple(observation.agent_position), blocked)
             side0 = DiagnosticBeliefPolicy._sign_cells(
                 public, signpost, 0
@@ -172,14 +174,22 @@ def _sign_audit(
             record["any_informative_face_reachable"] = bool(
                 record["side0_reachable"] or record["side1_reachable"]
             )
+            record["base_diagnostic_face_reachable"] = bool(
+                record["side0_reachable"]
+            )
         else:
             record["any_informative_face_reachable"] = False
+            record["base_diagnostic_face_reachable"] = False
         by_map[map_id] = record
     return {
-        "method": "walls + markers + signpost; door ignored",
+        "method": "walls + markers + signpost + closed door",
         "maps": by_map,
         "maps_with_reachable_informative_face": sum(
             bool(record["any_informative_face_reachable"])
+            for record in by_map.values()
+        ),
+        "maps_with_reachable_base_diagnostic_face": sum(
+            bool(record["base_diagnostic_face_reachable"])
             for record in by_map.values()
         ),
         "maps_without_signpost": sum(
@@ -220,9 +230,9 @@ def _map_identity_audit(config: GridConfig, maps: int) -> dict[str, Any]:
         "duplicate_map_count": sum(len(ids) for ids in duplicate_groups),
         "attempts": attempts,
         "note": (
-            "Map generation retries with random.Random(map_seed + attempt); "
-            "adjacent map seeds can therefore resolve to the same candidate. "
-            "Counts are public geometry identities, not scenario ids."
+            "Counts are public geometry identities, not scenario ids. "
+            "Duplicate groups are reported explicitly; scenario ids remain "
+            "unique."
         ),
     }
 
@@ -234,12 +244,12 @@ def _eligibility(
     scenarios: dict[str, Any],
     methods: Sequence[str],
 ) -> dict[str, Any]:
-    """Metrics restricted to maps with a reachable informative sign face."""
+    """Metrics restricted to maps with a readable side-0 diagnostic face."""
 
     unreadable = {
         map_id
         for map_id, record in sign_affordance["maps"].items()
-        if not record["any_informative_face_reachable"]
+        if not record["base_diagnostic_face_reachable"]
     }
 
     def map_id(row: dict[str, Any]) -> str:
@@ -504,7 +514,9 @@ def _summary_markdown(payload: dict[str, Any]) -> str:
     lines.extend(["", "## Sign affordance", ""])
     audit = payload["sign_affordance"]
     lines.append(
-        f"Maps with an informative face reachable without crossing a marker: "
+        f"Maps with side 0 reachable without crossing a marker or the closed "
+        f"door: {audit['maps_with_reachable_base_diagnostic_face']}/"
+        f"{len(audit['maps'])}; maps with any informative face: "
         f"{audit['maps_with_reachable_informative_face']}/{len(audit['maps'])}; "
         f"maps without a signpost: {audit['maps_without_signpost']}."
     )
@@ -518,8 +530,7 @@ def _summary_markdown(payload: dict[str, Any]) -> str:
         + "."
     )
     lines.append(
-        "Cause: retries use `random.Random(map_seed + attempt)`, so adjacent "
-        "seeds can resolve to the same candidate; scenario ids stay unique."
+        "Duplicate groups are reported explicitly; scenario ids remain unique."
     )
     lines.extend(["", "## Zero-tool hazard/sign", ""])
     zero = payload["zero_tool_hazard_or_sign"]
@@ -532,7 +543,7 @@ def _summary_markdown(payload: dict[str, Any]) -> str:
     lines.extend(["", "## Eligible-map sensitivity", ""])
     eligibility = payload["eligibility"]
     lines.append(
-        f"Excluded maps without a reachable informative face: "
+        f"Excluded maps without a reachable side-0 diagnostic face: "
         f"{eligibility['unreadable_maps'] or 'none'}; "
         f"{eligibility['excluded_episode_rows']} method rows excluded."
     )
