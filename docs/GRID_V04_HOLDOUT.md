@@ -1,5 +1,13 @@
 # v0.4 base-policy candidate: exploratory holdout result
 
+> **Historical record.** This document predates the 2026-11-25 static freeze.
+> Its "v0.4 is not frozen" conclusion refers to the earlier VLM/benchmark
+> promotion decision, not to the new static identification candidate. For that
+> experiment, repaired v0.4 is frozen at policy commit `e65e191` under
+> [FREEZE_MANIFEST_IDENTIFICATION_V1.md](FREEZE_MANIFEST_IDENTIFICATION_V1.md);
+> no Phase 1 or VLM promotion is implied. The exploratory numbers below are
+> preserved unchanged.
+
 **Status: exploratory candidate evaluation. Not a gate result, not a frozen
 benchmark, and not a Phase 1 authorization.**
 

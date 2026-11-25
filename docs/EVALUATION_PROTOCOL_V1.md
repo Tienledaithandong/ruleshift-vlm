@@ -1,191 +1,195 @@
-# Evaluation Protocol v1: RuleShift-Grid identification
+# Evaluation protocol v1: static Grid identification
 
-Status: P0 measurement-repair draft. This document does not authorize a
-confirmatory holdout, model calls, GPU use or a merged policy change.
+Status: measurement protocol frozen with the static-only preregistration
+(`docs/PREREGISTRATION_IDENTIFICATION_V1.md`). This document defines fields and
+estimands; the preregistration defines the experimental design and decision
+rules. Neither is a result.
 
-Scope: active rule identification is the primary research claim. General
-post-shift adaptation is outside this protocol. Task success, identification,
-commitment, tool spend and shift timing are reported separately.
+Scope: active rule identification on the six static initial rules. Shift and
+post-shift adaptation fields are retained for compatibility but are not part of
+the frozen design.
 
-Evaluation version: grid-identification-v1. Manifest version: grid-manifest-v1.
+## 1. Unit and denominators
 
-## 1. Cohorts and denominators
+The static unit is one episode identified by `(map_id, run_seed, initial_rule)`.
+The design has 30 maps × 5 seeds × 6 rules = 900 static episodes per method. The
+map is the independent cluster for paired uncertainty.
 
-An episode is never removed from a cohort after its outcome is known.
+No episode is dropped for being unresolved, wrong, unsuccessful, truncated or
+API-unavailable. Every rate states its denominator. The primary rates use all 900
+static episodes. The base endpoint uses the 150 base episodes. The hazard and sign
+endpoints each use 150 episodes of that rule.
 
-Static identification cohort: scenario_type is identification. It contains six
-initial rules (base, remap_swap, remap_rotate, slippery, hazard_goal_swap,
-sign_composition). Every static episode is in the denominator.
+## 2. Task success
 
-Base endpoint: the static identification cohort with initial_rule base, using
-the frozen map and seed list. The historical endpoint is maps 0-9, seeds 0-4
-(50 episodes). A future endpoint must be specified in the manifest before
-execution.
+`task_success` is the environment's terminal task outcome, independent of the
+rule estimate. A task success with a wrong rule is a successful misdiagnosis, not
+an identification success. A task failure with a correct MAP is a task failure,
+not a declaration failure by itself.
 
-Shift cohort: scenarios with a non-null shift_rule. Shift metrics never enter
-the static primary endpoint. The no-shift control is reported separately.
+## 3. Terminal MAP
 
-## 2. Independent outcome fields
+At termination, score the terminal posterior's highest-probability rule against
+the terminal true rule. Static episodes have the same true rule throughout, so
+the initial rule is the terminal true rule. The terminal MAP is a posterior
+snapshot. It is **not** an explicit declaration and must not be described as
+confirmed active identification.
 
-Task success is the environment's success flag. It is not identification.
+For paired comparisons, terminal MAP is the endpoint because no_adaptation has no
+declaration API. The paired result answers whether terminal behaviour differs, not
+whether either policy made an explicit identification.
 
-Terminal MAP is the highest-probability rule at the end of the episode, with a
-documented deterministic tie break. It is compared with the true rule at
-termination (the terminal true rule), not with the pre-shift rule on a shifted
-episode. Terminal MAP accuracy is secondary and is computed independently of
-task success.
+Ties are unresolved and are never scored as correct. Posterior validity requires
+the full six-rule menu, finite probabilities, nonnegative values and a total
+within tolerance of 1.0. Invalid posteriors are reported, not repaired.
 
-Misdiagnosis means task success with an incorrect terminal MAP. It is not an
-identification success.
+Brier is the conventional multiclass sum of squared class errors against the
+terminal true rule. NLL is the negative log probability assigned to that rule.
+Both require a valid posterior; otherwise they are unavailable.
 
-A joint field records task success and correct identification together. A
-policy may succeed by accident, and must not receive identification credit for
-doing so.
+## 4. Explicit declarations
 
-## 3. Explicit commitments
+A declaration event has `step`, `declared_rule`, `confidence`,
+`posterior_margin` and a source label. It is valid only when:
 
-The primary identification score is:
+- the step is within the episode horizon and steps are nondecreasing;
+- the rule is one of the six known rules;
+- confidence and margin are finite and in [0, 1];
+- the margin is not negative.
 
-    correct explicit settled declarations / all static episodes
+A declaration is **settled** when confidence ≥ 0.90 and margin ≥ 0.10, with ties
+at the top treated as unresolved. The final settled declaration is scored. An
+unsettled final declaration is `unresolved`; a settled wrong rule is
+`wrong_commit`; a settled correct rule is `correct_commit`; no API is
+`unavailable`.
 
-A declaration is an event produced by the policy's declaration API. It contains
-the decision step, declared rule, confidence and top-second posterior margin. A
-declaration is settled only when confidence >= 0.90 and margin >= 0.10. Both
-conditions are required. The final declaration before termination is scored.
-Commitments are scored only on the static identification cohort; a shifted
-episode contributes to the separate shift summary, not to the primary
-commitment numerator or denominator.
+Statuses are mutually exclusive per episode. Unconditional declaration accuracy
+is:
 
-Commitment status is exactly one of:
+    correct_commit / total static episodes
 
-- correct_commit: settled declaration equals the true initial rule;
-- wrong_commit: settled declaration names another rule;
-- unresolved: no declaration, an unsettled declaration, a missing posterior, or
-  any other failure to make a scorable declaration;
-- unavailable: the policy exposes no declaration API.
+Unresolved, unavailable, wrong and earlier-wrong cases remain in that denominator.
+Event coverage is the fraction of episodes with at least one valid declaration
+event. Settled coverage is the fraction with a settled declaration. API
+availability is the fraction whose policy exposes the API. These are three
+different quantities and are reported separately.
 
-Unresolved and unavailable are never counted as correct. Ties are unresolved.
-A terminal MAP is not a declaration and may not be substituted for one.
+Earlier wrong declarations are counted even when a later declaration is correct.
+A final correct declaration does not retroactively erase the error.
 
-Earlier settled wrong declarations are counted separately, even if a later
-declaration is correct. Reporting only the final status would hide a wrong
-commitment that was later repaired.
+No terminal MAP, fallback plan, action histogram or post-hoc rule preference may
+be converted into a declaration.
 
-For policies without a declaration API, commitment accuracy is reported as
-unavailable. Their terminal MAP and posterior may be reported descriptively.
-They cannot pass the primary commitment gate by substituting MAP for
-commitment.
+## 5. Base, hazard and sign endpoints
 
-A successful goal before any declaration is task success plus unresolved
-identification.
+The base task gate is the 150 base episodes per method: observed task successes
+must be 150/150 for the candidate. It is an engineering readiness gate, not a
+population reliability claim. Report the one-sided 95% Clopper–Pearson upper bound
+with zero failures and the observed count. Do not relax it after seeing candidate
+maps.
 
-## 4. Coverage, selective error and calibration
+Hazard (`hazard_goal_swap`) and sign (`sign_composition`) identification gates use
+the 150 episodes of that rule and the unconditional explicit-declaration accuracy
+defined above. The candidate requirement is at least 90.0% for each. The
+development 50-episode subsets are not the gate.
 
-Coverage is the fraction of static episodes with a valid full-menu posterior or
-a declaration, as separately named. Selective error is:
+The zero-tool hazard/sign gate is fail-closed: any raw candidate task success on
+a hazard or sign episode with zero tool units blocks the gate. An evidence-coding
+exception is not approved in v1. If one were ever approved, it would require a
+written coding rule and independent verification, and both raw and
+evidence-adjusted counts would still be reported. The adjusted count cannot
+rescue a raw failure.
 
-    wrong commitments / (correct commitments + wrong commitments)
+## 6. Tool accounting
 
-When the denominator is zero it is unavailable, not zero.
+Tool units are the sum of READ_SIGN and INSPECT costs using the configured costs.
+The cap is 3 per episode. Budget violations are counted; a violation is not
+silently clipped. Report total, mean, maximum, zero-tool episodes and zero-tool
+successes separately for all static episodes and for hazard/sign. Zero-tool
+successes are task successes, not declarations.
 
-Brier score and negative log-likelihood are reported only for valid full-menu
-posteriors whose probabilities sum to one within tolerance. Brier is the
-conventional multiclass sum of squared class errors; NLL is the negative log
-probability assigned to the terminal true rule. Neither is imputed for policies
-without a posterior. Raw and normalized calibration may be reported separately;
-neither replaces identification accuracy.
+## 7. Static and shift separation
 
-## 5. Base preservation
+Static identification, shift detection and no-shift behaviour are different
+endpoints. The frozen experiment uses static identification only. The runner and
+record schema retain shift fields for historical compatibility, but no shift or
+no-shift episode is part of the 900-per-method design.
 
-Base preservation is measured on the static base endpoint, never on shift
-episodes. The original gate is 50/50 task successes, with no 0.99 tolerance and
-no substitution of a terminal base estimate for task success. The terminal-base
-estimate is reported as a secondary field.
+`actual_shift_time`, `belief_shift_event_time`, latency, censoring and false-alarm
+fields are not used to adjust static accuracy. A shift-detection false alarm on
+a static episode, if observed in a deferred design, is reported separately and
+never counted as a static declaration error. Conversely, a static success is not
+evidence of shift adaptation.
 
-A 100% observed result is an empirical gate result for the observed endpoint,
-not a universal proof about all maps or all possible base transitions.
+## 8. Aggregation
 
-## 6. Shift timing
+Records are aggregated by method and endpoint without exclusions:
 
-The shift export distinguishes:
+- `static_identification`: all 900 static episodes;
+- `base_identification`: 150 base episodes;
+- `by_initial_rule`: 150 episodes per rule;
+- success, MAP, joint task+MAP, successful misdiagnosis, task-failure-with-correct-
+  MAP, declaration statuses, earlier-wrong counts, Brier, NLL and tool fields;
+- the all-row and no-shift blocks remain available for historical comparison but
+  are not confirmatory endpoints.
 
-- scheduled shift time;
-- actual shift time, detected from the evaluator-only true rule change;
-- censoring, when the episode ended before the scheduled shift occurred;
-- policy shift-probability event and its step;
-- false alarm before the actual shift;
-- shift away and back to base, when the true terminal rule is base;
-- no post-shift evidence.
+The paired analysis requires the exact same scenario-id set for both methods.
+Missing, duplicate or extra ids abort the analysis; there is no intersection or
+implicit fill.
 
-The policy's shift-probability threshold crossing is a policy proxy, not an
-explicit detection declaration. The current baselines do not expose a separate
-detection declaration. Shift fields are never used to score the static primary
-endpoint.
+## 9. Map-level paired analysis
 
-## 7. Tools and accidental successes
+For each map, average the binary outcome over its 30 static episodes. The paired
+effect is the equal-map mean of the 30 within-map differences. Report:
 
-Tool spend is the configured tool-unit spend, with the episode cap of 3. Tool
-events are exported separately. Zero-tool successes are reported as raw counts.
+- effect and its 95% percentile bootstrap interval over maps (20,000 resamples);
+- one-sided sign-flip randomization p-value over maps (20,000 permutations);
+- exact sign-test sensitivity counts;
+- maps positive, zero and negative;
+- raw and Holm-adjusted p-values for H1/H2 only.
 
-A zero-tool success on hazard_goal_swap or sign_composition is not automatically
-called evidence-backed or accidental. An accidental-success classification
-requires a separate evidence audit, such as direct public cell-role feedback.
-Without that evidence the report says zero-tool success and nothing stronger.
+The percentile bootstrap and randomization test are implemented in
+`src/ruleshift/evaluator/grid_map_analysis.py`. The default seed is
+`20261125`; the exact seed and sample counts are recorded in the export.
 
-## 8. Pairing and statistics
+Episode-level exact McNemar tests are supplementary. They treat episodes as
+independent and can be anti-conservative under shared maps; they never replace the
+map-cluster interval and are not confirmatory.
 
-Paired comparisons require exactly the same unique scenario ids. Missing ids,
-extra ids and duplicates are errors; implementation silently intersecting the
-two sets is forbidden.
+## 10. Multiplicity and gates
 
-The primary paired statistic is an exact McNemar test on the paired binary
-outcome. Report both discordant cells and the exact two-sided p value. Do not
-use a normal approximation for small discordant counts.
+Only H1 (v4 > no_adaptation terminal MAP) and H2 (v3 > no_adaptation terminal MAP)
+are in the Holm family. The candidate-vs-v3 contrast is descriptive. Gates G1–G6
+are deterministic engineering criteria and are not p-valued; they are not added
+to Holm. Brier, NLL, calibration, tool counts, base MAP and declaration
+subcomponents are descriptive unless a gate explicitly names them.
 
-Rates use Wilson intervals. Confirmatory uncertainty may additionally use a
-cluster bootstrap over maps, never over seeds or frames. Multiplicity control
-must be specified before the run.
+## 11. Manifest and immutability
 
-## 9. Gates retained from the program
+The confirmatory manifest is explicit, content-hashed and geometry-hashed. The
+frozen manifest is:
 
-- Identification accuracy: at least 95% on the frozen static endpoint, using
-  explicit settled commitments.
-- Hazard identification: at least 90%.
-- Sign identification: at least 90%.
-- Base preservation: 100% task success on the static base endpoint.
-- No accidental zero-tool hazard or sign success. Until a separate evidence
-  audit is approved, the gate is fail-closed: any raw zero-tool success on
-  hazard_goal_swap or sign_composition blocks it. An evidence-backed exception
-  requires a pre-registered coding rule that uses only public observations.
-- Tool spend at most 3 units per episode.
-- Positive paired terminal-MAP gain over no_adaptation. A paired commitment
-  gain is required only when both methods expose a declaration API; a
-  commitment-unavailable baseline cannot supply it.
+- path: `artifacts/manifests/identification_v1_static.json`;
+- content SHA-256: `95c4e13e533d1161af9cf6971df905c3222d94fbf091d3bf71e5ff3b37cabe80`;
+- entries: 900 static episodes, maps 210–239, seeds 5–9, six rules;
+- 30 unique layouts, zero collisions with maps 0–199.
 
-A gate whose required field is unavailable is not passed by a fallback metric.
-The historical 49/50 base result remains labelled 49/50. It is not rewritten as
-100%.
+Every episode record carries the manifest hash, config hash and code commit.
+Duplicate scenario ids, stale hashes, layout mismatches, unknown methods and
+missing paired scenarios fail closed. The working-tree file hash is not the
+scientific identity because line endings vary; the content hash is.
 
-## 10. Reproducibility and manifests
+## 12. No retrospective scoring
 
-Every run uses an explicit scenario manifest containing scenario ids, map ids,
-run seeds, scenario types, rules, shift times and public-layout SHA-256 hashes.
-The manifest content hash is recorded in every episode record. Layout hashes
-cover geometry, not only integer map ids.
+A result is not relabelled after seeing it. Old outputs retain their original
+fields and thresholds. A metric correction must be documented and applied before
+the frozen candidate run; it cannot be introduced after seeing candidate-map
+outcomes. If a bug is found after execution, the confirmatory run is invalid and
+must be re-frozen, not patched.
 
-Duplicate manifests, stale hashes, unknown methods, layout mismatches and
-missing paired scenarios fail closed. Development mode refuses maps above 199.
-Confirmatory execution is not available in the P1 scaffold.
+## 13. P0 completion
 
-## 11. No retrospective scoring
-
-A result is not relabelled after seeing it. Old outputs keep their original
-labels and thresholds. New reports use the grid-identification-v1 names and
-state which fields were unavailable in the old rows.
-
-## 12. Decision rule for this P0 stage
-
-P0 is complete only when the metric definitions, manifest validation, shift
-export, leakage checks and regression tests pass. P0 completion does not
-authorize candidate tuning or a holdout. Those require a separately approved
-preregistration and a frozen candidate commit.
+P0 is complete for review when metric definitions, manifest validation, declaration
+instrumentation, leakage checks, behavioural equivalence, archive checksums and
+regression tests pass. P0 completion does not authorize candidate-map execution.
+That requires the separate human GO in the preregistration.

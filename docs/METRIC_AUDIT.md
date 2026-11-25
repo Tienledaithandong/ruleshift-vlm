@@ -70,6 +70,39 @@ Reading the static table:
   wrong rule. Its 300/550 initial-rule agreement on the full file is not an
   identification result.
 
+### 2.1 Explicit-declaration audit of the final development run
+
+The legacy rows above have no declaration API, so they cannot supply an explicit
+identification metric. The final exposed development run at candidate commit
+`e65e191` added declaration observations without changing actions. Its 300
+static episodes per method give:
+
+| Method | Declaration events | Episodes with an event | Correct | Wrong | Unresolved | Unconditional accuracy | Event coverage |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| diagnostic_belief_v3 | 294 | 288 | 284 | 4 | 12 | 94.67% | 96.0% |
+| diagnostic_belief_v4 | 268 | 267 | 263 | 4 | 33 | 87.67% | 89.0% |
+| no_adaptation | 0 | 0 | 0 | 0 | 300 unavailable | unavailable | 0.0% |
+
+The v4 mean Brier score is 0.025507 and NLL is 0.056736; v3 is 0.024447 and
+0.054596. v3 has 6 episodes with an earlier wrong declaration; v4 has 1. A later
+correct declaration does not erase the earlier error.
+
+Unconditional accuracy keeps all 300 episodes in the denominator. The earlier
+draft reported API availability as `declaration_coverage` and therefore showed
+1.0 for v4 despite only 267/300 episodes with an event. The corrected fields are
+`declaration_event_episodes`, `settled_declaration_episodes`,
+`declaration_coverage`, `settled_declaration_coverage` and
+`declaration_available_coverage`. The correction is evaluator-only.
+
+The v4 base subset has 40/50 explicit correct declarations (8 unresolved), even
+though base task success is 50/50. Base task success and base declaration
+accuracy are different endpoints and must not be substituted for each other.
+
+These are development counts, not the 900-episode confirmatory endpoint and not
+a gate adjudication. They show the candidate's unconditional declaration
+accuracy below the proposed 95% gate and its sign subset below 90%; that risk is
+recorded in the decision packet before freeze.
+
 ## 3. Tool and zero-tool observations
 
 | Method | 0 tools | 1 tool | 2 tools | 3 tools | Zero-tool hazard/sign task successes |
