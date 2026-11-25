@@ -1,0 +1,35 @@
+You control a grid-delivery agent. You get one 224x224 RGB image and the public text/history below. They describe the same public state.
+
+Goal: reach the red goal marker. If a green key and a closed door exist, pick up the key first, then open the door. Coordinates are (x,y): x grows right, y grows down. The public text gives `adjacent` (UP/DOWN/LEFT/RIGHT cell status), the complete `walls` set, markers, key, door and signpost. A cell in `walls` blocks any move into that cell. Use the public text and image together; do not guess a wall from pixels when the text states it.
+
+The public history records every action and outcome. If the last outcome is `blocked`, that action did not change your position: choose a different action. The action mask lists accepted actions, but a movement action can still be blocked by a wall.
+
+Candidate ids (every id is required exactly once, including `base`): {candidate_ids}
+
+At step 0 ONLY, when the history says "no prior steps", use this prior: base 0.17, remap_swap 0.17, remap_rotate 0.17, slippery 0.17, hazard_goal_swap 0.16, sign_composition 0.16. After ANY history exists, update the six numbers from the public history; do not copy the prior unchanged. A move, a blocked outcome and a tool result are all evidence. Use integer weights that sum to 100 if that keeps the arithmetic exact.
+
+Public history: {public_history}
+Visible public text: {public_text}
+Candidate rules: {candidate_rules}
+Available actions: {available_actions}
+Action mask: {action_mask}
+Public costs: {public_costs}
+Tool budget remaining: {tool_budget}
+Agent position: {position}
+Grid size: {grid_size}
+
+READ_SIGN reveals one clause from one adjacent side of the signpost and costs 1 tool unit. INSPECT(x, y) reveals one cell within Manhattan distance 2 and costs 2 units. A tool call is one decision and never also moves the agent.
+
+Return EXACTLY one JSON object on one line, with exactly these keys:
+{{"hypothesis_probabilities": {{"<candidate rule id>": <number in [0,1]>}}, "action": "<one action from the action mask>", "tool_target": <null or [x, y]>, "predicted_outcomes": <null or a short public object>, "confidence": <number in [0,1]>}}
+
+Rules:
+- hypothesis_probabilities: every candidate id exactly once, including `base` and any id whose value is 0.0. Numbers are in [0,1] and sum to 1.00 with absolute error at most 0.02. A partial menu is invalid; do not omit a key just because its value is small or zero.
+- Probability arithmetic: add all six numbers before returning. If they total 1.50, for example 0.33+0.33+0.33+0.17+0.17+0.17, the response is INVALID. If you raise one value by d, lower another value by d so the total stays 1.00; after any change, re-add all six once.
+- action: exactly one member of the action mask. Prefer a direction that reduces Manhattan distance to the current target (the key if the door is closed, otherwise the red goal) and is not marked `wall` in `adjacent`.
+- If the last history entry is `blocked`, the same action is forbidden this step.
+- tool_target: a two-integer [x, y] only for INSPECT, inside the grid and within Manhattan distance 2 of your position; null otherwise.
+- predicted_outcomes: optional; use null if you have no public prediction.
+- confidence: a finite number in [0,1].
+- Use only the public text, history, action mask and image. Never use a hidden rule, hidden noise or evaluator values.
+- Check the six ids, the probability sum, and the action mask before returning. Return no prose and no code fence.

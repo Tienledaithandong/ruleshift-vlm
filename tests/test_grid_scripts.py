@@ -91,12 +91,13 @@ def test_behavioral_gate_rejects_fallback_and_invalid_json():
     assert pilot.behavioral_gate(rows, 2)["passed"] is False
 
 
-def _semantic_row(scenario, action, position, steps, probs=None):
+def _semantic_row(scenario, action, position, steps, probs=None, history="no prior steps"):
     return {
         "scenario_id": scenario,
         "chosen_action": action,
         "agent_position": list(position),
         "env_steps": steps,
+        "public_history": history,
         "action_mask": ["UP", "DOWN", "LEFT", "RIGHT", "INSPECT"],
         "hypothesis_probabilities": probs or {
             "base": 0.2, "remap_swap": 0.2, "remap_rotate": 0.2,
@@ -144,14 +145,34 @@ def test_semantic_gate_rejects_constant_beliefs_and_blocked_repeat():
     }
     rows = [
         _semantic_row("a", "LEFT", (1, 5), 0, constant),
-        _semantic_row("a", "LEFT", (1, 5), 1, constant),
+        _semantic_row(
+            "a", "LEFT", (1, 5), 1, constant,
+            history="Step 1: LEFT -> blocked",
+        ),
         _semantic_row("b", "LEFT", (1, 5), 0, constant),
-        _semantic_row("b", "LEFT", (1, 5), 1, constant),
+        _semantic_row(
+            "b", "LEFT", (1, 5), 1, constant,
+            history="Step 1: LEFT -> blocked",
+        ),
     ]
     gate = pilot.semantic_gate(rows)
     assert gate["passed"] is False
     assert any("belief" in reason for reason in gate["reasons"])
     assert any("blocked" in reason for reason in gate["reasons"])
+
+def test_semantic_gate_does_not_treat_hazard_as_blocked():
+    pilot = _load_pilot_module()
+    rows = [
+        _semantic_row("a", "LEFT", (1, 5), 0),
+        _semantic_row(
+            "a", "LEFT", (1, 5), 1,
+            history="Step 1: LEFT -> hazard",
+        ),
+        _semantic_row("b", "RIGHT", (1, 5), 0),
+    ]
+    gate = pilot.semantic_gate(rows)
+    assert gate["blocked_transitions"] == 0
+    assert gate["blocked_repeats"] == 0
 
 def test_select_chunk_scenarios_uses_map_range():
     pilot = _load_pilot_module()

@@ -214,7 +214,7 @@ now adapts, and they do not authorize any run beyond a 2-episode smoke.
 - `build_public_text()` now emits `adjacent=[UP=...,DOWN=...,LEFT=...,RIGHT=...]`
   and the complete public `walls=[...]` set, both read from `PublicGridMap`.
   These are public map data; no hidden rule or evaluator value is exposed.
-- `grid_v7.txt` gives the wall/adjacent contract, makes the latest blocked
+- `grid_v8.txt` gives the wall/adjacent contract, makes the latest blocked
   outcome operational, repeats the full-menu prior only at step 0, and states
   the strict JSON schema.
 - `GridVLMPolicy` applies a deterministic public guard when the chosen action

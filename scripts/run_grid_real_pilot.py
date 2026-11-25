@@ -139,6 +139,16 @@ def _belief_vector(row: dict) -> tuple[tuple[str, float], ...] | None:
         return None
 
 
+def _last_public_outcome(row: dict) -> str | None:
+    """Return the outcome of the most recent public step, if recorded."""
+
+    history = str(row.get("public_history", "") or "")
+    segments = [segment for segment in history.split(";") if segment.strip()]
+    if not segments:
+        return None
+    match = re.search(r"Step\s+\d+:\s*([A-Z_]+).*?->\s*(\S+)", segments[-1])
+    return match.group(2).lower() if match else None
+
 def semantic_gate(
     public_rows: list[dict],
     episodes: list | tuple = (),
@@ -165,20 +175,11 @@ def semantic_gate(
             action = str(current.get("chosen_action", ""))
             if action not in moves:
                 continue
-            before = current.get("agent_position")
-            after = nxt.get("agent_position")
-            if not (
-                isinstance(before, (list, tuple))
-                and len(before) == 2
-                and isinstance(after, (list, tuple))
-                and len(after) == 2
-            ):
-                continue
             try:
                 advanced = int(nxt.get("env_steps", 0)) > int(current.get("env_steps", 0))
             except (TypeError, ValueError):
                 continue
-            if advanced and tuple(before) == tuple(after):
+            if advanced and _last_public_outcome(nxt) == "blocked":
                 blocked_total += 1
                 if str(nxt.get("chosen_action", "")) == action:
                     blocked_repeats += 1
