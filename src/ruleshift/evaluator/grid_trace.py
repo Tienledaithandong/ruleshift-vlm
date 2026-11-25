@@ -32,6 +32,14 @@ class GridEvaluatorTrace:
     adaptation_steps: int | None
     false_alarm: bool
     final_rule_estimate: str
+    #: Scheduled shift time (the existing shift_time field) and the observed
+    #: shift time. None means the episode ended before the shift occurred.
+    actual_shift_time: int | None = None
+    shift_censored: bool = False
+    #: Policy's shift-probability threshold crossing, not ground-truth detection.
+    belief_shift_event_time: int | None = None
+    belief_shift_false_alarm: bool = False
+    termination_reason: str = "unknown"
 
     def to_row(self) -> dict[str, Any]:
         """Return a JSON-serializable privileged row."""

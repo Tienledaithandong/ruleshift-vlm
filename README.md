@@ -17,6 +17,22 @@ contains 81 distinct inputs with exact microtask labels.
 
 [Progress and evidence](docs/RESEARCH_STATUS.md) · [CPU and experiment runbook](docs/RUNBOOK.md)
 
+## P0 measurement repair (2026-11-25)
+
+The active identification claim now has an independent metric protocol, explicit
+manifests, shift-timing exports and a corrected pairing path. The legacy audit
+found that the old gate used task success and a terminal-label shift proxy; it
+is preserved under its original labels in
+[Metric audit](docs/METRIC_AUDIT.md). Map exposure and candidate-layout checks
+are in [Data exposure audit](docs/DATA_EXPOSURE_AUDIT.md). The new
+[Evaluation protocol](docs/EVALUATION_PROTOCOL_V1.md) separates task success,
+terminal MAP, explicit settled commitment, base preservation, shift timing and
+tool spend. A [draft preregistration](docs/PREREGISTRATION_IDENTIFICATION_V1.md)
+proposes a sample and gates but is not approved. The
+[P0 decision packet](docs/P0_DECISION_PACKET.md) records the tests, corrected
+legacy numbers and decisions still owed. No holdout, model call or GPU run was
+performed, and no candidate was tuned.
+
 ## Research question (frozen)
 
 > When hidden environment dynamics change without warning, do frozen
@@ -69,7 +85,7 @@ project_0/
 │   ├── evaluator/                 # privileged labels and references, including grid_* evaluators
 │   ├── agents/                    # public-only policies, grid_* baselines/selector/VLM scaffold
 │   └── prompts/                   # direct_v1.txt, outcomes_v1.txt, grid_v1.txt
-└── tests/                         # 385 tests, all passing
+└── tests/                         # 486 tests, all passing
 ```
 
 ```sh

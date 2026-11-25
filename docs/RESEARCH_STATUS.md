@@ -77,3 +77,34 @@ manifest hashes canonical sources and excludes older Kaggle snapshots.
 2. At the next explicitly approved model run, use a fresh output directory and record the prompt, input mode, checkpoint revision, source hashes and generation settings. Inspect the distribution of actions and the distinct inputs behind it. A constant policy can be a genuine result once the task and labels are sound.
 3. Run a real public-RGB path for P0. Compare M1, direct and adapted DIVA on validation scenarios under the same input, call cap and primitive horizon. Select methods and prompts on validation; the plumbing and validation grid are in place, but no pixel-dependent VLM result exists yet.
 4. Apply the W6 decision rule, record a frozen protocol and scenario list if warranted, and only then open the locked evaluation. Keep Family B, CUSUM and the Gemini prototype outside the current W4 claim.
+
+## 2026-11-25 · P0 measurement repair
+
+The active identification claim now has a separate evaluation contract. The
+[Evaluation protocol v1](EVALUATION_PROTOCOL_V1.md) distinguishes task success,
+independent terminal MAP, explicit settled commitments, base preservation,
+shift timing, censoring, tool spend and selective error. Unresolved episodes
+stay in the denominator, and a terminal MAP is not substituted for a
+declaration.
+
+The [legacy metric audit](METRIC_AUDIT.md) recomputed existing development rows
+without rerunning a policy. On the 300 static maps 0-9 episodes, v3 has 287
+task successes and 297 independent MAP matches; v4 has 298 and 297 respectively.
+The all-550-row counts (v3 534/544, v4 546/543) mix in shift rows and are not
+identification rates. The historical base endpoint remains 49/50 for v3 and
+50/50 for v4 on that exposed bank. The old identification field required task
+success, and the old shift field was a terminal non-base proxy.
+
+The [data exposure audit](DATA_EXPOSURE_AUDIT.md) found scenario references for
+all map ids 0-199 and none above 199. A prior-branch prose proposal names maps
+200-209, but no episode used them. The current draft therefore proposes the
+non-overlapping 210-239 bank: 30 unique layouts, no duplicate and no collision
+with 0-199. It remains unselected and unauthorized.
+
+[Preregistration draft v1](PREREGISTRATION_IDENTIFICATION_V1.md) proposes 30
+maps x 5 seeds x 6 rules = 900 primary static episodes per method, with a
+declaration-capable candidate that is not yet frozen. The
+[P0 decision packet](P0_DECISION_PACKET.md) records the exact tests, corrected
+numbers and decisions required before any next run. The draft is explicitly
+not approved. No candidate tuning, holdout, VLM smoke, GPU inference or merge
+was performed. The next decision belongs to a human reviewer.
