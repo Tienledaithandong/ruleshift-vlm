@@ -1,4 +1,4 @@
-# Research checkpoint · 2026-11-24
+# Research checkpoint · 2026-11-25
 
 The next experimental milestone in the [12-week plan](../RuleShift_VLM_Research_12_Week_Master_Plan.md)
 is a clean Week 4 offline diagnostic on distinct development decisions. Week
@@ -77,3 +77,55 @@ manifest hashes canonical sources and excludes older Kaggle snapshots.
 2. At the next explicitly approved model run, use a fresh output directory and record the prompt, input mode, checkpoint revision, source hashes and generation settings. Inspect the distribution of actions and the distinct inputs behind it. A constant policy can be a genuine result once the task and labels are sound.
 3. Run a real public-RGB path for P0. Compare M1, direct and adapted DIVA on validation scenarios under the same input, call cap and primitive horizon. Select methods and prompts on validation; the plumbing and validation grid are in place, but no pixel-dependent VLM result exists yet.
 4. Apply the W6 decision rule, record a frozen protocol and scenario list if warranted, and only then open the locked evaluation. Keep Family B, CUSUM and the Gemini prototype outside the current W4 claim.
+
+## 2026-11-25 · P0 freeze readiness (static identification)
+
+The active identification claim now has a separate evaluation contract. The
+[Evaluation protocol v1](EVALUATION_PROTOCOL_V1.md) distinguishes task success,
+independent terminal MAP, explicit settled declarations, base preservation,
+tool spend and zero-tool hazard/sign evidence. Unresolved episodes stay in the
+unconditional declaration denominator, and terminal MAP is not substituted for
+a declaration. Shift and no-shift endpoints are deferred.
+
+The final candidate is repaired v0.4 at policy commit `e65e191`. The only
+post-baseline change is declaration instrumentation at the existing safe-commit
+point. The pre-instrumentation fixture covers 300 exposed static scenarios per
+method; all 600 action traces, outcomes, estimates, steps and tool units match.
+The [declaration instrumentation report](DECLARATION_INSTRUMENTATION.md) records
+the contract and equivalence evidence.
+
+The [legacy metric audit](METRIC_AUDIT.md) recomputed existing development rows
+without rerunning a policy. On the 300 static maps 0-9 episodes, v3 has 287
+task successes and 297 independent MAP matches; v4 has 298 and 297 respectively.
+The all-550-row counts (v3 534/544, v4 546/543) mix in shift rows and are not
+identification rates. The historical base endpoint remains 49/50 for v3 and
+50/50 for v4 on that exposed bank.
+
+The frozen candidate manifest covers maps 210-239 and seeds 5-9: 900 static
+entries, 30 unique public layouts, zero collisions with maps 0-199. Its
+authoritative content SHA-256 is
+`95c4e13e533d1161af9cf6971df905c3222d94fbf091d3bf71e5ff3b37cabe80`.
+No candidate-map episode has been run. The [freeze record](FREEZE_MANIFEST_IDENTIFICATION_V1.md)
+and [data exposure audit](DATA_EXPOSURE_AUDIT.md) document validation and the
+post-freeze `results/` scan.
+
+The final exposed development run gives the candidate 298/300 task successes,
+297/300 terminal MAP, but only 263/300 correct explicit declarations = 87.67%,
+with 4 wrong and 33 unresolved. Its sign-composition declaration rate is 44/50
+= 88%. These exposed numbers are below the proposed 95% overall and 90% sign
+gates, so the candidate may fail its primary identification gate on the frozen
+bank. That risk is disclosed, not tuned away. Base task success is 50/50 on the
+development base subset; the confirmatory base endpoint is 150 episodes.
+
+The [preregistration](PREREGISTRATION_IDENTIFICATION_V1.md) fixes the 2,700-
+episode static design, H1/H2 (v4 and v3 vs no_adaptation, paired terminal MAP,
+map-level Holm family, 5-point minimum effect), the absolute G1-G6 gates, the
+fail-closed zero-tool rule and the descriptive-only v4−v3 contrast. The
+[P0 decision packet](P0_DECISION_PACKET.md) records all nine human decisions,
+the candidate and manifest hashes, the development gate risk and the exact GO
+condition. Raw development artifacts are archived with checksums under the
+ignored `results/archive/p0_2026-11-25/`.
+
+Status: **freeze-ready for a human GO/NO-GO; default NO-GO.** No confirmatory
+holdout, candidate tuning, VLM/GPU inference, merge or new draft PR was
+performed in this step.
