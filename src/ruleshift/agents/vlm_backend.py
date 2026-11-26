@@ -336,7 +336,8 @@ class TransformersVLMBackend:
                 outputs = self._model.generate(**inputs, **kwargs)
         else:
             outputs = self._model.generate(**inputs, **kwargs)
-        generated = outputs[:, inputs["input_ids"].shape[-1] :]
+        prompt_tokens = int(inputs["input_ids"].shape[-1])
+        generated = outputs[:, prompt_tokens:]
         text = self._processor.batch_decode(generated, skip_special_tokens=True)[0]
         return ModelResponse(
             text=text,
