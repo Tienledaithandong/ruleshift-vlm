@@ -1,0 +1,598 @@
+"""RuleShift-Grid environment: physical dynamics and hidden rule shifts.
+
+Only public geometry, public rule hypotheses and public costs are ever exposed
+through :meth:`GridEnv.public_view` / :meth:`GridEnv._obs`. The simulator's true
+rule, shift schedule and per-episode configuration live exclusively in
+:meth:`GridEnv.evaluator_state`.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+from typing import Any
+
+import numpy as np
+from gymnasium import Env, spaces
+
+from ruleshift.envs.events import SemanticRNG
+from ruleshift.public_api.grid_rules import (
+    GRID_HYPOTHESES,
+    RULE_BY_ID,
+    Coord,
+    PublicGridMap,
+    cell_role,
+    effective_map,
+    key_opens,
+    movement_outcomes,
+)
+from ruleshift.public_api.grid_schemas import (
+    GRID_ACTIONS,
+    GRID_ACTIONS_FROZEN,
+    GRID_PHYSICAL_ACTIONS,
+    GRID_TOOL_ACTIONS,
+    GridAction,
+    GridPublicObservation,
+)
+
+from .config import GridConfig
+from .entities import GridMap, GridScenario
+from .mapgen import generate_solvable_map
+from .noise import draw_inspect, draw_move
+from .observations import (
+    PublicCoord,
+    PublicLabelList,
+    PublicPayloadSpace,
+    PublicScalar,
+    PublicText,
+    build_grid_observation,
+)
+from .render import RENDER_SIZE, render_grid
+from .rules import sample_scenario
+from .tools import inspect_cell, read_sign, sign_side, tool_cost, validate_tool_action
+
+
+@dataclass
+class GridState:
+    """Mutable, simulator-private episode state."""
+
+    position: Coord
+    health: int
+    inventory: tuple[str, ...]
+    steps: int
+    tool_budget: int
+    recovery: int
+    door_open: bool
+    terminated: bool
+    truncated: bool
+    success: bool
+    last_outcome: str
+
+
+def _manhattan(a: Coord, b: Coord) -> int:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def _inspect_target_available(
+    public: PublicGridMap, position: Coord, config: GridConfig
+) -> bool:
+    """Whether any marker/key/door cell is within INSPECT reach."""
+
+    candidates = list(public.markers.values())
+    if public.key is not None:
+        candidates.append(public.key)
+    if public.door is not None:
+        candidates.append(public.door)
+    return any(
+        0 <= coord[0] < public.width
+        and 0 <= coord[1] < public.height
+        and _manhattan(position, coord) <= config.inspect_range
+        for coord in candidates
+    )
+
+
+class GridEnv(Env):
+    """Small grid world with a hidden movement/role rule that may shift."""
+
+    metadata = {"render_modes": ["rgb_array"], "render_fps": 30}
+
+    def __init__(
+        self,
+        config: GridConfig | None = None,
+        render_mode: str = "rgb_array",
+        observation_mode: str = "symbolic",
+    ) -> None:
+        self.config = config or GridConfig()
+        self.render_mode = render_mode
+        self.observation_mode = observation_mode
+
+        cfg = self.config
+        self.action_space = spaces.Dict(
+            {
+                "kind": spaces.Discrete(len(GRID_ACTIONS)),
+                "target": spaces.MultiDiscrete([cfg.width, cfg.height]),
+            }
+        )
+        # The declared space must describe every key returned by ``_obs()``.
+        # Most fields use typed subspaces that accept the payload's plain
+        # Python values; only the nested ``public_map``/``candidate_rules``
+        # structures need the documented fallback space.
+        cost_space = spaces.Dict(
+            {
+                "step_cost": PublicScalar(),
+                "goal_reward": PublicScalar(),
+                "inspect_cost": PublicScalar(),
+                "read_sign_cost": PublicScalar(),
+                "advisor_cost": PublicScalar(),
+                "tool_budget": PublicScalar(),
+                "inspect_range": PublicScalar(),
+            }
+        )
+        observation_space: dict[str, Any] = {
+            "observation_id": PublicText(max_length=64, min_length=1),
+            "public_obs_hash": PublicText(max_length=64, min_length=1),
+            "public_history_hash": PublicText(max_length=64, min_length=1),
+            "public_history": PublicText(max_length=8192),
+            "public_text": PublicText(max_length=8192),
+            "available_actions": PublicLabelList(max_items=len(GRID_ACTIONS)),
+            "candidate_rules": PublicPayloadSpace(sample_value=()),
+            "public_costs": cost_space,
+            "public_map": PublicPayloadSpace(sample_value={}),
+            "agent_position": PublicCoord(
+                max_x=max(cfg.width, 64) - 1, max_y=max(cfg.height, 64) - 1
+            ),
+            "health": spaces.Discrete(cfg.max_health + 1),
+            "inventory": PublicLabelList(),
+            "door_open": spaces.Discrete(2),
+            "steps": spaces.Discrete(cfg.max_env_steps + 1),
+            "action_mask": PublicLabelList(max_items=len(GRID_ACTIONS)),
+            "tool_budget_remaining": spaces.Discrete(cfg.tool_budget + 1),
+            "image_hash": PublicText(max_length=64),
+        }
+        if observation_mode == "visual":
+            observation_space["image"] = spaces.Box(
+                low=0,
+                high=255,
+                shape=(RENDER_SIZE, RENDER_SIZE, 3),
+                dtype=np.uint8,
+            )
+        self.observation_space = spaces.Dict(observation_space)
+
+        self._grid_map: GridMap | None = None
+        self._scenario: GridScenario | None = None
+        self._episode_config = self.config
+        self._state: GridState | None = None
+        self._rng: SemanticRNG | None = None
+        self._history: list[tuple[str, str | None, str]] = []
+        self._shifted = False
+        self._active_rule = ""
+
+    # ------------------------------------------------------------------
+    # Lifecycle
+    # ------------------------------------------------------------------
+
+    def reset(
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[Any, dict[str, Any]]:
+        super().reset(seed=seed)
+        opts = dict(options or {})
+
+        config = self.config
+        known_config = set(GridConfig.__dataclass_fields__)
+        config_overrides = {
+            key: value for key, value in opts.items() if key in known_config
+        }
+        if config_overrides:
+            config = replace(config, **config_overrides)
+        self._episode_config = config
+
+        scenario = opts.get("scenario")
+        if not isinstance(scenario, GridScenario):
+            scenario = sample_scenario(
+                seed or 0, config, opts.get("scenario_type")
+            )
+        for key in ("scenario_type", "initial_rule", "shift_rule", "shift_time"):
+            if key in opts:
+                scenario = replace(scenario, **{key: opts[key]})
+        self._scenario = scenario
+
+        map_option = opts.get("map")
+        if isinstance(map_option, GridMap):
+            grid_map = map_option
+        elif isinstance(map_option, PublicGridMap):
+            grid_map = GridMap(public=map_option, map_seed=scenario.map_seed)
+        else:
+            grid_map = generate_solvable_map(scenario.map_seed, config).map
+        self._grid_map = grid_map
+
+        self._rng = SemanticRNG(scenario.run_seed, scenario.scenario_id)
+        self._state = GridState(
+            position=grid_map.public.start,
+            health=config.max_health,
+            inventory=(),
+            steps=0,
+            tool_budget=config.tool_budget,
+            recovery=0,
+            door_open=False,
+            terminated=False,
+            truncated=False,
+            success=False,
+            last_outcome="none",
+        )
+        self._history = []
+        self._shifted = False
+        self._active_rule = scenario.initial_rule
+        return self._obs(), self._info()
+
+    def step(self, action: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+        if self._state is None:
+            raise RuntimeError("call reset() before step()")
+        if self._state.terminated or self._state.truncated:
+            raise RuntimeError("episode has ended; call reset()")
+
+        grid_action = self._resolve_action(action)
+        if (
+            grid_action is None
+            or not isinstance(grid_action.kind, str)
+            or grid_action.kind not in GRID_ACTIONS_FROZEN
+        ):
+            self._state.last_outcome = "invalid_action"
+            return self._obs(), 0.0, self._state.terminated, self._state.truncated, self._info()
+
+        if grid_action.kind in GRID_TOOL_ACTIONS:
+            return self._apply_tool(grid_action)
+
+        if grid_action.kind not in self._action_mask():
+            self._state.last_outcome = "invalid_action"
+            return self._obs(), 0.0, self._state.terminated, self._state.truncated, self._info()
+
+        return self._apply_physical(grid_action)
+
+    # ------------------------------------------------------------------
+    # Transition helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_action(action: Any) -> GridAction | None:
+        if isinstance(action, GridAction):
+            return action
+        if isinstance(action, str):
+            return GridAction(kind=action.upper())
+        if isinstance(action, dict):
+            kind = action.get("kind")
+            if isinstance(kind, int) and not isinstance(kind, bool):
+                if 0 <= kind < len(GRID_ACTIONS):
+                    kind = GRID_ACTIONS[kind]
+                else:
+                    return None
+            target = action.get("target")
+            if isinstance(target, (list, tuple)) and len(target) == 2:
+                target = (int(target[0]), int(target[1]))
+            else:
+                target = None
+            return GridAction(kind=kind, target=target)
+        return None
+
+    def _rule_object(self, rule_id: str):
+        """Public rule with the simulator's configured slip probabilities."""
+
+        config = self._episode_config
+        slip = (
+            config.slippery_slip if rule_id == "slippery" else config.baseline_slip
+        )
+        return replace(RULE_BY_ID[rule_id], slip_prob=slip)
+
+    def _apply_physical(self, action: GridAction) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+        config = self._episode_config
+        state = self._state
+        public = self._grid_map.public
+        reward = config.step_cost
+
+        if state.recovery > 0:
+            state.recovery -= 1
+            state.last_outcome = "recovering"
+            state.steps += 1
+            self._maybe_shift()
+            self._check_truncation()
+            return self._finish(action.kind, reward)
+
+        rule = self._rule_object(self._active_rule)
+
+        if action.kind == "INTERACT":
+            self._interact(rule, public, state)
+        else:
+            blocked_map = effective_map(public, state.door_open)
+            previous_position = state.position
+            outcomes = movement_outcomes(
+                rule, state.position, action.kind, blocked_map
+            )
+            state.position = self._sample_outcome(
+                outcomes, draw_move(self._rng, state.steps)
+            )
+            reward += self._apply_cell_effect(rule, public, state)
+            # A wall, closed door, or slip outcome can leave the agent in the
+            # same cell. The public history must say ``blocked`` rather than
+            # ``move`` so a policy can avoid repeating a futile action.
+            if state.position == previous_position and state.last_outcome == "move":
+                state.last_outcome = "blocked"
+
+        state.steps += 1
+        self._maybe_shift()
+        self._check_truncation()
+        return self._finish(action.kind, reward)
+
+    def _apply_tool(
+        self, action: GridAction
+    ) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+        """Execute one epistemic tool call without advancing physical time."""
+
+        config = self._episode_config
+        state = self._state
+        public = self._grid_map.public
+        kind = action.kind
+        errors = validate_tool_action(
+            kind,
+            action.target,
+            state.position,
+            public,
+            state.tool_budget,
+            config,
+        )
+        if errors:
+            # Budget exhaustion is the binding rejection reason even when the
+            # target is also invalid, so callers can distinguish it cleanly.
+            reason = (
+                "insufficient_budget"
+                if "insufficient_budget" in errors
+                else errors[0]
+            )
+            state.last_outcome = f"rejected:{reason}"
+            info = self._info()
+            info["tool_rejected"] = reason
+            return (
+                self._obs(),
+                0.0,
+                state.terminated,
+                state.truncated,
+                info,
+            )
+
+        cost = tool_cost(kind, config)
+        state.tool_budget -= cost
+        rule = self._rule_object(self._active_rule)
+        # A tool call is one decision; history length keeps its semantic draws
+        # distinct without consuming a physical step.
+        draw_index = len(self._history)
+        if kind == "INSPECT":
+            target = (int(action.target[0]), int(action.target[1]))
+            result = inspect_cell(
+                public,
+                rule,
+                target,
+                draw_inspect(self._rng, draw_index),
+                int(draw_inspect(self._rng, draw_index, attempt=1) * 3),
+                config,
+            )
+            detail = f"({target[0]},{target[1]})"
+        else:
+            side = sign_side(state.position, public.signpost)
+            result = read_sign(rule, side, config)
+            detail = f"side{side}"
+
+        # The revealed value is the public outcome of a tool call. Store it as
+        # the history outcome (and the frame's ``last_outcome``) so it reaches
+        # public_history/public_text and the VLM prompt; keep the dedicated
+        # info key as well for the scripted baselines that read it directly.
+        state.last_outcome = str(result.value)
+        info = self._info()
+        info["last_tool_value"] = result.value
+        self._history.append((kind, detail, state.last_outcome))
+        return (
+            self._obs(),
+            0.0,
+            state.terminated,
+            state.truncated,
+            info,
+        )
+
+    @staticmethod
+    def _sample_outcome(outcomes: dict[Coord, float], draw: float) -> Coord:
+        items = sorted(outcomes.items(), key=lambda item: item[0])
+        cumulative = 0.0
+        for coord, probability in items:
+            cumulative += probability
+            if draw < cumulative:
+                return coord
+        return items[-1][0] if items else (0, 0)
+
+    @staticmethod
+    def _interact(rule, public: PublicGridMap, state: GridState) -> None:
+        key_color = rule.key_color
+        if (
+            public.key is not None
+            and state.position == public.key
+            and key_color not in state.inventory
+        ):
+            state.inventory = state.inventory + (key_color,)
+            state.last_outcome = "key_picked_up"
+            return
+        if (
+            public.door is not None
+            and not state.door_open
+            and _manhattan(state.position, public.door) == 1
+        ):
+            if any(
+                key_opens(rule, carried, rule.door_color)
+                for carried in state.inventory
+            ):
+                state.door_open = True
+                state.last_outcome = "door_opened"
+            else:
+                state.last_outcome = "door_locked"
+            return
+        state.last_outcome = "interact"
+
+    def _apply_cell_effect(
+        self, rule, public: PublicGridMap, state: GridState
+    ) -> float:
+        config = self._episode_config
+        color = next(
+            (color for color, coord in public.markers.items() if coord == state.position),
+            None,
+        )
+        role = cell_role(rule, color) if color is not None else "safe"
+        if role == "goal":
+            state.success = True
+            state.terminated = True
+            state.last_outcome = "goal"
+            return config.goal_reward
+        if role == "hazard":
+            state.health = max(0, state.health + int(config.soft_hazard_damage))
+            state.recovery = int(config.soft_hazard_recovery_steps)
+            state.last_outcome = "hazard"
+            return config.soft_hazard_damage
+        state.last_outcome = "move"
+        return 0.0
+
+    def _maybe_shift(self) -> None:
+        scenario = self._scenario
+        if (
+            scenario.shift_time is not None
+            and self._state.steps >= scenario.shift_time
+            and not self._shifted
+        ):
+            self._active_rule = scenario.shift_rule
+            self._shifted = True
+
+    def _check_truncation(self) -> None:
+        if self._state.steps >= self._episode_config.max_env_steps:
+            self._state.truncated = True
+
+    def _finish(
+        self, action_kind: str, reward: float
+    ) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+        self._history.append(
+            (action_kind, None, self._state.last_outcome)
+        )
+        return (
+            self._obs(),
+            float(reward),
+            self._state.terminated,
+            self._state.truncated,
+            self._info(),
+        )
+
+    # ------------------------------------------------------------------
+    # Observation / info surfaces
+    # ------------------------------------------------------------------
+
+    def _action_mask(self) -> tuple[str, ...]:
+        # Tools join the mask only when there is a legal, affordable use.
+        mask = list(GRID_PHYSICAL_ACTIONS)
+        if self._state is None or self._grid_map is None:
+            return tuple(mask)
+        state = self._state
+        public = self._grid_map.public
+        config = self._episode_config
+        if (
+            state.tool_budget >= config.inspect_cost
+            and _inspect_target_available(public, state.position, config)
+        ):
+            mask.append("INSPECT")
+        if (
+            public.signpost is not None
+            and state.tool_budget >= config.read_sign_cost
+            and _manhattan(state.position, public.signpost) == 1
+        ):
+            mask.append("READ_SIGN")
+        return tuple(mask)
+
+    def _obs(self) -> Any:
+        view = self.public_view()
+        payload = view.to_payload()
+        if self.observation_mode == "visual":
+            payload["image"] = view.image
+        return payload
+
+    def _info(self) -> dict[str, Any]:
+        state = self._state
+        return {
+            "env_steps": state.steps,
+            "success": state.success,
+            "last_outcome": state.last_outcome,
+            "tool_budget_remaining": state.tool_budget,
+        }
+
+    def public_view(self) -> GridPublicObservation:
+        """Build the complete agent-visible observation (no hidden state)."""
+
+        if self._state is None or self._grid_map is None:
+            raise RuntimeError("call reset() before public_view()")
+        state = self._state
+        config = self._episode_config
+        public_map = self._grid_map.public
+        public_costs = {
+            "step_cost": config.step_cost,
+            "goal_reward": config.goal_reward,
+            "inspect_cost": config.inspect_cost,
+            "read_sign_cost": config.read_sign_cost,
+            "advisor_cost": config.advisor_cost,
+            "tool_budget": config.tool_budget,
+            # Published so the VLM parser can validate INSPECT targets against
+            # the simulator's range rule end to end (finding 3).
+            "inspect_range": config.inspect_range,
+        }
+        image = (
+            render_grid(public_map, state)
+            if self.observation_mode == "visual"
+            else None
+        )
+        return build_grid_observation(
+            public_map=public_map,
+            state=state,
+            history=self._history,
+            last_outcome=state.last_outcome,
+            candidate_rules=GRID_HYPOTHESES,
+            public_costs=public_costs,
+            action_mask=self._action_mask(),
+            tool_budget_remaining=state.tool_budget,
+            image=image,
+        )
+
+    def evaluator_state(self) -> dict[str, Any]:
+        """Privileged evaluator view; never call from agent code."""
+
+        if self._state is None or self._scenario is None:
+            raise RuntimeError("call reset() before evaluator_state()")
+        state = self._state
+        scenario = self._scenario
+        return {
+            "scenario_id": scenario.scenario_id,
+            "true_rule": self._active_rule,
+            "initial_rule": scenario.initial_rule,
+            "shift_time": scenario.shift_time,
+            "scenario_type": scenario.scenario_type,
+            "map_seed": scenario.map_seed,
+            "position": state.position,
+            "health": state.health,
+            "inventory": state.inventory,
+            "steps": state.steps,
+            "tool_budget": state.tool_budget,
+            "recovery": state.recovery,
+            "door_open": state.door_open,
+            "success": state.success,
+            "terminated": state.terminated,
+            "truncated": state.truncated,
+        }
+
+    def render(self) -> Any | None:
+        """Return the visual frame in visual mode, else ``None``."""
+
+        if self.observation_mode != "visual":
+            return None
+        return self.public_view().image
+
+
+__all__ = ["GridEnv", "GridState"]

@@ -1,0 +1,68 @@
+You control an agent performing repeated deliveries. Use ONLY the public information below.
+You are not given the active rule, any shift time, hidden noise, action values or a simulator.
+
+Visible public text: {public_text}
+Public costs (per primitive step {step_cost}): {public_costs}
+
+== RULES (PAYOFF TABLE) ==
+{rules_table}
+
+== PROBE SEMANTICS ==
+PROBE_<colour> is a multi-step macro: it moves the agent to the station
+(probe_detour primitive steps), probes the card once, then returns home,
+ending with one aggregate public outcome:
+  accept = the probed colour is consistent with the active rule
+  reject = the probed colour is inconsistent
+The belief update happens once, from the aggregate outcome.
+
+== ACTION MENU ==
+Available macro actions: {available_actions}
+Candidate actions to evaluate: {candidate_actions}
+
+== OBSERVATION HISTORY ==
+{public_history}
+
+Compare a task and a probe when both are offered. For each evaluated action,
+imagine each candidate rule and give the distribution of public outcomes.
+
+Describe the result as one JSON object with the shape below. Every <...> is a
+placeholder, not a value: replace it with something you derived from THIS input.
+
+{{
+  "candidate_probabilities": {{"<rule id from the candidate list>": <number in [0,1]>}},
+  "action_predictions": [
+    {{
+      "action_id": "<macro id from the candidate list>",
+      "under_rules": [
+        {{
+          "rule_id": "<rule id from the candidate list>",
+          "possible_outcomes": [
+            {{"observation": "<one public outcome word>", "p": <number in [0,1]>}}
+          ]
+        }}
+      ],
+      "estimated_future_best_action": "<macro id from the available list>"
+    }}
+  ],
+  "selected_action": "<macro id from the available list>"
+}}
+
+Rules:
+- candidate_probabilities: exactly one entry per candidate rule id above; the
+  numbers lie in [0,1] and sum to 1. Start from the uniform prior unless the
+  public history justifies a shift.
+- action_predictions: evaluate at most two candidate actions, one task action
+  and one probe action when both are available. Choose them from candidate_actions,
+  include selected_action, and include each evaluated action only once.
+- under_rules: one entry per candidate rule id, each at most once. For each
+  rule, possible_outcomes lists only outcomes supported by the public text. If
+  that text describes uncertainty, include the plausible outcomes and derive
+  their probabilities from it. Probabilities lie in [0,1] and sum to 1.
+- observation: use only these public outcome words: accept, reject, success,
+  failure, none.
+- selected_action and estimated_future_best_action must be available macro ids.
+- Derive the probabilities from the public evidence. Choose the action whose
+  expected reward best justifies its public cost within the remaining budget.
+- Keep the JSON compact on one line and within the {max_new_tokens}-token generation limit.
+
+Return ONLY the JSON object: no prose, no code fence.
