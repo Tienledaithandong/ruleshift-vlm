@@ -82,6 +82,9 @@ class GridEpisode:
     #: policy proxy, not an explicit shift declaration.
     belief_shift_event_time: int | None = None
     belief_shift_false_alarm: bool = False
+    #: v2 epistemic events. Empty for v1 policies; a separate ledger keeps
+    #: declarations, abstentions and evidence requests out of control rows.
+    epistemic_events: tuple[dict[str, Any], ...] = ()
 
 
 class OraclePolicy:
@@ -235,6 +238,13 @@ def run_grid_episode(
         if terminated or truncated:
             break
 
+    # v2 final-observation opportunity: a readout only, never an env action.
+    finalize = getattr(policy, "finalize", None)
+    if callable(finalize):
+        finalize(observation, info)
+    event_source = getattr(policy, "epistemic_events", None)
+    epistemic_events = tuple(event_source() if callable(event_source) else ())
+
     belief_shift_false_alarm = bool(
         belief_shift_event_time is not None
         and actual_shift_time is not None
@@ -367,6 +377,7 @@ def run_grid_episode(
         shift_censored=bool(scenario.shift_rule is not None and actual_shift_time is None),
         belief_shift_event_time=belief_shift_event_time,
         belief_shift_false_alarm=bool(belief_shift_false_alarm),
+        epistemic_events=epistemic_events,
     )
 
 
