@@ -154,11 +154,7 @@ performed.
 
 Run command:
 
-    PYTHONPATH=src python scripts/run_grid_identification_v2.py ^
-      --manifest results/p0_dev_static_manifest.json ^
-      --mode development ^
-      --out results/grid_v05_dev_official_v2 ^
-      --code-commit <candidate-commit>
+    PYTHONPATH=src python scripts/run_grid_identification_v2.py --manifest results/p0_dev_static_manifest.json --mode development --out results/grid_v05_official_final --code-commit 751a3414ad8815087f64d85ad5a1523af11077f4
 
 ## 7. Readiness criteria (recorded before the official run)
 
