@@ -485,12 +485,14 @@ class DiagnosticBeliefPolicy(_BasePolicy):
         self.sign_observed = False
         self.blue_observed = False
         self.tool_attempts = 0
+        self._commitment_events: list[dict[str, Any]] = []
 
     def reset(self, observation: Any, info: dict[str, Any]) -> None:
         super().reset(observation, info)
         self.sign_observed = False
         self.blue_observed = False
         self.tool_attempts = 0
+        self._commitment_events = []
 
     def record(
         self,
@@ -509,6 +511,7 @@ class DiagnosticBeliefPolicy(_BasePolicy):
     def choose(self, observation: Any, info: dict[str, Any]) -> GridAction:
         observation = as_observation(observation)
         if self._commit_is_safe():
+            self._record_commitment(observation, info)
             return self._commit(observation)
         action = self._diagnostic_action(observation)
         if action is not None:
@@ -667,6 +670,43 @@ class DiagnosticBeliefPolicy(_BasePolicy):
             return plan[0]
         return self._first_plan_action([], observation)
 
+    def _record_commitment(self, observation: Any, info: dict[str, Any]) -> None:
+        """Record a declaration at the existing safe-commit branch.
+
+        This is instrumentation, not a new decision rule. It reads the current
+        public-belief posterior after the policy has already decided that its
+        commit criterion is met. It never uses the terminal estimate, and it
+        never changes the returned action.
+        """
+
+        if self.belief is None:
+            return
+        top, second = self._top_two()
+        margin = top - second
+        if top < 0.90 or margin < 0.10:
+            return
+        rule = self.belief.most_likely()
+        step = int(info.get("env_steps", getattr(observation, "steps", 0)))
+        if (
+            self._commitment_events
+            and self._commitment_events[-1]["declared_rule"] == rule
+        ):
+            return
+        self._commitment_events.append(
+            {
+                "step": step,
+                "declared_rule": rule,
+                "confidence": float(top),
+                "posterior_margin": float(margin),
+                "source": "policy.safe_commit",
+            }
+        )
+
+    def commitment_events(self) -> tuple[dict[str, Any], ...]:
+        """Return explicit safe-commit declarations in decision order."""
+
+        return tuple(dict(event) for event in self._commitment_events)
+
     def _commit(self, observation: Any) -> GridAction:
         rule_id = self.belief.most_likely() if self.belief is not None else "base"
         return self._first_plan_action(self.base_plan(rule_id, observation), observation)
@@ -802,6 +842,7 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
         self._observe_top_rule()
         observation = as_observation(observation)
         if self._commit_is_safe():
+            self._record_commitment(observation, info)
             return self._commit(observation)
         action = self._diagnostic_action(observation)
         if action is not None:

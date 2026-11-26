@@ -17,6 +17,31 @@ contains 81 distinct inputs with exact microtask labels.
 
 [Progress and evidence](docs/RESEARCH_STATUS.md) · [CPU and experiment runbook](docs/RUNBOOK.md)
 
+## P0 freeze readiness (2026-11-25)
+
+The active identification claim now has an independent metric protocol, a frozen
+static design and a declaration-capable candidate. The legacy audit found that
+the old gate used task success and a terminal-label shift proxy; it is preserved
+under its original labels in [Metric audit](docs/METRIC_AUDIT.md). Map exposure
+and candidate-layout checks are in [Data exposure audit](docs/DATA_EXPOSURE_AUDIT.md).
+The [Evaluation protocol](docs/EVALUATION_PROTOCOL_V1.md) separates task success,
+terminal MAP, explicit settled declarations, base preservation, tool spend and
+zero-tool hazard/sign evidence. The [preregistration](docs/PREREGISTRATION_IDENTIFICATION_V1.md)
+fixes the 2,700-episode static design: maps 210–239, seeds 5–9, six rules, three
+methods. The candidate manifest is frozen at content SHA-256
+`95c4e13e…cabe80`; no candidate-map episode has been run.
+
+The candidate is repaired v0.4 at `e65e191`, with declaration instrumentation
+shown behaviourally inert on 600/600 exposed scenarios. The exposed development
+run gives it 298/300 task success and 297/300 terminal MAP, but only 263/300
+correct explicit declarations (87.67%) and 44/50 sign declarations (88%). Those
+are below the proposed 95% overall and 90% sign gates, so the candidate may fail
+its primary identification gate. The [decision packet](docs/P0_DECISION_PACKET.md)
+and [freeze record](docs/FREEZE_MANIFEST_IDENTIFICATION_V1.md) disclose that risk;
+the [instrumentation report](docs/DECLARATION_INSTRUMENTATION.md) records the
+equivalence evidence. No holdout, model call, GPU run, merge or candidate tuning
+was performed. Status is freeze-ready for a human GO/NO-GO, default NO-GO.
+
 ## Research question (frozen)
 
 > When hidden environment dynamics change without warning, do frozen
@@ -69,7 +94,7 @@ project_0/
 │   ├── evaluator/                 # privileged labels and references, including grid_* evaluators
 │   ├── agents/                    # public-only policies, grid_* baselines/selector/VLM scaffold
 │   └── prompts/                   # direct_v1.txt, outcomes_v1.txt, grid_v1.txt
-└── tests/                         # 385 tests, all passing
+└── tests/                         # 486 tests, all passing
 ```
 
 ```sh

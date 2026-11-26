@@ -65,6 +65,26 @@ class GridEpisode:
     move_information_gain_bits: float | None = None
     #: Number of tool actions actually issued, independent of their unit cost.
     tool_calls_made: int = 0
+    #: Terminal rule posterior when the policy exposes one. It is captured for
+    #: evaluation only and is never fed back to the agent.
+    terminal_posterior: dict[str, float] | None = None
+    #: Environment termination fields, kept separate from task success.
+    terminated: bool = False
+    truncated: bool = False
+    termination_reason: str = "unknown"
+    #: Scheduled and observed shift timing. A missing actual shift means the
+    #: episode ended before the scheduled shift could occur (censoring).
+    scheduled_shift_time: int | None = None
+    actual_shift_time: int | None = None
+    shift_censored: bool = False
+    #: First step at which the policy's own shift-probability query crossed its
+    #: threshold, plus whether that happened before any actual shift. This is a
+    #: policy proxy, not an explicit shift declaration.
+    belief_shift_event_time: int | None = None
+    belief_shift_false_alarm: bool = False
+    #: v2 epistemic events. Empty for v1 policies; a separate ledger keeps
+    #: declarations, abstentions and evidence requests out of control rows.
+    epistemic_events: tuple[dict[str, Any], ...] = ()
 
 
 class OraclePolicy:
@@ -149,6 +169,8 @@ def run_grid_episode(
     public_rows: list[dict[str, Any]] = []
     first_correct_step: int | None = None
     tool_calls_made = 0
+    actual_shift_time: int | None = None
+    belief_shift_event_time: int | None = None
 
     for decision in range(max_decisions):
         action = policy.choose(observation, info)
@@ -193,6 +215,15 @@ def run_grid_episode(
         public_rows.append(row)
 
         env_steps_now = int(next_info.get("env_steps", 0))
+        true_rule_now = str(env.evaluator_state().get("true_rule", scenario.initial_rule))
+        if (
+            scenario.shift_rule is not None
+            and actual_shift_time is None
+            and true_rule_now != scenario.initial_rule
+        ):
+            actual_shift_time = env_steps_now
+        if belief_shift_event_time is None and bool(policy.shift_detected()):
+            belief_shift_event_time = env_steps_now
         if (
             scenario.shift_rule is not None
             and scenario.shift_time is not None
@@ -207,6 +238,18 @@ def run_grid_episode(
         if terminated or truncated:
             break
 
+    # v2 final-observation opportunity: a readout only, never an env action.
+    finalize = getattr(policy, "finalize", None)
+    if callable(finalize):
+        finalize(observation, info)
+    event_source = getattr(policy, "epistemic_events", None)
+    epistemic_events = tuple(event_source() if callable(event_source) else ())
+
+    belief_shift_false_alarm = bool(
+        belief_shift_event_time is not None
+        and actual_shift_time is not None
+        and belief_shift_event_time < actual_shift_time
+    )
     success = bool(info.get("success", False))
     total_return = sum(rewards)
     env_steps = int(info.get("env_steps", 0))
@@ -223,6 +266,34 @@ def run_grid_episode(
     scenario_type = str(getattr(scenario, "scenario_type", "change_detection"))
     false_alarm = scenario_type == "no_shift" and policy.shift_detected()
     final_rule_estimate = policy.most_likely_rule()
+    terminated = bool(info.get("terminated", False))
+    truncated = bool(info.get("truncated", False))
+    if success:
+        termination_reason = "success"
+    elif truncated:
+        termination_reason = "truncated"
+    elif terminated:
+        termination_reason = "terminated"
+    else:
+        termination_reason = "max_decisions"
+
+    terminal_posterior: dict[str, float] | None = None
+    belief = getattr(policy, "belief", None)
+    marginal = getattr(belief, "marginal", None)
+    if callable(marginal):
+        raw_marginal = marginal()
+        if isinstance(raw_marginal, Mapping) and raw_marginal:
+            terminal_posterior = {
+                str(rule): float(probability)
+                for rule, probability in raw_marginal.items()
+            }
+    elif isinstance(getattr(policy, "last_probabilities", None), Mapping):
+        raw_probabilities = getattr(policy, "last_probabilities")
+        if raw_probabilities:
+            terminal_posterior = {
+                str(rule): float(probability)
+                for rule, probability in raw_probabilities.items()
+            }
 
     trace = GridEvaluatorTrace(
         scenario_id=scenario.scenario_id,
@@ -241,6 +312,11 @@ def run_grid_episode(
         adaptation_steps=adaptation_steps,
         false_alarm=bool(false_alarm),
         final_rule_estimate=final_rule_estimate,
+        actual_shift_time=actual_shift_time,
+        shift_censored=bool(scenario.shift_rule is not None and actual_shift_time is None),
+        belief_shift_event_time=belief_shift_event_time,
+        belief_shift_false_alarm=bool(belief_shift_false_alarm),
+        termination_reason=termination_reason,
     ).to_row()
 
     raw_information_gain = getattr(policy, "information_gain_bits", None)
@@ -292,6 +368,16 @@ def run_grid_episode(
         tool_information_gain_bits=tool_information_gain_bits,
         move_information_gain_bits=move_information_gain_bits,
         tool_calls_made=tool_calls_made,
+        terminal_posterior=terminal_posterior,
+        terminated=terminated,
+        truncated=truncated,
+        termination_reason=termination_reason,
+        scheduled_shift_time=scenario.shift_time,
+        actual_shift_time=actual_shift_time,
+        shift_censored=bool(scenario.shift_rule is not None and actual_shift_time is None),
+        belief_shift_event_time=belief_shift_event_time,
+        belief_shift_false_alarm=bool(belief_shift_false_alarm),
+        epistemic_events=epistemic_events,
     )
 
 
