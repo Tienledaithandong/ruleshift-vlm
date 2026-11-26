@@ -1,0 +1,542 @@
+{
+  "file_count": 107,
+  "source_files": [
+    {
+      "path": "configs/dev.yaml",
+      "sha256": "sha256:1fe53a4b6c95e241ea74e2f6b017a4cf6ebbf1065a345eaa554f77ec0d371cc0",
+      "size_bytes": 3361
+    },
+    {
+      "path": "configs/grid_dev.yaml",
+      "sha256": "sha256:f4faf788641a400043cd7eaa9da8d1ef204a65985f671abfa7a2c3cff2ed3aa3",
+      "size_bytes": 1184
+    },
+    {
+      "path": "configs/models.yaml",
+      "sha256": "sha256:a024f6917b9f9518385fb31f9be28db1dc37b3a18a8494fe6464a3e5742cb23b",
+      "size_bytes": 1053
+    },
+    {
+      "path": "configs/preregistered_test.yaml",
+      "sha256": "sha256:70eecbe55234af25463ae58e4dd085362499368a8ec5697851875ab3b91092b1",
+      "size_bytes": 2353
+    },
+    {
+      "path": "configs/runtime.yaml",
+      "sha256": "sha256:c642023451f238e1d0c2cb34a6074733c9299b12ef19dfc1ddfa090fe6672de3",
+      "size_bytes": 670
+    },
+    {
+      "path": "configs/validation.yaml",
+      "sha256": "sha256:bed3b0aacc5e5e55b9d62bb9ba9e8ad59a944ee7988eb2f584cb477948168769",
+      "size_bytes": 1531
+    },
+    {
+      "path": "docs/VLM_PROMPT_BELIEF_DIAGNOSTIC_PROTOCOL.md",
+      "sha256": "sha256:c4b7017b06c2742c6b446c8541235d2d486d693a1b45d8fad5ae2064a4c85a12",
+      "size_bytes": 21280
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/analysis_plan.json",
+      "sha256": "sha256:c8c08cbf9a2b74e77d9d70587a4334c74b80bbb5bc29d61fe879c964f491eb04",
+      "size_bytes": 824
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/checkpoint_manifest.json",
+      "sha256": "sha256:84ac05e1a20687b803aed751a1626d64b3ce071e095fdc0aac732b2425a0fbcc",
+      "size_bytes": 2427
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/freeze.json",
+      "sha256": "sha256:351c772ebfe3fc26d19bd42d910888f6aa393970a5d2f04ead77ad1706f7c968",
+      "size_bytes": 3814
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/freeze.sha256",
+      "sha256": "sha256:bb8e786e489bdb937104ea2fcfb3b2a3b6123ac3e480c5806f9f464435948d1e",
+      "size_bytes": 72
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/model_runtime.json",
+      "sha256": "sha256:3a3daa61d6112127c0cf4358debd32b34976abc32ccfaa89972160af9597d089",
+      "size_bytes": 409
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/prompt_manifest.json",
+      "sha256": "sha256:a27375a7a038c6dfaf4ecb5db49b522787b9509fdb91266a9ae1a925da60cefe",
+      "size_bytes": 151964
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/prompts.jsonl",
+      "sha256": "sha256:75d1ecd5229654835d6f5153cb395417c565101c2fd94c08e536accb5acb600e",
+      "size_bytes": 144326
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/public_payloads.jsonl",
+      "sha256": "sha256:46e14106f66ee2dce987b0137ad157d34401463860c1548719cf21ac4395a8f2",
+      "size_bytes": 79222
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/reference_labels.json",
+      "sha256": "sha256:c44b695dfaf14df4e922993ee440e16bb6d8422df1684f3a6a081d9617e6d45d",
+      "size_bytes": 11885
+    },
+    {
+      "path": "results/vlm_prompt_belief_diagnostic/frozen/request_manifest.json",
+      "sha256": "sha256:a3271a58e158c11e538126d4581e851c3fe1c5b22dc67707b938714ad6159a8b",
+      "size_bytes": 42994
+    },
+    {
+      "path": "scripts/preflight_vlm_prompt_belief.py",
+      "sha256": "sha256:8fab2fcf68c1653db77e415f66cf8618c7c4d72708e99730e0663c938e38d640",
+      "size_bytes": 7522
+    },
+    {
+      "path": "scripts/prepare_vlm_prompt_belief.py",
+      "sha256": "sha256:8d8c61f0268433ca831a4ecaa63d97dbd13f8a7042f364e288b4e3c8650c672c",
+      "size_bytes": 2563
+    },
+    {
+      "path": "scripts/run_vlm_prompt_belief.py",
+      "sha256": "sha256:cab13037b0b0bc37ff94fdc3e347746b5194882ebb0cc73658482a06d373d42c",
+      "size_bytes": 15364
+    },
+    {
+      "path": "src/ruleshift/__init__.py",
+      "sha256": "sha256:2007ae62cf51d7c6ba469649d2143ac83444c14856d49c8d1ee3a281eb71e789",
+      "size_bytes": 804
+    },
+    {
+      "path": "src/ruleshift/agents/__init__.py",
+      "sha256": "sha256:23ff48db727941287998feb94f54b5b51bea750eb6678f2ea761f640e1ee9b7e",
+      "size_bytes": 644
+    },
+    {
+      "path": "src/ruleshift/agents/baselines.py",
+      "sha256": "sha256:1bd2f991cd78c935e814d1ad5dac4b9e82da46b8ea654740e25941288a11c978",
+      "size_bytes": 1677
+    },
+    {
+      "path": "src/ruleshift/agents/cache.py",
+      "sha256": "sha256:a00a938064461f4e5de77ee3b55aaa7bdeb482bbf187e44edba3a925ac52f2f9",
+      "size_bytes": 2131
+    },
+    {
+      "path": "src/ruleshift/agents/change_detection.py",
+      "sha256": "sha256:72f3a514e39d978d561a6b0f0b57282c5e302a3b70f9e08e9350047061303774",
+      "size_bytes": 5367
+    },
+    {
+      "path": "src/ruleshift/agents/consistency.py",
+      "sha256": "sha256:5999ca5ff29df6ef18e216a33f0ca9f072fc8c3120f5c366aff7868121ccd776",
+      "size_bytes": 2503
+    },
+    {
+      "path": "src/ruleshift/agents/diva_style.py",
+      "sha256": "sha256:3b5dac5bd6bdacd11be111d48f42d609ea579b8707b6c442cc6a100822350fdc",
+      "size_bytes": 3002
+    },
+    {
+      "path": "src/ruleshift/agents/grid_baselines.py",
+      "sha256": "sha256:8e96d48178f2645b0b66d05b2682873f58ecccb4d98efc3b1b4d4aab39850431",
+      "size_bytes": 37944
+    },
+    {
+      "path": "src/ruleshift/agents/grid_belief.py",
+      "sha256": "sha256:b87e3d52de9055a123de011e6adcc92ce829fe9bd3b124a91421a8450e4833d3",
+      "size_bytes": 12291
+    },
+    {
+      "path": "src/ruleshift/agents/grid_selector.py",
+      "sha256": "sha256:f227eb61113cae44eef30165e6a8d5a70c53818502e90c8b0e6ce7a485531c4e",
+      "size_bytes": 14749
+    },
+    {
+      "path": "src/ruleshift/agents/grid_vlm.py",
+      "sha256": "sha256:17f11dbad1b763c9da9f10e14a39df9924c0b7410e1fdffc4e351fb3bcfe3a0c",
+      "size_bytes": 23632
+    },
+    {
+      "path": "src/ruleshift/agents/model_check.py",
+      "sha256": "sha256:34b5fd6c2ca84203cf255e59cf4e50756a6905849ce64d24bb4637bcd0426389",
+      "size_bytes": 5865
+    },
+    {
+      "path": "src/ruleshift/agents/self_consistency.py",
+      "sha256": "sha256:3ddadb073c4b44f2cd6b17514994f48133e1e853958d85b3ad616df2ec2f50b5",
+      "size_bytes": 1628
+    },
+    {
+      "path": "src/ruleshift/agents/structured_vlm.py",
+      "sha256": "sha256:757654cb1f32e08354748761d0322dc3e8f54eb81f0dca46d0b02196f19d7f3c",
+      "size_bytes": 5434
+    },
+    {
+      "path": "src/ruleshift/agents/value_selector.py",
+      "sha256": "sha256:1a1dc0950adae23dc6f52f5a1d560ddbb5ac151c37dbdfc1335f283f69997df5",
+      "size_bytes": 17149
+    },
+    {
+      "path": "src/ruleshift/agents/vlm_backend.py",
+      "sha256": "sha256:65eb7aee99762029386105f94df69d792195a23edd48ebbcc4fabb8de84f4202",
+      "size_bytes": 16103
+    },
+    {
+      "path": "src/ruleshift/agents/vlm_smoke_backend.py",
+      "sha256": "sha256:380766785f9debed08286fc55f7dab61e2585c06920655f3d07895f4082c0dc8",
+      "size_bytes": 10492
+    },
+    {
+      "path": "src/ruleshift/envs/__init__.py",
+      "sha256": "sha256:ee269a82ece613a4745355a17086150fb990d903b48b9f0136e10956541e338a",
+      "size_bytes": 825
+    },
+    {
+      "path": "src/ruleshift/envs/bridge_hazard.py",
+      "sha256": "sha256:1ba6e607628b42ba2edfcc1c56acd9421abd34fb57ca623cc639d47e0583f0a9",
+      "size_bytes": 14774
+    },
+    {
+      "path": "src/ruleshift/envs/config.py",
+      "sha256": "sha256:ba8d5c4e9725953c1c20e617646060cf3d2537515a819d03aca973fbeac24cde",
+      "size_bytes": 4665
+    },
+    {
+      "path": "src/ruleshift/envs/events.py",
+      "sha256": "sha256:5cfeb3d01a7a92c9ece9d52c3937f109e343361b3a36ba41ecace96775e6c6e4",
+      "size_bytes": 2042
+    },
+    {
+      "path": "src/ruleshift/envs/gate_lock.py",
+      "sha256": "sha256:be3b561c16fd5584f3ddf37ef95fe20af17d43a42891075011bd21c9debdad84",
+      "size_bytes": 11719
+    },
+    {
+      "path": "src/ruleshift/envs/grid/__init__.py",
+      "sha256": "sha256:dc4565747ad8134a0d8ff0729a08fc691b41f30b16376bac838dc93fc0439389",
+      "size_bytes": 620
+    },
+    {
+      "path": "src/ruleshift/envs/grid/config.py",
+      "sha256": "sha256:b36f029d0cc3b2719d7c340eb42a2931f7a8fc94b6d758225d94994529a3cfa6",
+      "size_bytes": 2026
+    },
+    {
+      "path": "src/ruleshift/envs/grid/entities.py",
+      "sha256": "sha256:43135fc613f4ccf4ba0881cbb55aa5c3ec1f576578d0f1138762af2854da6f06",
+      "size_bytes": 1235
+    },
+    {
+      "path": "src/ruleshift/envs/grid/grid_env.py",
+      "sha256": "sha256:a05ab76df9fa0d5cbd27a750260e3c52d21567e177e982fc1b0db3df9c765d7c",
+      "size_bytes": 22104
+    },
+    {
+      "path": "src/ruleshift/envs/grid/mapgen.py",
+      "sha256": "sha256:ba84b4bea5d181ef90c83e644db5b38059859ab653374295a8e1664c06a06ea7",
+      "size_bytes": 10984
+    },
+    {
+      "path": "src/ruleshift/envs/grid/noise.py",
+      "sha256": "sha256:b09389b253433a442ffe56e71cb0367bc725d2aa68f6aa2f91255ec2098519bc",
+      "size_bytes": 1231
+    },
+    {
+      "path": "src/ruleshift/envs/grid/observations.py",
+      "sha256": "sha256:358b53d0c9d979bc349dfdb2e8f638c92c9bfcd9a77fe0981773db6725638244",
+      "size_bytes": 10272
+    },
+    {
+      "path": "src/ruleshift/envs/grid/render.py",
+      "sha256": "sha256:9d6659d52a32a633b8e05e954a32d732b136ae376be95cf28f82534d7b51e310",
+      "size_bytes": 8112
+    },
+    {
+      "path": "src/ruleshift/envs/grid/rules.py",
+      "sha256": "sha256:35fe89674dd33fc66a5d35ddc31937d620f4377af7a5edd6db0afceb61466f89",
+      "size_bytes": 2479
+    },
+    {
+      "path": "src/ruleshift/envs/grid/tools.py",
+      "sha256": "sha256:2688cc1d584852d2b2b5e1f20f81b3cf9ce2351c8d5ce329be594093760d18e4",
+      "size_bytes": 7327
+    },
+    {
+      "path": "src/ruleshift/envs/macro.py",
+      "sha256": "sha256:b8c57d48bcaff8363d82a057f457809a4708601caa080c24aae6914d6265b6ce",
+      "size_bytes": 2893
+    },
+    {
+      "path": "src/ruleshift/envs/observations.py",
+      "sha256": "sha256:a7c79f2491644e6730358fcbf99ce2710f744626ec8bd7cd373b9b33757cb2cb",
+      "size_bytes": 4240
+    },
+    {
+      "path": "src/ruleshift/evaluator/__init__.py",
+      "sha256": "sha256:a6949e0c477c58da87771c69521c86a50ba7523a798e6ec45c88053f4316595a",
+      "size_bytes": 1679
+    },
+    {
+      "path": "src/ruleshift/evaluator/adapter.py",
+      "sha256": "sha256:a7736cfadd1ace65fcd3a2ca4628bddb142d54475fd9d3beabee3f1f04a64684",
+      "size_bytes": 1230
+    },
+    {
+      "path": "src/ruleshift/evaluator/approx_reference.py",
+      "sha256": "sha256:e63547a8010133caa28eac54b011cf0a605d5f1f4be9856ee94eae94e8e5a339",
+      "size_bytes": 4781
+    },
+    {
+      "path": "src/ruleshift/evaluator/baselines.py",
+      "sha256": "sha256:2ec2dd735a721a49d35382b27cafa5ee6dd3bda8cce99111c3c44f013d86b270",
+      "size_bytes": 2225
+    },
+    {
+      "path": "src/ruleshift/evaluator/bayes_filter.py",
+      "sha256": "sha256:2b50d524c70e5df5a272d892ba8ac3f7a39a1db72ba061e3e8d44a137bf358e9",
+      "size_bytes": 4585
+    },
+    {
+      "path": "src/ruleshift/evaluator/closed_loop.py",
+      "sha256": "sha256:9d048624f3f761f0a5cf526ded8cd7ef0fe7f62db309f2a66002dbcd902291ec",
+      "size_bytes": 22313
+    },
+    {
+      "path": "src/ruleshift/evaluator/diagnostics.py",
+      "sha256": "sha256:5994d8966acd8a5c28fc9f5ffaf64bdf041477c3e9c1b2e374813a4aa94a7ba2",
+      "size_bytes": 7881
+    },
+    {
+      "path": "src/ruleshift/evaluator/exact_solver.py",
+      "sha256": "sha256:5bbd6f7326927bc7795aea0f764b7ebdf78a786a2650bd261f5e511cc275fa37",
+      "size_bytes": 12748
+    },
+    {
+      "path": "src/ruleshift/evaluator/family_b_reference.py",
+      "sha256": "sha256:958e5b5002ebf3c1c50ab5ef4e2f941e6c483dbf4abd9220b7960d50c06db289",
+      "size_bytes": 2322
+    },
+    {
+      "path": "src/ruleshift/evaluator/grid_base_stress.py",
+      "sha256": "sha256:321da68a9d5e34308203d3467f8616361071937cf5f8c3cf78f2a4d5ccfd915f",
+      "size_bytes": 18957
+    },
+    {
+      "path": "src/ruleshift/evaluator/grid_metrics.py",
+      "sha256": "sha256:4a09a7dc5e48746d12d22dc318d837262b022f6868069b166216d0aefb70720c",
+      "size_bytes": 21895
+    },
+    {
+      "path": "src/ruleshift/evaluator/grid_reference.py",
+      "sha256": "sha256:9f12591daac6982af7c214d331a8c7ad72fdaa0af11bfac30afc1da9202db9f9",
+      "size_bytes": 4509
+    },
+    {
+      "path": "src/ruleshift/evaluator/grid_runner.py",
+      "sha256": "sha256:c0c1c05989dc4a69a6521631d8a5b0cacb19c54babac5df331dc79e760eba674",
+      "size_bytes": 14232
+    },
+    {
+      "path": "src/ruleshift/evaluator/grid_trace.py",
+      "sha256": "sha256:ba1ffa8f1047b2530247deca4a9ac177c18d2847c3fbd225e0ab5525aa65db22",
+      "size_bytes": 1103
+    },
+    {
+      "path": "src/ruleshift/evaluator/h1_contexts.py",
+      "sha256": "sha256:af5a3376d3396152c5c6d654ced395c88bced067d6001ddcfc8e4b5e5d6014a7",
+      "size_bytes": 9236
+    },
+    {
+      "path": "src/ruleshift/evaluator/heldout.py",
+      "sha256": "sha256:d1278eab30cdda68c89c8b098244bcff59af9fd9e863bb4003df3f7bd20be9c9",
+      "size_bytes": 11313
+    },
+    {
+      "path": "src/ruleshift/evaluator/history_contexts.py",
+      "sha256": "sha256:e64cdd9b2d19f13db32e07b65c88c8ada73b2664aa1f1422fb56d676a13ee914",
+      "size_bytes": 7670
+    },
+    {
+      "path": "src/ruleshift/evaluator/metrics_ci.py",
+      "sha256": "sha256:20b586131a02bb4dc7afffdcf843c55264c6b8088a515eb016e1732bc76eb7af",
+      "size_bytes": 2874
+    },
+    {
+      "path": "src/ruleshift/evaluator/offline_audit.py",
+      "sha256": "sha256:b96c9f49c61357d2c9a0f779d8dc3eb25a61b6940dd7dff3f1f7158be1ddf242",
+      "size_bytes": 22808
+    },
+    {
+      "path": "src/ruleshift/evaluator/phase_diagram.py",
+      "sha256": "sha256:e54def441050ea924933531d912108c848fdb4ca085338112cce72518a925667",
+      "size_bytes": 7377
+    },
+    {
+      "path": "src/ruleshift/evaluator/provenance.py",
+      "sha256": "sha256:b68d16927dcc3805c8caa5c072af194c61938089022b6962c2593cbd34ec5a87",
+      "size_bytes": 1485
+    },
+    {
+      "path": "src/ruleshift/evaluator/real_run.py",
+      "sha256": "sha256:4c84da1e90e51d3b49ca250c5b852a4098f4f2c2f89d0240364fa19ebc6103f8",
+      "size_bytes": 5603
+    },
+    {
+      "path": "src/ruleshift/evaluator/stress.py",
+      "sha256": "sha256:09391323664ea1e75039bf9845cc9bae54fac7e46dc208577685eb4a1a4864be",
+      "size_bytes": 4444
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_decision.py",
+      "sha256": "sha256:63c537a17755e20d0dffe20cb68295ce8acd8e12f6bb562a3077bfc3d6c34a14",
+      "size_bytes": 45505
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_decision_visual.py",
+      "sha256": "sha256:7a84aa91184ab657135464ecea675b31007778efca011e6c943929392886c47c",
+      "size_bytes": 9241
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_prompt_belief.py",
+      "sha256": "sha256:8cb829dfd5ecace7eccacd9d79a3ca99db53ebf8907a4b023b1612a6f05108a8",
+      "size_bytes": 27115
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_run_audit.py",
+      "sha256": "sha256:be756c80256e1d5cf784ebd809840f4a0d589fdd76b0debd7774f9dfbacf79a2",
+      "size_bytes": 3545
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_smoke.py",
+      "sha256": "sha256:1bca9afe6f015b4cd29c3b82ed5bb937ae7d974de763a228a0c16b011653b020",
+      "size_bytes": 37074
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_smoke_checkpoint.py",
+      "sha256": "sha256:9cd94654067fa5128b8ff1a56427caacae5aa0eb8b67bb03395acc587791ee61",
+      "size_bytes": 4481
+    },
+    {
+      "path": "src/ruleshift/evaluator/vlm_smoke_parser.py",
+      "sha256": "sha256:21af22d79b67d1c4fa81d80b1d9428ce040c6d6886600ffb4b5b14db29dc5596",
+      "size_bytes": 1907
+    },
+    {
+      "path": "src/ruleshift/permissions.py",
+      "sha256": "sha256:43945a2a25d3aeaedc84c3999e16855020bb2380e5660aef4136f121d2849f01",
+      "size_bytes": 9029
+    },
+    {
+      "path": "src/ruleshift/prompts/direct_v1.txt",
+      "sha256": "sha256:8698b76b282d5a7de1a9abf406b6fd3d93a6fa8c5a083be7ee6d6aa3da59ecde",
+      "size_bytes": 1052
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v1.txt",
+      "sha256": "sha256:916fdda52a2fd6683595f6cade2066aaf416436a5959d2ec23a5aebc0e7b6d50",
+      "size_bytes": 2563
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v2.txt",
+      "sha256": "sha256:77e076ad2923c6e87f237122df46e0564a4f5e22ab3c44aa60a5ff7268435f72",
+      "size_bytes": 3013
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v3.txt",
+      "sha256": "sha256:65509fa8889a80a20c8b69d3c28c4b5992612181eca56bd5d15fe48f9e0e3845",
+      "size_bytes": 3606
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v4.txt",
+      "sha256": "sha256:9a16c41e504714cca809297ccb9cdb8913d6edbc38076a86abf5b283d32f8af5",
+      "size_bytes": 4215
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v5.txt",
+      "sha256": "sha256:7afca70f7664d05b7f62b78fe1a74fd7bba5f65ea0d8904d16f1a23281e13f1c",
+      "size_bytes": 4846
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v6.txt",
+      "sha256": "sha256:57cb90b47b272a85b2d01cc78b5a4240cc8f87b3e9037851618ea235d5e48c12",
+      "size_bytes": 3065
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v7.txt",
+      "sha256": "sha256:6b6f35cd9cb9ec05df9f2e25465902fb3bc3cc7df498aed05da1441b53ac2062",
+      "size_bytes": 3260
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v8.txt",
+      "sha256": "sha256:4b4836d4dff9aee50c7827712b1a21a8197b544b8ce186271c1c6be992f4087e",
+      "size_bytes": 3531
+    },
+    {
+      "path": "src/ruleshift/prompts/grid_v9.txt",
+      "sha256": "sha256:ec471440031a0a907ab0f056ecf6beb6f0fdd9a5b97e47235471c26b1618c991",
+      "size_bytes": 3644
+    },
+    {
+      "path": "src/ruleshift/prompts/outcomes_v1.txt",
+      "sha256": "sha256:e68091d33598b254608ef89c4e6e600f596050cbc47edd73ab78f8a77438fac9",
+      "size_bytes": 3029
+    },
+    {
+      "path": "src/ruleshift/public_api/__init__.py",
+      "sha256": "sha256:f6982320feec2e0bda8c1e871995cf6d360dd53920d6a4358a13cba465138baf",
+      "size_bytes": 365
+    },
+    {
+      "path": "src/ruleshift/public_api/grid_planner.py",
+      "sha256": "sha256:795fdbda5cba6889c36d5be8ec6a23b69f40edf8783a4348422f735e4b03edb4",
+      "size_bytes": 7477
+    },
+    {
+      "path": "src/ruleshift/public_api/grid_rules.py",
+      "sha256": "sha256:442e38dbe1601504286d7fd085b0bf8ea1defc246341f4ba071b03d694437f7a",
+      "size_bytes": 11212
+    },
+    {
+      "path": "src/ruleshift/public_api/grid_schemas.py",
+      "sha256": "sha256:479d6802fae2225f75cd1e2fa38ca1b12e147dfafc24cb81ac49c6f391a3ebdf",
+      "size_bytes": 17776
+    },
+    {
+      "path": "src/ruleshift/public_api/interface.py",
+      "sha256": "sha256:7655406d87cae912052904b92d925ab19cbc5c48cc5348b9bacf825ed12cada1",
+      "size_bytes": 4560
+    },
+    {
+      "path": "src/ruleshift/public_api/schemas.py",
+      "sha256": "sha256:e74ab229984b55853c28328518ced771a3b239629d014373928b494c8faa437f",
+      "size_bytes": 16010
+    },
+    {
+      "path": "src/ruleshift_vlm.egg-info/dependency_links.txt",
+      "sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "size_bytes": 1
+    },
+    {
+      "path": "src/ruleshift_vlm.egg-info/PKG-INFO",
+      "sha256": "sha256:e8d638becdae15232d42ed8fcef55310f3bf36e541b596b6386e32b12a6ad907",
+      "size_bytes": 5464
+    },
+    {
+      "path": "src/ruleshift_vlm.egg-info/requires.txt",
+      "sha256": "sha256:976f1ef534ead5edcd1a4aac70a63e05cac60b25a199fd24d0fc2dddc65b6c5b",
+      "size_bytes": 267
+    },
+    {
+      "path": "src/ruleshift_vlm.egg-info/SOURCES.txt",
+      "sha256": "sha256:1baf787f8462a73bbcdb9915d7c89d156d7493669264902a51fcafe5f74a26fd",
+      "size_bytes": 2634
+    },
+    {
+      "path": "src/ruleshift_vlm.egg-info/top_level.txt",
+      "sha256": "sha256:9e3b9ac7cf4a959122377abbff6c2b11abf733f46d7dea0cdc227b1f4a23ef9f",
+      "size_bytes": 10
+    }
+  ],
+  "total_bytes": 1196548,
+  "version": "vlm-prompt-belief-source-v3"
+}

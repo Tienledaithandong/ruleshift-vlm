@@ -1,0 +1,93 @@
+description: Deterministic cost / noise / diagnosticity grid for environment debugging
+  and early symbolic baselines. Family B and locked-test scenarios are deliberately
+  absent.
+diagnosticity_definition:
+  note: Quantify via a preregistered expected-information-gain formula under a fixed
+    reference belief before inspecting any VLM results. See docs/problem_spec.md section
+    15.
+  status: OPEN_QUESTION
+environment:
+  candidate_rules:
+  - red
+  - blue
+  - green
+  delivery_reward: 10.0
+  family: gate_lock
+  grid_size:
+  - 5
+  - 5
+  lockout_steps_options:
+  - 0
+  - 3
+  - 8
+  max_env_steps: 2
+  probe_round_trip: true
+  seed_rule: red
+  step_cost: -0.05
+grid:
+  feedback_noise_rate:
+  - 0.0
+  - 0.1
+  - 0.25
+  probe_detour_steps:
+  - 0
+  - 2
+  - 5
+  shift_condition:
+  - no_shift
+  - low_hazard
+  - high_hazard
+  task_action_diagnosticity:
+  - low
+  - medium
+  - high
+hypothesised_cells:
+- feedback_noise_rate: 0.25
+  id: dev_direct_action_preferable
+  lockout_steps: 0
+  prediction: direct task action dominates probing
+  probe_detour_steps: 5
+  shift_condition: no_shift
+  status: HYPOTHESIS_UNTESTED
+  task_action_diagnosticity: high
+- feedback_noise_rate: 0.0
+  id: dev_probe_preferable
+  lockout_steps: 8
+  prediction: probing dominates blind commit
+  probe_detour_steps: 0
+  shift_condition: high_hazard
+  status: HYPOTHESIS_UNTESTED
+  task_action_diagnosticity: low
+model_call_cap:
+  note: Cap applies identically to all methods; extra samples count toward it.
+  per_episode: 6
+name: ruleshift-dev-v0.1
+planned_splits:
+  note: Do not create test scenarios until method freeze in Week 6.
+  test_locked: NOT_DEFINED
+schema_version: 1
+seeds:
+  episode_offset: 1000
+  master: 20261121
+  streams:
+    hazard_outcome: HAZARD_OUTCOME
+    observation_noise: OBSERVATION_NOISE
+    probe_feedback: PROBE_FEEDBACK
+    shift_target: SHIFT_TARGET
+    shift_trigger: SHIFT_TRIGGER
+shift:
+  expose_progress_feature: false
+  hazard_over_full_horizon: true
+  log_shift_time_to_agent: false
+  max_shifts_per_episode: 1
+  narrow_time_window: false
+  no_shift_is_valid_episode: true
+split: dev
+uncertainty_trigger:
+  calibration_split: dev_no_shift
+  enabled: false
+  note: See docs/world_model_trigger.md. No learned transition model is currently
+    connected to the closed-loop runner.
+  score: standardized_residual
+  target_episode_false_alarm_rate: 0.05
+  threshold: NOT_CALIBRATED

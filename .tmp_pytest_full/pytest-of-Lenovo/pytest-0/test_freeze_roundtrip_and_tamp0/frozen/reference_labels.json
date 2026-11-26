@@ -1,0 +1,1590 @@
+{
+  "records": [
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.9,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+        "decision_class": "commit_preferred",
+        "decision_margin": 2.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 6.9,
+        "q_commit": 9.9,
+        "q_sign": 7.9,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-01"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.95,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000018,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 1.0,
+        "declaration_correct": true,
+        "declaration_margin": 1.0,
+        "declaration_rule": "hazard_goal_swap",
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": -0.0,
+        "q_blue": 8.949999999999998,
+        "q_commit": 9.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-02"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.75,
+        "commit_rule": "base",
+        "commit_steps": 5,
+        "commit_target": [
+          1,
+          4
+        ],
+        "context_id": "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 9.75,
+        "q_sign": 8.75,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-03"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 8.838888888888889,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000009,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.888888888888889,
+        "declaration_correct": null,
+        "declaration_margin": 0.7777777777777778,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.5032583347756456,
+        "q_blue": 7.838888888888888,
+        "q_commit": 8.838888888888889,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-04"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.925,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+        "decision_class": "probe_preferred",
+        "decision_margin": 5.025,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 3.9,
+        "q_sign": 8.925,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-05"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 7.894827586206896,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.9448275862068956,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.4827586206896552,
+        "declaration_correct": null,
+        "declaration_margin": 0.37931034482758624,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 2.2001393944508894,
+        "q_blue": null,
+        "q_commit": 3.95,
+        "q_sign": 7.894827586206896,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-06"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.430327868852459,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          2,
+          4
+        ],
+        "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.8418032786885226,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5573770491803279,
+        "declaration_correct": null,
+        "declaration_margin": 0.16393442622950827,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.2132336634320213,
+        "q_blue": null,
+        "q_commit": 4.588524590163936,
+        "q_sign": 8.430327868852459,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-07"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.830851063829787,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 1.2787234042553202,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8085106382978723,
+        "declaration_correct": null,
+        "declaration_margin": 0.6170212765957446,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 0.7045767128725936,
+        "q_blue": null,
+        "q_commit": 7.552127659574467,
+        "q_sign": 8.830851063829787,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-08"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.499374999999999,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.649374999999999,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.499374999999999,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-09"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.526249999999997,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.5762499999999973,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.526249999999997,
+        "q_commit": 4.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-10"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 7.875,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.0250000000000004,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 7.875,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-11"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.522749999999998,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+        "decision_class": "probe_preferred",
+        "decision_margin": 0.5777499999999982,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8,
+        "declaration_correct": null,
+        "declaration_margin": 0.7000000000000001,
+        "declaration_rule": null,
+        "latent_rule": "base",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 0.9219280948873623,
+        "q_blue": 8.522749999999998,
+        "q_commit": 7.75,
+        "q_sign": 7.945,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A1-12"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.9,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+        "decision_class": "commit_preferred",
+        "decision_margin": 2.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 6.9,
+        "q_commit": 9.9,
+        "q_sign": 7.9,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-01"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.95,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000018,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 1.0,
+        "declaration_correct": true,
+        "declaration_margin": 1.0,
+        "declaration_rule": "hazard_goal_swap",
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": -0.0,
+        "q_blue": 8.949999999999998,
+        "q_commit": 9.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-02"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.75,
+        "commit_rule": "base",
+        "commit_steps": 5,
+        "commit_target": [
+          1,
+          4
+        ],
+        "context_id": "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 9.75,
+        "q_sign": 8.75,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-03"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 8.838888888888889,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000009,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.888888888888889,
+        "declaration_correct": null,
+        "declaration_margin": 0.7777777777777778,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.5032583347756456,
+        "q_blue": 7.838888888888888,
+        "q_commit": 8.838888888888889,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-04"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.925,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+        "decision_class": "probe_preferred",
+        "decision_margin": 5.025,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 3.9,
+        "q_sign": 8.925,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-05"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 7.894827586206896,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.9448275862068956,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.4827586206896552,
+        "declaration_correct": null,
+        "declaration_margin": 0.37931034482758624,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 2.2001393944508894,
+        "q_blue": null,
+        "q_commit": 3.95,
+        "q_sign": 7.894827586206896,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-06"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.430327868852459,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          2,
+          4
+        ],
+        "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.8418032786885226,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5573770491803279,
+        "declaration_correct": null,
+        "declaration_margin": 0.16393442622950827,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.2132336634320213,
+        "q_blue": null,
+        "q_commit": 4.588524590163936,
+        "q_sign": 8.430327868852459,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-07"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.830851063829787,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 1.2787234042553202,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8085106382978723,
+        "declaration_correct": null,
+        "declaration_margin": 0.6170212765957446,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 0.7045767128725936,
+        "q_blue": null,
+        "q_commit": 7.552127659574467,
+        "q_sign": 8.830851063829787,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-08"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.499374999999999,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.649374999999999,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.499374999999999,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-09"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.526249999999997,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.5762499999999973,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.526249999999997,
+        "q_commit": 4.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-10"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 7.875,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.0250000000000004,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 7.875,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-11"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.522749999999998,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+        "decision_class": "probe_preferred",
+        "decision_margin": 0.5777499999999982,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8,
+        "declaration_correct": null,
+        "declaration_margin": 0.7000000000000001,
+        "declaration_rule": null,
+        "latent_rule": "base",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 0.9219280948873623,
+        "q_blue": 8.522749999999998,
+        "q_commit": 7.75,
+        "q_sign": 7.945,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A2-12"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.9,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+        "decision_class": "commit_preferred",
+        "decision_margin": 2.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 6.9,
+        "q_commit": 9.9,
+        "q_sign": 7.9,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-01"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.95,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000018,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 1.0,
+        "declaration_correct": true,
+        "declaration_margin": 1.0,
+        "declaration_rule": "hazard_goal_swap",
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": -0.0,
+        "q_blue": 8.949999999999998,
+        "q_commit": 9.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-02"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.75,
+        "commit_rule": "base",
+        "commit_steps": 5,
+        "commit_target": [
+          1,
+          4
+        ],
+        "context_id": "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 9.75,
+        "q_sign": 8.75,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-03"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 8.838888888888889,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000009,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.888888888888889,
+        "declaration_correct": null,
+        "declaration_margin": 0.7777777777777778,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.5032583347756456,
+        "q_blue": 7.838888888888888,
+        "q_commit": 8.838888888888889,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-04"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.925,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+        "decision_class": "probe_preferred",
+        "decision_margin": 5.025,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 3.9,
+        "q_sign": 8.925,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-05"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 7.894827586206896,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.9448275862068956,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.4827586206896552,
+        "declaration_correct": null,
+        "declaration_margin": 0.37931034482758624,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 2.2001393944508894,
+        "q_blue": null,
+        "q_commit": 3.95,
+        "q_sign": 7.894827586206896,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-06"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.430327868852459,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          2,
+          4
+        ],
+        "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.8418032786885226,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5573770491803279,
+        "declaration_correct": null,
+        "declaration_margin": 0.16393442622950827,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.2132336634320213,
+        "q_blue": null,
+        "q_commit": 4.588524590163936,
+        "q_sign": 8.430327868852459,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-07"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.830851063829787,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 1.2787234042553202,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8085106382978723,
+        "declaration_correct": null,
+        "declaration_margin": 0.6170212765957446,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 0.7045767128725936,
+        "q_blue": null,
+        "q_commit": 7.552127659574467,
+        "q_sign": 8.830851063829787,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-08"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.499374999999999,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.649374999999999,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.499374999999999,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-09"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.526249999999997,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.5762499999999973,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.526249999999997,
+        "q_commit": 4.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-10"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 7.875,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.0250000000000004,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 7.875,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-11"
+    },
+    {
+      "base_context_id": null,
+      "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+      "kind": "base",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.522749999999998,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+        "decision_class": "probe_preferred",
+        "decision_margin": 0.5777499999999982,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8,
+        "declaration_correct": null,
+        "declaration_margin": 0.7000000000000001,
+        "declaration_rule": null,
+        "latent_rule": "base",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 0.9219280948873623,
+        "q_blue": 8.522749999999998,
+        "q_commit": 7.75,
+        "q_sign": 7.945,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "A3-12"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+      "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+      "kind": "nuisance",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.9,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+        "decision_class": "commit_preferred",
+        "decision_margin": 2.0,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "remap_rotate",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 6.9,
+        "q_commit": 9.9,
+        "q_sign": 7.9,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "N1"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+      "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "nuisance",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.95,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "commit_preferred",
+        "decision_margin": 1.0000000000000018,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 1.0,
+        "declaration_correct": true,
+        "declaration_margin": 1.0,
+        "declaration_rule": "hazard_goal_swap",
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": -0.0,
+        "q_blue": 8.949999999999998,
+        "q_commit": 9.95,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "N2"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+      "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+      "kind": "nuisance",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.925,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+        "decision_class": "probe_preferred",
+        "decision_margin": 5.025,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": null,
+        "q_commit": 3.9,
+        "q_sign": 8.925,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "N3"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+      "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+      "kind": "nuisance",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 7.894827586206896,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.9448275862068956,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.4827586206896552,
+        "declaration_correct": null,
+        "declaration_margin": 0.37931034482758624,
+        "declaration_rule": null,
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 2.2001393944508894,
+        "q_blue": null,
+        "q_commit": 3.95,
+        "q_sign": 7.894827586206896,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "N4"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+      "kind": "nuisance",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.499374999999999,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+        "decision_class": "probe_preferred",
+        "decision_margin": 3.649374999999999,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.5,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 1.0,
+        "q_blue": 8.499374999999999,
+        "q_commit": 4.85,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "N5"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+      "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+      "kind": "nuisance",
+      "reference": {
+        "best_action": "PROBE_BLUE",
+        "best_value": 8.522749999999998,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+        "decision_class": "probe_preferred",
+        "decision_margin": 0.5777499999999982,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8,
+        "declaration_correct": null,
+        "declaration_margin": 0.7000000000000001,
+        "declaration_rule": null,
+        "latent_rule": "base",
+        "optimal_actions": [
+          "PROBE_BLUE"
+        ],
+        "posterior_entropy": 0.9219280948873623,
+        "q_blue": 8.522749999999998,
+        "q_commit": 7.75,
+        "q_sign": 7.945,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "N6"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+      "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe-diag-blue-goal",
+      "kind": "diagnostic",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 8.977027027027027,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 1,
+        "commit_target": [
+          3,
+          5
+        ],
+        "context_id": "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe-diag-blue-goal",
+        "decision_class": "near_tie",
+        "decision_margin": 0.031081081081081763,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 0.918918918918919,
+        "declaration_correct": true,
+        "declaration_margin": 0.8378378378378379,
+        "declaration_rule": "hazard_goal_swap",
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.4059770384755711,
+        "q_blue": null,
+        "q_commit": 8.977027027027027,
+        "q_sign": 8.945945945945946,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "D1"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+      "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal-diag-blue-hazard",
+      "kind": "diagnostic",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 8.738709677419353,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          2,
+          4
+        ],
+        "context_id": "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal-diag-blue-hazard",
+        "decision_class": "commit_preferred",
+        "decision_margin": 0.31774193548386975,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.22580645161290322,
+        "declaration_correct": null,
+        "declaration_margin": 0.0,
+        "declaration_rule": null,
+        "latent_rule": "slippery",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 2.361911622652153,
+        "q_blue": null,
+        "q_commit": 8.738709677419353,
+        "q_sign": 8.420967741935483,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "D2"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+      "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard-diag-blue-safe",
+      "kind": "diagnostic",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.734172661870502,
+        "commit_rule": "sign_composition",
+        "commit_steps": 1,
+        "commit_target": [
+          1,
+          2
+        ],
+        "context_id": "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard-diag-blue-safe",
+        "decision_class": "commit_preferred",
+        "decision_margin": 0.8926258992805742,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 0.9784172661870504,
+        "declaration_correct": true,
+        "declaration_margin": 0.9676258992805755,
+        "declaration_rule": "sign_composition",
+        "latent_rule": "sign_composition",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.17181996544142372,
+        "q_blue": null,
+        "q_commit": 9.734172661870502,
+        "q_sign": 8.841546762589928,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "D3"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+      "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal-diag-blue-hazard",
+      "kind": "diagnostic",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.715014577259476,
+        "commit_rule": "base",
+        "commit_steps": 5,
+        "commit_target": [
+          1,
+          4
+        ],
+        "context_id": "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal-diag-blue-hazard",
+        "decision_class": "commit_preferred",
+        "decision_margin": 0.9647230320699709,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 0.9970845481049563,
+        "declaration_correct": true,
+        "declaration_margin": 0.9941690962099126,
+        "declaration_rule": "base",
+        "latent_rule": "base",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.028754095353637182,
+        "q_blue": null,
+        "q_commit": 9.715014577259476,
+        "q_sign": 8.750291545189505,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "D4"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+      "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.-diag-blue-goal",
+      "kind": "diagnostic",
+      "reference": {
+        "best_action": "COMMIT",
+        "best_value": 9.593589743589742,
+        "commit_rule": "hazard_goal_swap",
+        "commit_steps": 3,
+        "commit_target": [
+          2,
+          1
+        ],
+        "context_id": "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.-diag-blue-goal",
+        "decision_class": "commit_preferred",
+        "decision_margin": 0.0,
+        "declaration": "DECLARE_RULE",
+        "declaration_confidence": 0.9743589743589743,
+        "declaration_correct": true,
+        "declaration_margin": 0.9487179487179487,
+        "declaration_rule": "hazard_goal_swap",
+        "latent_rule": "hazard_goal_swap",
+        "optimal_actions": [
+          "COMMIT"
+        ],
+        "posterior_entropy": 0.17203694935311378,
+        "q_blue": null,
+        "q_commit": 9.593589743589742,
+        "q_sign": null,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "D5"
+    },
+    {
+      "base_context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05-",
+      "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05--diag-blue-hazard",
+      "kind": "diagnostic",
+      "reference": {
+        "best_action": "PROBE_SIGN",
+        "best_value": 8.696808510638297,
+        "commit_rule": "base",
+        "commit_steps": 2,
+        "commit_target": [
+          2,
+          4
+        ],
+        "context_id": "vlm-dev-layout-b-hazard-confident-cheap-0.05--diag-blue-hazard",
+        "decision_class": "probe_preferred",
+        "decision_margin": 1.0946808510638304,
+        "declaration": "ABSTAIN",
+        "declaration_confidence": 0.8085106382978723,
+        "declaration_correct": null,
+        "declaration_margin": 0.6382978723404255,
+        "declaration_rule": null,
+        "latent_rule": "base",
+        "optimal_actions": [
+          "PROBE_SIGN"
+        ],
+        "posterior_entropy": 0.8009453301700576,
+        "q_blue": null,
+        "q_commit": 7.6021276595744665,
+        "q_sign": 8.696808510638297,
+        "reference_version": "vlm-decision-reference-v1"
+      },
+      "request_id": "D6"
+    }
+  ],
+  "reference_version": "vlm-decision-reference-v1",
+  "version": "vlm-decision-smoke-v1"
+}

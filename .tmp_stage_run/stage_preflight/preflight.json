@@ -1,0 +1,44 @@
+{
+  "all_contexts_present": true,
+  "arms": {
+    "B1": 12,
+    "B2": 12,
+    "B3": 12,
+    "B4": 12
+  },
+  "checkpoint": {
+    "aggregate_sha256": "sha256:02bdb4ccb82eb3aceaed1608e1e7c55a81ab3e6125a20f6cccc690bbf1254c75",
+    "file_count": 11,
+    "snapshot_path": "C:\\Users\\Lenovo\\Documents\\ChatGPT\\Agentic VLM research\\kaggle_stage\\qwen_snapshot\\66285546d2b821cf421d4f5eb2576359d3770cd3",
+    "total_bytes": 7520892432
+  },
+  "freeze_sha256": "sha256:351c772ebfe3fc26d19bd42d910888f6aa393970a5d2f04ead77ad1706f7c968",
+  "frozen": "C:\\Users\\Lenovo\\Documents\\ChatGPT\\Agentic VLM research\\.tmp_stage_run\\results\\vlm_prompt_belief_diagnostic\\frozen",
+  "frozen_hashes": {
+    "analysis_plan_sha256": "sha256:c8c08cbf9a2b74e77d9d70587a4334c74b80bbb5bc29d61fe879c964f491eb04",
+    "checkpoint_manifest_sha256": "sha256:84ac05e1a20687b803aed751a1626d64b3ce071e095fdc0aac732b2425a0fbcc",
+    "model_runtime_sha256": "sha256:3a3daa61d6112127c0cf4358debd32b34976abc32ccfaa89972160af9597d089",
+    "prompt_manifest_sha256": "sha256:a27375a7a038c6dfaf4ecb5db49b522787b9509fdb91266a9ae1a925da60cefe",
+    "prompts_sha256": "sha256:75d1ecd5229654835d6f5153cb395417c565101c2fd94c08e536accb5acb600e",
+    "protocol_sha256": "sha256:c4b7017b06c2742c6b446c8541235d2d486d693a1b45d8fad5ae2064a4c85a12",
+    "public_payloads_sha256": "sha256:46e14106f66ee2dce987b0137ad157d34401463860c1548719cf21ac4395a8f2",
+    "reference_labels_sha256": "sha256:c44b695dfaf14df4e922993ee440e16bb6d8422df1684f3a6a081d9617e6d45d",
+    "request_manifest_sha256": "sha256:a3271a58e158c11e538126d4581e851c3fe1c5b22dc67707b938714ad6159a8b"
+  },
+  "leakage": {
+    "no_concrete_action_example_in_neutral": true,
+    "no_image_input": true,
+    "no_image_marker": true,
+    "no_posterior_in_prior_arms": true,
+    "posterior_in_both_explicit_arms": true
+  },
+  "prompt_chars": {
+    "max": 2847,
+    "mean": 2622.9583333333335,
+    "min": 2520
+  },
+  "protocol_sha256": "sha256:c4b7017b06c2742c6b446c8541235d2d486d693a1b45d8fad5ae2064a4c85a12",
+  "request_count": 48,
+  "request_ids_unique": true,
+  "status": "GO_FOR_CPU_ONLY_DRY_RUN"
+}

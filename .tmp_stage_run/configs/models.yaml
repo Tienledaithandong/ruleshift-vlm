@@ -1,0 +1,33 @@
+# Qwen2.5 is the pinned anchor used in the historical text-input Kaggle pilot.
+schema_version: 1
+status: PINNED_PILOT_ANCHOR
+default: qwen2.5-vl-3b
+
+models:
+  qwen2.5-vl-3b:
+    hf_id: Qwen/Qwen2.5-VL-3B-Instruct
+    revision: 66285546d2b821cf421d4f5eb2576359d3770cd3
+    device: cuda            # set to cpu only if no GPU is available in the runtime
+    dtype: bfloat16
+    max_new_tokens: 2048   # raised from 1024 for the merged RGB+text prompt
+    call_cap_per_episode: 6
+    role: small_anchor
+  qwen3-vl-4b:
+    hf_id: Qwen/Qwen3-VL-4B-Instruct
+    revision: null
+    device: cpu
+    dtype: bfloat16
+    max_new_tokens: 1024
+    call_cap_per_episode: 6
+    role: newer_alternative
+
+runtime:
+  allow_download: false
+  local_files_only: true
+  cache_dir: null
+  seed: 20261121
+
+notes: >-
+  No model is fetched by the setup. Before any empirical run, set revision to a
+  pinned commit hash, confirm the checkpoint exists locally (or explicitly
+  allow a download), and verify the hardware in `scripts/preflight.py`.

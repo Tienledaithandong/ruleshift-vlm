@@ -1,0 +1,36 @@
+call_and_step_budget:
+  max_env_steps: 60
+  max_vlm_calls_per_episode: 6
+frozen_commit: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+locked_run:
+  implementation_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+  methods:
+  - never_probe
+  model_id: anchor
+  revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  scenarios:
+  - config:
+      candidate_rules:
+      - red
+      - blue
+      - green
+      delivery_reward: 10.0
+      disable_shift: false
+      feedback_noise: 0.05
+      grid_height: 5
+      grid_width: 5
+      initial_mechanic: red
+      lockout_steps: 4
+      max_env_steps: 60
+      probe_detour_steps: 4
+      scenario_id: heldA-d4-n0.05-k4-h0
+      seed_rule: red
+      shift_hazard: 0.04
+      shift_targets:
+      - blue
+      - green
+      step_cost: -0.05
+    id: heldA-d4-n0.05-k4-h0
+  seeds:
+  - 1
+status: READY

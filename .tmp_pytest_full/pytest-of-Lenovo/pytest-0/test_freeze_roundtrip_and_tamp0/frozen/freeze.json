@@ -1,0 +1,52 @@
+{
+  "analysis_plan_sha256": "sha256:51b458ad8e0fa039baf9eda681fc57b50a61b4e3eaddef120100f00f46859403",
+  "base_ids": [
+    "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+    "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+    "vlm-dev-layout-c-base-rotate-50-default-0.30-blue:hazard",
+    "vlm-dev-layout-a-hazard-confident-cheap-0.30-sign:The red tile is not the goal.",
+    "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+    "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+    "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard",
+    "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal",
+    "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+    "vlm-dev-layout-a-base-hazard-sign-uniform-cheap-0.05-sign:The red tile is not the goal.",
+    "vlm-dev-layout-c-hazard-sign-50-default-0.00-sign:The red tile is not the goal.",
+    "vlm-dev-layout-b-hazard-confident-cheap-0.05-"
+  ],
+  "checkpoint_manifest_sha256": "sha256:31a2077779c422ce84da04ce63e13de3415f61f5fc3ce54f46b313b8259be78f",
+  "decoding_seed": 20261126,
+  "diagnostic_roles": {
+    "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe": "goal",
+    "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal": "hazard",
+    "vlm-dev-layout-b-hazard-confident-cheap-0.05-": "hazard",
+    "vlm-dev-layout-b-sign-confident-cheap-0.15-blue:hazard": "safe",
+    "vlm-dev-layout-c-base-hazard-90-default-0.05-blue:goal": "hazard",
+    "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.": "goal"
+  },
+  "do_sample": false,
+  "max_new_tokens": 32,
+  "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "nuisance_ids": [
+    "vlm-dev-layout-a-base-rotate-50-expensive-0.00-",
+    "vlm-dev-layout-b-base-hazard-50-cheap-0.05-sign:The red tile is not the goal.",
+    "vlm-dev-layout-a-base-hazard-50-cheap-0.15-blue:safe",
+    "vlm-dev-layout-b-all-uniform-cheap-0.30-blue:goal",
+    "vlm-dev-layout-c-hazard-sign-50-cheap-0.05-sign:The red tile is not the goal.",
+    "vlm-dev-layout-b-hazard-confident-cheap-0.05-"
+  ],
+  "parser_version": "vlm-smoke-direct-parser-v1",
+  "prompt_version": "vlm-smoke-direct-v1",
+  "prompts_sha256": "sha256:fc65c88d728937c51086388e4372782140feaa5eba3241368f685321baee053b",
+  "protocol_sha256": "sha256:71b8a76fafa084de80b09d1e34234a971157768db2b4275505761ce65d4715dd",
+  "public_payloads_sha256": "sha256:930f272bc2ab1c065845374a21219a850209bdea24163f1d0d3d8bebcc21e8f8",
+  "reference_labels_sha256": "sha256:90bb55c07cfefdcf03e28573edbe8c7d56bdb8947c2b68f21b272d5116184551",
+  "request_count": 48,
+  "request_manifest_sha256": "sha256:5558a8c4c75449887c870eef67476bde0ae2caa8674b9071dff5300655ddf4a0",
+  "revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "scorer_version": "vlm-smoke-scorer-v1",
+  "source_hashes": {
+    "tests\\test_vlm_smoke.py": "sha256:7c4e03b47e0fd20605786e053dafc4a5e83579522773b9d935a5848a78cdd047"
+  },
+  "version": "vlm-decision-smoke-v1"
+}

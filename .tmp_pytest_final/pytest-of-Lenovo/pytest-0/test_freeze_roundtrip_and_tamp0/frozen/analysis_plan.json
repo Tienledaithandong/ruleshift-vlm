@@ -1,0 +1,62 @@
+{
+  "arms": {
+    "A1": {
+      "contract": "direct",
+      "information": "prior_plus_evidence_text",
+      "n": 12
+    },
+    "A2": {
+      "contract": "direct",
+      "information": "posterior_text",
+      "n": 12
+    },
+    "A3": {
+      "contract": "direct",
+      "information": "posterior_rgb_card",
+      "n": 12
+    },
+    "RGB_DIAGNOSTIC": {
+      "contract": "direct",
+      "information": "fresh_blue_role_posterior",
+      "n": 6
+    },
+    "RGB_NUISANCE": {
+      "contract": "direct",
+      "information": "same_facts_new_palette",
+      "n": 6
+    }
+  },
+  "baselines": [
+    "always_commit",
+    "always_probe",
+    "random_valid",
+    "information_gain",
+    "exact"
+  ],
+  "controls": {
+    "diagnostic_expected": "fresh exact label and optimal set; action change is descriptive, not a correctness shortcut",
+    "nuisance_expected": "same exact label and action; palette/border only"
+  },
+  "denominators": {
+    "fallback_regret": "fallback attempts separately",
+    "mean_regret_all": "all completed attempts, including fallback regret",
+    "mean_regret_valid": "valid non-fallback responses only",
+    "optimal_action_accuracy_all": "all completed attempts; fallback counts as failure",
+    "optimal_action_accuracy_valid": "valid non-fallback responses only",
+    "over_under_probe": "valid non-fallback responses only",
+    "tool_selection_accuracy": "valid non-fallback PROBE responses only",
+    "valid_action_rate": "all planned requests in the completed arm"
+  },
+  "hard_gates": {
+    "budget": "at most 48 model requests, no retries",
+    "checkpoint": "frozen snapshot manifest verifies",
+    "constant_action": "at least two distinct valid actions across the 12 base contexts",
+    "correct_commit_and_probe_A2_A3": "at least one correct COMMIT and one correct PROBE in A2 and A3",
+    "leakage": "zero forbidden evaluator-label terms in prompts/public payloads",
+    "valid_each_arm": "at least 11 of 12 valid in each completed direct arm"
+  },
+  "no_tuning": "no prompt, parser, threshold, or selection changes after the first model request",
+  "primary_scope": "12-context development smoke; not confirmatory",
+  "request_cap": 48,
+  "version": "vlm-decision-smoke-v1"
+}

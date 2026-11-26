@@ -1,0 +1,10 @@
+{
+  "title": "RuleShift VLM prompt belief source",
+  "id": "tiennamlee/ruleshift-vlm-prompt-belief-source",
+  "licenses": [
+    {
+      "name": "CC0-1.0"
+    }
+  ],
+  "isPrivate": true
+}
