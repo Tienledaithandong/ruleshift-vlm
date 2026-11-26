@@ -39,6 +39,7 @@ from ruleshift.public_api.grid_schemas import (
 __all__ = [
     "DiagnosticBeliefPolicy",
     "DiagnosticBeliefPolicyV4",
+    "DiagnosticBeliefPolicyV5",
     "GridPolicy",
     "InfoGainPolicy",
     "NoAdaptationPolicy",
@@ -971,3 +972,75 @@ class DiagnosticBeliefPolicyV4(DiagnosticBeliefPolicy):
                 self.plan_fallback_count += 1
             plan = fallback
         return self._first_plan_action(plan, observation)
+
+
+class DiagnosticBeliefPolicyV5(DiagnosticBeliefPolicyV4):
+    """Diagnostic policy with direct cell-role feedback.
+
+    v0.5 keeps the v0.4 probing and planning changes and adds one general
+    observation channel. When a physical move ends on a coloured marker cell,
+    the public outcome identifies that cell's role without tool noise:
+
+    * ``move`` means the marker was traversable and safe;
+    * ``hazard`` means the marker was a hazard;
+    * ``goal`` ends the episode successfully.
+
+    The first two outcomes are deterministic evidence about the rule, not model
+    output or hidden state. Conditioning on them removes the failure mode where
+    a single noisy INSPECT led the policy to occupy a non-goal marker and then
+    loop on an empty plan. It also lets a stale post-shift observation create
+    the ambiguity needed to re-probe after the environment has changed.
+
+    This is a separate class so v0.3 and v0.4 remain reproducible. The policy
+    is public-only: it reads the observed position and outcome, never the true
+    rule.
+    """
+
+    def __init__(self, config: Any | None = None) -> None:
+        super().__init__(config)
+        self.direct_role_observations = 0
+
+    def reset(self, observation: Any, info: dict[str, Any]) -> None:
+        super().reset(observation, info)
+        self.direct_role_observations = 0
+
+    def _update_belief(
+        self,
+        action: GridAction,
+        observation: Any,
+        info: dict[str, Any],
+    ) -> None:
+        super()._update_belief(action, observation, info)
+        self._record_direct_cell_role(action, observation, info)
+
+    def _record_direct_cell_role(
+        self,
+        action: GridAction,
+        observation: Any,
+        info: dict[str, Any],
+    ) -> None:
+        if (
+            action.kind not in _MOVE_KINDS
+            or self.belief is None
+            or self.previous_observation is None
+        ):
+            return
+        observation = as_observation(observation)
+        position = tuple(observation.agent_position)
+        color = next(
+            (
+                marker_color
+                for marker_color, coord in observation.public_map.markers.items()
+                if tuple(coord) == position
+            ),
+            None,
+        )
+        if color is None:
+            return
+        outcome = str(info.get("last_outcome", ""))
+        role = {"move": "safe", "hazard": "hazard"}.get(outcome)
+        if role is None:
+            return
+        step = int(info.get("env_steps", 0))
+        self.belief.update_role(color, role, step)
+        self.direct_role_observations += 1
